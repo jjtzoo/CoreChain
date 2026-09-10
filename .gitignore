@@ -1,0 +1,21 @@
+# Operating-system files
+Thumbs.db
+Desktop.ini
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Dependency and build output (for future application work)
+node_modules/
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# Preserved local source extraction. The curated demo CSVs remain versioned.
+data/demo/alberta-dig-2024-0022/raw/
+
+# Test and coverage output
+coverage/
