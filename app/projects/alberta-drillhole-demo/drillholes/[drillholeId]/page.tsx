@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/corechain/app-shell";
 import { DrillholeDetail } from "@/components/corechain/drillholes/drillhole-detail";
 import { albertaDemoProject } from "@/lib/demo/alberta-project";
+import { buildTraceabilityDemo } from "@/lib/demo/traceability-fixture";
 import { getAlbertaDemoDataset } from "@/lib/repositories/alberta-demo-repository";
 
 type DrillholeDetailPageProps = {
@@ -21,6 +22,8 @@ export default async function DrillholeDetailPage({
     notFound();
   }
 
+  const traceabilityDemo = buildTraceabilityDemo(dataset);
+
   return (
     <AppShell activeItem="Drillholes">
       <div className="workspace-content workspace-content-dense">
@@ -33,6 +36,11 @@ export default async function DrillholeDetailPage({
           assays={dataset.assays.filter(
             (assay) => assay.drillholeName === drillhole.name,
           )}
+          traceabilityDemo={
+            drillhole.name === traceabilityDemo.sample.drillholeName
+              ? traceabilityDemo
+              : undefined
+          }
         />
       </div>
     </AppShell>

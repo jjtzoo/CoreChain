@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import {
   Database,
   Drill,
@@ -13,7 +14,13 @@ import {
 } from "@/lib/demo/alberta-project";
 
 type AppShellProps = {
-  activeItem: "Overview" | "Projects" | "Drillholes";
+  activeItem:
+    | "Overview"
+    | "Projects"
+    | "Drillholes"
+    | "Samples"
+    | "Dispatches"
+    | "Assays and QA/QC";
   children: React.ReactNode;
 };
 
@@ -62,7 +69,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
             item.available ? (
               <Link
                 className={`workspace-nav-item${activeItem === item.label ? " is-active" : ""}`}
-                href={item.href}
+                href={item.href as Route}
                 key={item.label}
               >
                 {(() => {

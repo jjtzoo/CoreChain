@@ -56,6 +56,101 @@ export type AssayRecord = {
   provenance: SourceProvenance;
 };
 
+export type RecordOrigin =
+  "Public source data" | "Synthetic demonstration data";
+
+export type CoreBox = {
+  id: string;
+  drillholeName: string;
+  boxNumber: string;
+  fromM: number;
+  toM: number;
+  receivedStatus: "Received" | "Not recorded";
+  condition: string;
+  location: string;
+  origin: RecordOrigin;
+  note: string;
+};
+
+export type Sample = {
+  id: string;
+  projectSampleId: string;
+  sourceSampleId: string;
+  drillholeName: string;
+  linkedIntervalId: string;
+  fromM: number;
+  toM: number;
+  sampleType: "Primary" | "Standard" | "Blank" | "Field duplicate" | "Other";
+  purpose: string;
+  status: string;
+  origin: RecordOrigin;
+};
+
+export type CustodyEvent = {
+  id: string;
+  sampleId: string;
+  eventType: "Created" | "Packed" | "Handed over" | "Dispatched";
+  occurredAt: string;
+  handledBy: string;
+  location: string;
+  note: string;
+  evidence: string;
+  origin: RecordOrigin;
+};
+
+export type Dispatch = {
+  id: string;
+  dispatchNumber: string;
+  laboratory: string;
+  preparationRequest: string;
+  createdAt: string;
+  handedOffAt: string;
+  receivedAt: string | null;
+  status: string;
+  sampleIds: readonly string[];
+  origin: RecordOrigin;
+  note: string;
+};
+
+export type AssayResultValue = {
+  analyte: string;
+  unit: "ppm" | "pct";
+  reportedValue: string;
+};
+
+export type AssayMatch = {
+  id: string;
+  corechainSampleId: string;
+  sourceSampleId: string;
+  sourceAssayId: string;
+  fromM: number;
+  toM: number;
+  laboratory: string | null;
+  methodCode: string | null;
+  certificateDate: string | null;
+  reportedValues: readonly AssayResultValue[];
+  origin: RecordOrigin;
+};
+
+export type QaqcControl = {
+  id: string;
+  controlType: "Standard" | "Blank" | "Field duplicate";
+  insertedWithSampleId: string;
+  observation: string;
+  demonstrationRule: string;
+  status: "No alert shown" | "Flagged for review" | "Review recorded";
+  origin: RecordOrigin;
+};
+
+export type QaqcReview = {
+  id: string;
+  sampleId: string;
+  status: "Review required";
+  decision: string;
+  note: string;
+  origin: RecordOrigin;
+};
+
 export type ImportIntegrity = {
   drillholeCount: number;
   intervalCount: number;

@@ -28,16 +28,16 @@ export const workspaceNavigation = [
   {
     label: "Samples",
     href: `/projects/${albertaDemoProject.id}/samples`,
-    available: false,
+    available: true,
   },
   {
     label: "Dispatches",
     href: `/projects/${albertaDemoProject.id}/dispatches`,
-    available: false,
+    available: true,
   },
   {
     label: "Assays and QA/QC",
     href: `/projects/${albertaDemoProject.id}/assays`,
-    available: false,
+    available: true,
   },
 ] as const;

@@ -12,12 +12,14 @@ import type {
   Drillhole,
   GeologicalInterval,
 } from "@/lib/domain/corechain";
+import type { TraceabilityDemo } from "@/lib/demo/traceability-fixture";
 
 type DrillholeDetailProps = {
   projectId: string;
   drillhole: Drillhole;
   intervals: readonly GeologicalInterval[];
   assays: readonly AssayRecord[];
+  traceabilityDemo?: TraceabilityDemo;
 };
 
 function recorded(value: string | number | null, suffix = "") {
@@ -36,11 +38,16 @@ function drillholeRegisterHref(projectId: string): Route {
   return `/projects/${projectId}/drillholes` as Route;
 }
 
+function sampleTraceHref(projectId: string, sampleId: string): Route {
+  return `/projects/${projectId}/samples/${sampleId}` as Route;
+}
+
 export function DrillholeDetail({
   projectId,
   drillhole,
   intervals,
   assays,
+  traceabilityDemo,
 }: DrillholeDetailProps) {
   const sortedIntervals = [...intervals].sort(
     (left, right) => left.fromM - right.fromM,
@@ -300,6 +307,32 @@ export function DrillholeDetail({
           </p>
         </article>
       </section>
+
+      {traceabilityDemo ? (
+        <section
+          className="drillhole-trace-link"
+          aria-labelledby="traceability-link-title"
+        >
+          <div>
+            <p className="page-kicker">Traceability demonstration</p>
+            <h2 id="traceability-link-title">
+              Follow the linked sample beyond the source record.
+            </h2>
+            <p>
+              The core box, sample handling, custody events, and dispatch are
+              synthetic demonstration data. The selected drillhole, interval,
+              and source sample ID remain public-source references.
+            </p>
+          </div>
+          <Link
+            className="primary-action"
+            href={sampleTraceHref(projectId, traceabilityDemo.sample.id)}
+          >
+            Open sample trace
+            <ArrowUpRight aria-hidden="true" size={16} strokeWidth={1.5} />
+          </Link>
+        </section>
+      ) : null}
 
       <section className="provenance-panel" aria-labelledby="provenance-title">
         <Database aria-hidden="true" size={18} strokeWidth={1.5} />
