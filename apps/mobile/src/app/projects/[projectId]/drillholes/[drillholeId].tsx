@@ -2,6 +2,8 @@ import {
   actualDepthWarning,
   deepestRecordedDepthM,
   DRILLHOLE_STATUSES,
+  normaliseDateInput,
+  validateActualDates,
   type DrillholeStatus,
   type FieldDrillhole,
 } from '@corechain/domain';
@@ -12,6 +14,7 @@ import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
+import { DateField } from '@/components/form/date-field';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -44,8 +47,13 @@ export default function DrillholeDetailScreen() {
   // Deepest depth recorded by any core box, run or log interval — what the
   // E2-2 "final depth is shallower than what's recorded" warning compares to.
   const [deepestRecordedM, setDeepestRecordedM] = useState(0);
-  const [startedAt, setStartedAt] = useState('');
-  const [completedAt, setCompletedAt] = useState('');
+  const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [completedAt, setCompletedAt] = useState<string | null>(null);
+  const [dateErrors, setDateErrors] = useState<{
+    startedAt?: string;
+    completedAt?: string;
+  }>({});
+  const [depthError, setDepthError] = useState<string | null>(null);
   const [actualFinalDepthM, setActualFinalDepthM] = useState('');
   const [depthWarning, setDepthWarning] = useState<string | null>(null);
   const [savingActuals, setSavingActuals] = useState(false);
@@ -57,8 +65,11 @@ export default function DrillholeDetailScreen() {
         return;
       }
       setDrillhole(loaded);
-      setStartedAt(loaded.startedAt ?? '');
-      setCompletedAt(loaded.completedAt ?? '');
+      // Tidy any date saved in an older, looser format (e.g. 2026/09/19).
+      const started = normaliseDateInput(loaded.startedAt ?? '', 'Started');
+      const completed = normaliseDateInput(loaded.completedAt ?? '', 'Completed');
+      setStartedAt(started.valid ? started.value : null);
+      setCompletedAt(completed.valid ? completed.value : null);
       setActualFinalDepthM(
         loaded.actualFinalDepthM != null ? String(loaded.actualFinalDepthM) : '',
       );
@@ -93,13 +104,23 @@ export default function DrillholeDetailScreen() {
   }
 
   async function handleSaveActuals() {
-    const parsedDepth =
-      actualFinalDepthM.trim().length > 0 ? Number(actualFinalDepthM) : null;
+    const dates = validateActualDates(startedAt ?? '', completedAt ?? '');
+    setDateErrors(dates.valid ? {} : dates.errors);
+
+    const depthText = actualFinalDepthM.trim();
+    const parsedDepth = depthText.length > 0 ? Number(depthText) : null;
+    const depthInvalid =
+      parsedDepth != null && !(Number.isFinite(parsedDepth) && parsedDepth > 0);
+    setDepthError(
+      depthInvalid ? 'Final depth must be a number above 0.' : null,
+    );
+
+    if (!dates.valid || depthInvalid) {
+      return;
+    }
 
     if (parsedDepth != null) {
-      setDepthWarning(
-        actualDepthWarning(parsedDepth, deepestRecordedM),
-      );
+      setDepthWarning(actualDepthWarning(parsedDepth, deepestRecordedM));
     } else {
       setDepthWarning(null);
     }
@@ -107,8 +128,8 @@ export default function DrillholeDetailScreen() {
     setSavingActuals(true);
     try {
       const updated = await updateDrillholeActuals(drillholeId, {
-        startedAt: startedAt.trim() || null,
-        completedAt: completedAt.trim() || null,
+        startedAt: dates.startedAt,
+        completedAt: dates.completedAt,
         actualFinalDepthM: parsedDepth,
       });
       if (updated) {
@@ -194,19 +215,20 @@ export default function DrillholeDetailScreen() {
         />
 
         <ThemedText type="smallBold">Actual details</ThemedText>
-        <TextField
-          label="Started (ISO date, e.g. 2026-09-19)"
+        <DateField
+          label="Started"
           optional
           value={startedAt}
-          onChangeText={setStartedAt}
-          placeholder="YYYY-MM-DD"
+          onChange={setStartedAt}
+          error={dateErrors.startedAt}
         />
-        <TextField
-          label="Completed (ISO date)"
+        <DateField
+          label="Completed"
           optional
           value={completedAt}
-          onChangeText={setCompletedAt}
-          placeholder="YYYY-MM-DD"
+          onChange={setCompletedAt}
+          minimumDate={startedAt}
+          error={dateErrors.completedAt}
         />
         <TextField
           label="Actual final depth (m)"
@@ -214,7 +236,7 @@ export default function DrillholeDetailScreen() {
           value={actualFinalDepthM}
           onChangeText={setActualFinalDepthM}
           keyboardType="decimal-pad"
-          error={depthWarning ?? undefined}
+          error={depthError ?? depthWarning ?? undefined}
         />
 
         <PrimaryButton
