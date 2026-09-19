@@ -1,4 +1,5 @@
 import {
+  loggedLengthM,
   loggingProgress,
   matchesDrillholeSearch,
   type FieldDrillhole,
@@ -15,12 +16,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
+import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
-
-// Sprint 1 has no core logging yet (that's E4, a later sprint), so every
-// hole's logged metres is 0 for now — loggingProgress always renders 0%
-// until logging exists to measure. That's honest, not a placeholder bug.
-const LOGGED_METRES_PLACEHOLDER = 0;
 
 export default function ProjectDetailScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
@@ -28,11 +25,18 @@ export default function ProjectDetailScreen() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [drillholes, setDrillholes] = useState<FieldDrillhole[]>([]);
+  // Metres logged per drillhole id (overlapping intervals counted once).
+  const [loggedMetres, setLoggedMetres] = useState<Map<string, number>>(new Map());
   const [query, setQuery] = useState('');
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
     listDrillholes(projectId).then(setDrillholes);
+    listIntervalRangesByProject(projectId).then((byHole) => {
+      setLoggedMetres(
+        new Map([...byHole].map(([holeId, ranges]) => [holeId, loggedLengthM(ranges)])),
+      );
+    });
   }, [projectId]);
 
   useFocusEffect(reload);
@@ -89,7 +93,7 @@ export default function ProjectDetailScreen() {
             </ThemedView>
           }
           renderItem={({ item }) => {
-            const progress = loggingProgress(LOGGED_METRES_PLACEHOLDER, item);
+            const progress = loggingProgress(loggedMetres.get(item.id) ?? 0, item);
             return (
               <Link
                 href={`/projects/${projectId}/drillholes/${item.id}`}

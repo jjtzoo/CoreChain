@@ -29,6 +29,10 @@ export default function RootLayout() {
           options={{ title: 'Sampling settings' }}
         />
         <Stack.Screen
+          name="projects/[projectId]/codes"
+          options={{ title: 'Code library' }}
+        />
+        <Stack.Screen
           name="projects/[projectId]/drillholes/new"
           options={{ title: 'New drillhole', presentation: 'modal' }}
         />
@@ -51,6 +55,14 @@ export default function RootLayout() {
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/runs/new"
           options={{ title: 'New core run', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/log/index"
+          options={{ title: 'Core log' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/log/new"
+          options={{ title: 'New interval', presentation: 'modal' }}
         />
       </Stack>
     </ThemeProvider>

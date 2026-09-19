@@ -547,7 +547,7 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 
 ### S2 progress (2026-09-19)
 
-**Slice 1 — E3 core boxes and runs: done and verified on the phone.** E4 (code library and logging) is next.
+**Slice 1 — E3 core boxes and runs: done and verified on the phone.**
 
 - **Domain** (`packages/domain/src/core.ts`, 37 new tests, 61 total): one shared `analyseContinuity` for gaps and overlaps in any set of depth ranges (used by boxes and runs now, and by log intervals in E4-4); `recoveryPercent` and `rqdPercent` (1 decimal; RQD divides by the _drilled_ length, per the story); `validateBoxInput` and `validateRunInput`; `nextBoxDefaults` / `nextRunDefaults`; `deepestRecordedDepthM`. Float noise (1.1 + 2.2 vs 3.3) is absorbed by a 5 mm tolerance, and the first record's start is never reported as a gap.
 - **Warnings vs errors:** a duplicate box number, non-positive depths, or RQD pieces longer than the recovered core are _errors_ (blocked). Overlaps, gaps and recovery above the drilled length are _warnings_ that need a second tap, "Save anyway" — a geologist can be entering boxes out of order, and over-100% recovery is physically possible.
@@ -559,7 +559,22 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
   - E2-2 (completing Sprint 1's placeholder): entering a 5 m final depth now warns "shallower than the deepest depth already recorded (12 m)" using the real box/run depth.
 - **Found on the device:** the keyboard covered the "Save anyway" button on Android, so the forms now dismiss the keyboard when a warning appears. **Fast Refresh can leave a form in a stale state**, so a fix to a screen with local state should be re-tested after a full app restart before trusting the result.
 - **Found in code:** the domain package already exported a web-demo `CoreBox` type from the Phase 1 dataset, and a duplicate `export *` name silently loses to the local one. The new types are `FieldCoreBox` / `FieldCoreRun`, following the `Field` prefix convention already used for `FieldDrillhole`.
-- **Not yet built:** editing an existing box or run (delete and re-add for now), and E4-1 to E4-5.
+- **Not yet built:** editing an existing box or run (delete and re-add for now), and the rest of the E4 stories (see slice 2 below).
+
+**Slice 2 — E4 code library and core logging: done and verified on the phone.** All of Sprint 2's stories (E3-1..3, E4-1..5) are now built.
+
+- **Domain** (`packages/domain/src/logging.ts`, 27 new tests, 88 total): the starter code library (provisional and generic hard-rock; the Philippine code lists remain an open item), code validation (unique per category, ignoring case), `visibleCodes`, `validateIntervalInput`, `copyIntervalCodes` (everything except depths and free text), `isCodeInUse`, `loggedLengthM` (overlaps counted once) and `continuityStrip`.
+- **Data:** migration v3 adds `code_library`, `log_intervals` and `log_drafts` (device-local, never synced). The library seeds itself from the starter set the first time a project's library is read, so it works offline on first launch with no setup; soft-deleted rows still count, so deleting every code never re-seeds.
+- **Design choices:** interval fields are plain text, so a pick-list chip and free text are the same thing (the story: "free text is always allowed"). Autosave writes a per-hole draft 500 ms after the last change, and only once the form differs from how it loaded, so an untouched form never leaves a stale draft.
+- **On the phone (Infinix, Android):**
+  - E4-1: the starter library appeared as chips for every category, and a selection shows its description ("PY — Pyrite").
+  - E4-3: a full interval (AND · PROP 2 · PY DISS 3% · SW · VEIN) saved, and the interval's "from" pre-filled from the previous interval's end. **A force-kill mid-entry restored every field** with "Restored your unsaved entry."
+  - E4-4: a 4.5–6 m gap showed as an amber segment in the strip, in the list ("Gap: 4.5–6 m") and as a "Leaves a gap of 4.5–6 m" warning with "Save anyway".
+  - E4-5: "Copy previous interval" carried over AND, PROP and intensity 2 while keeping the new depths.
+  - E4-2: deleting AND, which is used by two intervals, was refused ("AND is in use… Hide it instead"); BAS could be hidden and then disappeared from the pick-list; a new custom code (RHY — Rhyolite) appeared in the pick-list.
+  - E2-4: the hole list's "% logged" is now real (7.5 m of 80 m shows 9%).
+- **Found on the device:** a restored draft still popped the keyboard, because `autoFocus` only applies on mount and the draft hadn't loaded yet; the form now renders only after loading. (Fixed after the last device check; worth a re-test.) Tapping chips shifts the layout as each selection adds its description line, which makes scripted testing fiddly and is a small real-world annoyance too.
+- **Not yet built:** editing an existing box, run or interval (delete and re-add for now), renaming a code's short code, and per-hole log export (Sprint 3). With E3 and E4 done, Sprint 2's goal — log a complete hole offline — is met, but it has only been exercised on short test holes.
 
 ---
 

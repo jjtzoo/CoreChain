@@ -16,6 +16,7 @@ import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { listBoxes, listRuns } from '@/data/coreRepository';
+import { listIntervals } from '@/data/intervalsRepository';
 import {
   getDrillhole,
   updateDrillholeActuals,
@@ -36,8 +37,9 @@ export default function DrillholeDetailScreen() {
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [boxCount, setBoxCount] = useState(0);
   const [runCount, setRunCount] = useState(0);
-  // Deepest depth recorded by any core box or run — what the E2-2 "final depth
-  // is shallower than what's recorded" warning compares against.
+  const [intervalCount, setIntervalCount] = useState(0);
+  // Deepest depth recorded by any core box, run or log interval — what the
+  // E2-2 "final depth is shallower than what's recorded" warning compares to.
   const [deepestRecordedM, setDeepestRecordedM] = useState(0);
   const [startedAt, setStartedAt] = useState('');
   const [completedAt, setCompletedAt] = useState('');
@@ -58,13 +60,18 @@ export default function DrillholeDetailScreen() {
         loaded.actualFinalDepthM != null ? String(loaded.actualFinalDepthM) : '',
       );
     });
-    Promise.all([listBoxes(drillholeId), listRuns(drillholeId)]).then(
-      ([boxes, runs]) => {
-        setBoxCount(boxes.length);
-        setRunCount(runs.length);
-        setDeepestRecordedM(deepestRecordedDepthM([...boxes, ...runs]));
-      },
-    );
+    Promise.all([
+      listBoxes(drillholeId),
+      listRuns(drillholeId),
+      listIntervals(drillholeId),
+    ]).then(([boxes, runs, intervals]) => {
+      setBoxCount(boxes.length);
+      setRunCount(runs.length);
+      setIntervalCount(intervals.length);
+      setDeepestRecordedM(
+        deepestRecordedDepthM([...boxes, ...runs, ...intervals]),
+      );
+    });
   }, [drillholeId]);
 
   useFocusEffect(load);
@@ -163,6 +170,14 @@ export default function DrillholeDetailScreen() {
             router.push(
               `/projects/${projectId}/drillholes/${drillholeId}/runs`,
             )
+          }
+        />
+
+        <PrimaryButton
+          label={`Core log (${intervalCount})`}
+          variant="secondary"
+          onPress={() =>
+            router.push(`/projects/${projectId}/drillholes/${drillholeId}/log`)
           }
         />
 

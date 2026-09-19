@@ -168,3 +168,4 @@ export type AlbertaDemoDataset = {
 
 export * from "./field";
 export * from "./core";
+export * from "./logging";

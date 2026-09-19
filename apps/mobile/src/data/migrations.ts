@@ -115,4 +115,59 @@ export const MIGRATIONS: readonly Migration[] = [
       ['CREATE INDEX idx_core_runs_drillhole_id ON core_runs (drillhole_id)'],
     ],
   },
+  {
+    // Sprint 2, E4: the per-project code library, log intervals, and the
+    // autosaved draft of an interval that is still being typed.
+    version: 3,
+    commands: [
+      [
+        `CREATE TABLE code_library (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          category TEXT NOT NULL,
+          code TEXT NOT NULL,
+          description TEXT NOT NULL,
+          hidden INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      ['CREATE INDEX idx_code_library_project_id ON code_library (project_id)'],
+      [
+        `CREATE TABLE log_intervals (
+          id TEXT PRIMARY KEY NOT NULL,
+          drillhole_id TEXT NOT NULL REFERENCES drillholes (id),
+          from_m REAL NOT NULL,
+          to_m REAL NOT NULL,
+          lithology TEXT,
+          alteration_type TEXT,
+          alteration_intensity TEXT,
+          mineral TEXT,
+          mineral_style TEXT,
+          mineral_percent REAL,
+          weathering TEXT,
+          structure_type TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      [
+        'CREATE INDEX idx_log_intervals_drillhole_id ON log_intervals (drillhole_id)',
+      ],
+      [
+        // Device-local scratch space (never synced): one in-progress interval
+        // per hole, so killing the app mid-entry loses nothing (E4-3).
+        `CREATE TABLE log_drafts (
+          drillhole_id TEXT PRIMARY KEY NOT NULL REFERENCES drillholes (id),
+          draft_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`,
+      ],
+    ],
+  },
 ];
