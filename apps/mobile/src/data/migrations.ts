@@ -79,4 +79,40 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // Sprint 2, E3: core boxes and drilling runs.
+    version: 2,
+    commands: [
+      [
+        `CREATE TABLE core_boxes (
+          id TEXT PRIMARY KEY NOT NULL,
+          drillhole_id TEXT NOT NULL REFERENCES drillholes (id),
+          box_number INTEGER NOT NULL,
+          from_m REAL NOT NULL,
+          to_m REAL NOT NULL,
+          note TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      ['CREATE INDEX idx_core_boxes_drillhole_id ON core_boxes (drillhole_id)'],
+      [
+        `CREATE TABLE core_runs (
+          id TEXT PRIMARY KEY NOT NULL,
+          drillhole_id TEXT NOT NULL REFERENCES drillholes (id),
+          from_m REAL NOT NULL,
+          to_m REAL NOT NULL,
+          recovered_m REAL NOT NULL,
+          rqd_pieces_m REAL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      ['CREATE INDEX idx_core_runs_drillhole_id ON core_runs (drillhole_id)'],
+    ],
+  },
 ];

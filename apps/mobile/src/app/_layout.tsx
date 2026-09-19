@@ -36,6 +36,22 @@ export default function RootLayout() {
           name="projects/[projectId]/drillholes/[drillholeId]"
           options={{ title: 'Drillhole' }}
         />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/boxes/index"
+          options={{ title: 'Core boxes' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/boxes/new"
+          options={{ title: 'New core box', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/runs/index"
+          options={{ title: 'Core runs' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/runs/new"
+          options={{ title: 'New core run', presentation: 'modal' }}
+        />
       </Stack>
     </ThemeProvider>
   );

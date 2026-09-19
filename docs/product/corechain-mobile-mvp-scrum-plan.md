@@ -543,7 +543,23 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 - **Two more real toolchain gaps found and fixed**, the same way as Sprint 0's PowerSync findings:
   - Expo Router's typed-route declarations (`.expo/types/router.d.ts`) are gitignored and only regenerate when the interactive dev server runs — CI's fresh checkout never does that, so `tsc` failed on every route helper (`router.push`, `<Link href>`) until fixed. Fixed with a `pretypecheck` script (`expo customize tsconfig.json`, which regenerates the routes file as a side effect without touching the real `tsconfig.json`) so it self-heals on every `npm run typecheck`, locally and in CI.
   - **op-sqlite cannot bundle for the web target at all** without also installing `@sqlite.org/sqlite-wasm` (a "Worker chunk not found" Metro error) — confirming decision D2 more concretely than Sprint 0's spike did. This also means the "export a web bundle and curl its SSR output" verification trick from Sprint 0 no longer works once a screen actually calls the database — it's an Android-only app from E8-1 onward, not just by choice but because the web target now hard-fails at bundle time. Verification for anything past this point relies on `expo export --platform android` (confirmed: 1,614 modules, including every new file, bundle cleanly) plus `tsc`/`eslint`/vitest, not a browser.
-- **Known simplifications, not gaps to silently carry forward:** dates in the actuals form are plain ISO-format text fields rather than a native date picker (avoids yet another native dependency before a device can verify any of them); `actualDepthWarning` is always computed against a hardcoded 0m "deepest recorded depth" placeholder, because there's no core logging yet (E3/E4) to measure against for real.
+- **Known simplifications, not gaps to silently carry forward:** dates in the actuals form are plain ISO-format text fields rather than a native date picker (avoids yet another native dependency before a device can verify any of them); `actualDepthWarning` is always computed against a hardcoded 0m "deepest recorded depth" placeholder, because there's no core logging yet (E3/E4) to measure against for real. **Update:** the depth-warning placeholder was replaced in Sprint 2 with the real deepest recorded box/run depth.
+
+### S2 progress (2026-09-19)
+
+**Slice 1 — E3 core boxes and runs: done and verified on the phone.** E4 (code library and logging) is next.
+
+- **Domain** (`packages/domain/src/core.ts`, 37 new tests, 61 total): one shared `analyseContinuity` for gaps and overlaps in any set of depth ranges (used by boxes and runs now, and by log intervals in E4-4); `recoveryPercent` and `rqdPercent` (1 decimal; RQD divides by the _drilled_ length, per the story); `validateBoxInput` and `validateRunInput`; `nextBoxDefaults` / `nextRunDefaults`; `deepestRecordedDepthM`. Float noise (1.1 + 2.2 vs 3.3) is absorbed by a 5 mm tolerance, and the first record's start is never reported as a gap.
+- **Warnings vs errors:** a duplicate box number, non-positive depths, or RQD pieces longer than the recovered core are _errors_ (blocked). Overlaps, gaps and recovery above the drilled length are _warnings_ that need a second tap, "Save anyway" — a geologist can be entering boxes out of order, and over-100% recovery is physically possible.
+- **Data:** migration v2 adds `core_boxes` and `core_runs` (sync-ready columns, soft delete). Deleting a box or run is a soft delete.
+- **On the phone (Infinix, Android):**
+  - E3-1: "next box" pre-fills the number and start depth (box 2 started at 4.2 m, where box 1 ended); a deliberate 8.4–9.5 m gap showed "Leaves a gap of 8.4–9.5 m next to this box", saved via "Save anyway", and the list shows "Gap: 8.4–9.5 m".
+  - E3-2: live "Recovery: 96.7%" for 2.9 m of 3 m; 3.4 m of 3 m showed "113.3%" and the warning "Recovered 3.4 m is more than the 3 m drilled", and saved via "Save anyway".
+  - E3-3: live "RQD: 70%" for 2.1 m of pieces in a 3 m run.
+  - E2-2 (completing Sprint 1's placeholder): entering a 5 m final depth now warns "shallower than the deepest depth already recorded (12 m)" using the real box/run depth.
+- **Found on the device:** the keyboard covered the "Save anyway" button on Android, so the forms now dismiss the keyboard when a warning appears. **Fast Refresh can leave a form in a stale state**, so a fix to a screen with local state should be re-tested after a full app restart before trusting the result.
+- **Found in code:** the domain package already exported a web-demo `CoreBox` type from the Phase 1 dataset, and a duplicate `export *` name silently loses to the local one. The new types are `FieldCoreBox` / `FieldCoreRun`, following the `Field` prefix convention already used for `FieldDrillhole`.
+- **Not yet built:** editing an existing box or run (delete and re-add for now), and E4-1 to E4-5.
 
 ---
 

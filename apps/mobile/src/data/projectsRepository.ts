@@ -12,8 +12,6 @@ const DEFAULT_SAMPLE_PREFIX = 'CC';
 const DEFAULT_NEXT_SAMPLE_NUMBER = 1;
 const DEFAULT_QC_EVERY_N = 20;
 
-// NOT YET VERIFIED ON A DEVICE — see the header note in ./database.ts.
-
 type ProjectRow = {
   id: string;
   name: string;

@@ -1,10 +1,11 @@
 import {
   actualDepthWarning,
+  deepestRecordedDepthM,
   DRILLHOLE_STATUSES,
   type DrillholeStatus,
   type FieldDrillhole,
 } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,27 +15,30 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { listBoxes, listRuns } from '@/data/coreRepository';
 import {
   getDrillhole,
   updateDrillholeActuals,
   updateDrillholeStatus,
 } from '@/data/drillholesRepository';
 
-// Sprint 1 has no core boxes or runs yet (E3), so there is no real recorded
-// depth to compare against — 0 means "nothing recorded yet", not a bug.
-const DEEPEST_RECORDED_DEPTH_PLACEHOLDER = 0;
-
 function formatStatus(status: DrillholeStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function DrillholeDetailScreen() {
-  const { drillholeId } = useLocalSearchParams<{
+  const { projectId, drillholeId } = useLocalSearchParams<{
     projectId: string;
     drillholeId: string;
   }>();
+  const router = useRouter();
 
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
+  const [boxCount, setBoxCount] = useState(0);
+  const [runCount, setRunCount] = useState(0);
+  // Deepest depth recorded by any core box or run — what the E2-2 "final depth
+  // is shallower than what's recorded" warning compares against.
+  const [deepestRecordedM, setDeepestRecordedM] = useState(0);
   const [startedAt, setStartedAt] = useState('');
   const [completedAt, setCompletedAt] = useState('');
   const [actualFinalDepthM, setActualFinalDepthM] = useState('');
@@ -54,6 +58,13 @@ export default function DrillholeDetailScreen() {
         loaded.actualFinalDepthM != null ? String(loaded.actualFinalDepthM) : '',
       );
     });
+    Promise.all([listBoxes(drillholeId), listRuns(drillholeId)]).then(
+      ([boxes, runs]) => {
+        setBoxCount(boxes.length);
+        setRunCount(runs.length);
+        setDeepestRecordedM(deepestRecordedDepthM([...boxes, ...runs]));
+      },
+    );
   }, [drillholeId]);
 
   useFocusEffect(load);
@@ -76,7 +87,7 @@ export default function DrillholeDetailScreen() {
 
     if (parsedDepth != null) {
       setDepthWarning(
-        actualDepthWarning(parsedDepth, DEEPEST_RECORDED_DEPTH_PLACEHOLDER),
+        actualDepthWarning(parsedDepth, deepestRecordedM),
       );
     } else {
       setDepthWarning(null);
@@ -134,6 +145,26 @@ export default function DrillholeDetailScreen() {
             Saving…
           </ThemedText>
         ) : null}
+
+        <ThemedText type="smallBold">Core</ThemedText>
+        <PrimaryButton
+          label={`Core boxes (${boxCount})`}
+          variant="secondary"
+          onPress={() =>
+            router.push(
+              `/projects/${projectId}/drillholes/${drillholeId}/boxes`,
+            )
+          }
+        />
+        <PrimaryButton
+          label={`Core runs (${runCount})`}
+          variant="secondary"
+          onPress={() =>
+            router.push(
+              `/projects/${projectId}/drillholes/${drillholeId}/runs`,
+            )
+          }
+        />
 
         <ThemedText type="smallBold">Actual details</ThemedText>
         <TextField

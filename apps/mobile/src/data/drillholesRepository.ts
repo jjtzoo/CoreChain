@@ -10,8 +10,6 @@ import type { Scalar } from '@op-engineering/op-sqlite';
 import { getDatabase } from './database';
 import { newId, nowIso } from './ids';
 
-// NOT YET VERIFIED ON A DEVICE — see the header note in ./database.ts.
-
 type DrillholeRow = {
   id: string;
   project_id: string;
