@@ -15,7 +15,14 @@ build/
 *.tsbuildinfo
 
 # Preserved local source extraction. The curated demo CSVs remain versioned.
-data/demo/alberta-dig-2024-0022/raw/
+**/data/demo/alberta-dig-2024-0022/raw/
 
 # Test and coverage output
 coverage/
+
+# Expo (apps/mobile)
+.expo/
+expo-env.d.ts
+*.orig.*
+apps/mobile/android/
+apps/mobile/ios/

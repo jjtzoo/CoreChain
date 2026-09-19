@@ -1,56 +1,29 @@
 {
-  "name": "corechain",
+  "name": "corechain-monorepo",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
-  "dependencies": {
-    "@hookform/resolvers": "^5.9.1",
-    "@prisma/client": "^6.16.0",
-    "@tanstack/react-query": "^5.102.8",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.40.0",
-    "motion": "^13.2.0",
-    "next": "^15.5.0",
-    "pg": "^8.23.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-hook-form": "^7.87.0",
-    "server-only": "^0.0.1",
-    "tailwind-merge": "^3.6.0",
-    "zod": "^4.0.0",
-    "zustand": "^5.0.15"
+  "op-sqlite": {
+    "sqlcipher": true
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "dev:mobile": "npm run start --workspace apps/mobile",
+    "build": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web && npm run lint --workspace apps/mobile",
+    "typecheck": "npm run typecheck --workspace apps/web && npm run typecheck --workspace apps/mobile && npm run typecheck --workspace @corechain/domain",
+    "test": "npm run test --workspace apps/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@tanstack/react-query-devtools": "^5.102.8",
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.7",
-    "@types/node": "^24.3.0",
-    "@types/pg": "^8.23.1",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "eslint": "^9.35.0",
-    "eslint-config-next": "^15.5.0",
-    "jsdom": "^30.0.1",
-    "prettier": "^3.9.6",
-    "prisma": "^8.0.0-rc.12",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.2",
-    "vitest": "^4.1.11"
+    "prettier": "^3.9.6"
   }
 }

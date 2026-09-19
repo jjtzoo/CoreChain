@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Typecheck (apps/web, apps/mobile, packages/domain)
+        run: npm run typecheck
+
+      - name: Lint (apps/web, apps/mobile)
+        run: npm run lint
+
+      - name: Test (apps/web)
+        run: npm test
+
+      - name: Build (apps/web)
+        run: npm run build
+
+      - name: Expo config sanity check (apps/mobile)
+        working-directory: apps/mobile
+        run: npx expo-doctor
