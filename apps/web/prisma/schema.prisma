@@ -1,0 +1,398 @@
+// CoreChain cloud database (Sprint 4). PostgreSQL, behind the Next.js API.
+//
+// This mirrors the phone's SQLite tables (apps/mobile/src/data/migrations.ts)
+// column for column, because PowerSync streams these tables down to the device.
+// Table and column names are therefore snake_case, and every syncable table
+// keeps the sync-ready columns of decisions D6-D8: id (a UUID made on the
+// device), created_at, updated_at, version, deleted_at.
+//
+// On top of what the phone stores, the server adds:
+//   - organization_id on every table (a personal workspace in the MVP; real
+//     teams later, with no data migration: decision D9),
+//   - created_by (the signed-in user's id),
+//   - project_id on the tables that hang off a drillhole, filled in by the API
+//     from the drillhole, so PowerSync can sync "only projects I belong to".
+//
+// NOT here yet: the sign-in tables (user, session, account, verification, and
+// the organization / member / invitation tables). Better Auth generates those
+// (`npx @better-auth/cli generate`) when sign-in is wired up in Sprint 4; they
+// are merged into this file then, and organization_id / created_by below gain
+// real foreign keys to them. Until then they are plain text columns.
+//
+// Rules the migration adds in raw SQL, because Prisma can't express them:
+//   - sample_number_blocks: an EXCLUDE constraint on int4range(start_number,
+//     start_number + size) per project, so two devices can never hold
+//     overlapping blocks even if two requests race.
+//   - samples: unique (project_id, lower(sample_number)) across deleted rows
+//     too, because a sample number is a physical tag and is never reused.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CollarSource {
+  gps
+  manual
+}
+
+enum DrillholeStatus {
+  planned
+  drilling
+  complete
+  logged
+}
+
+enum SampleType {
+  primary
+  standard
+  blank
+  duplicate
+}
+
+enum SampleStatus {
+  created
+  bagged
+  dispatched
+}
+
+enum ControlType {
+  standard
+  blank
+  duplicate
+}
+
+enum PhotoSubjectType {
+  box
+  interval
+}
+
+enum CodeCategory {
+  lithology
+  alteration_type
+  alteration_intensity
+  mineral
+  mineral_style
+  weathering
+  structure_type
+}
+
+model Project {
+  id                String    @id @db.Uuid
+  organizationId    String    @map("organization_id")
+  createdBy         String    @map("created_by")
+  name              String
+  commodity         String?
+  location          String?
+  coordinateSystem  String    @map("coordinate_system")
+  samplePrefix      String    @map("sample_prefix")
+  nextSampleNumber  Int       @map("next_sample_number")
+  qcStandardEveryN  Int       @map("qc_standard_every_n")
+  qcBlankEveryN     Int       @map("qc_blank_every_n")
+  qcDuplicateEveryN Int       @map("qc_duplicate_every_n")
+  photoMaxMb        Float     @default(1.5) @map("photo_max_mb")
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @map("updated_at") @db.Timestamptz(3)
+  version           Int
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  drillholes   Drillhole[]
+  codes        CodeLibraryEntry[]
+  samples      Sample[]
+  qcDismissals QcDismissal[]
+  numberBlocks SampleNumberBlock[]
+
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model Drillhole {
+  id                    String          @id @db.Uuid
+  organizationId        String          @map("organization_id")
+  projectId             String          @map("project_id") @db.Uuid
+  createdBy             String          @map("created_by")
+  holeId                String          @map("hole_id")
+  collarSource          CollarSource?   @map("collar_source")
+  collarLatitude        Float?          @map("collar_latitude")
+  collarLongitude       Float?          @map("collar_longitude")
+  collarAccuracyM       Float?          @map("collar_accuracy_m")
+  collarCapturedAt      DateTime?       @map("collar_captured_at") @db.Timestamptz(3)
+  plannedAzimuthDeg     Float?          @map("planned_azimuth_deg")
+  plannedInclinationDeg Float?          @map("planned_inclination_deg")
+  plannedDepthM         Float           @map("planned_depth_m")
+  actualFinalDepthM     Float?          @map("actual_final_depth_m")
+  // Dates are chosen from a calendar on the phone and kept as plain days.
+  startedAt             String?         @map("started_at")
+  completedAt           String?         @map("completed_at")
+  status                DrillholeStatus
+  contractor            String?
+  drillType             String?         @map("drill_type")
+  diameter              String?
+  note                  String?
+  createdAt             DateTime        @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime        @map("updated_at") @db.Timestamptz(3)
+  version               Int
+  deletedAt             DateTime?       @map("deleted_at") @db.Timestamptz(3)
+
+  project       Project                  @relation(fields: [projectId], references: [id])
+  statusHistory DrillholeStatusHistory[]
+  boxes         CoreBox[]
+  runs          CoreRun[]
+  intervals     LogInterval[]
+  samples       Sample[]
+  photos        Photo[]
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@map("drillholes")
+}
+
+model DrillholeStatusHistory {
+  id             String          @id @db.Uuid
+  organizationId String          @map("organization_id")
+  projectId      String          @map("project_id") @db.Uuid
+  drillholeId    String          @map("drillhole_id") @db.Uuid
+  status         DrillholeStatus
+  changedAt      DateTime        @map("changed_at") @db.Timestamptz(3)
+
+  drillhole Drillhole @relation(fields: [drillholeId], references: [id])
+
+  @@index([drillholeId])
+  @@map("drillhole_status_history")
+}
+
+model CoreBox {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id") @db.Uuid
+  createdBy      String    @map("created_by")
+  drillholeId    String    @map("drillhole_id") @db.Uuid
+  boxNumber      Int       @map("box_number")
+  fromM          Float     @map("from_m")
+  toM            Float     @map("to_m")
+  note           String?
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  drillhole Drillhole @relation(fields: [drillholeId], references: [id])
+
+  @@index([drillholeId])
+  @@index([projectId])
+  @@map("core_boxes")
+}
+
+model CoreRun {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id") @db.Uuid
+  createdBy      String    @map("created_by")
+  drillholeId    String    @map("drillhole_id") @db.Uuid
+  fromM          Float     @map("from_m")
+  toM            Float     @map("to_m")
+  recoveredM     Float     @map("recovered_m")
+  rqdPiecesM     Float?    @map("rqd_pieces_m")
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  drillhole Drillhole @relation(fields: [drillholeId], references: [id])
+
+  @@index([drillholeId])
+  @@index([projectId])
+  @@map("core_runs")
+}
+
+model CodeLibraryEntry {
+  id             String       @id @db.Uuid
+  organizationId String       @map("organization_id")
+  projectId      String       @map("project_id") @db.Uuid
+  createdBy      String       @map("created_by")
+  category       CodeCategory
+  code           String
+  description    String
+  hidden         Boolean      @default(false)
+  createdAt      DateTime     @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@map("code_library")
+}
+
+model LogInterval {
+  id                  String    @id @db.Uuid
+  organizationId      String    @map("organization_id")
+  projectId           String    @map("project_id") @db.Uuid
+  createdBy           String    @map("created_by")
+  drillholeId         String    @map("drillhole_id") @db.Uuid
+  fromM               Float     @map("from_m")
+  toM                 Float     @map("to_m")
+  lithology           String?
+  alterationType      String?   @map("alteration_type")
+  alterationIntensity String?   @map("alteration_intensity")
+  mineral             String?
+  mineralStyle        String?   @map("mineral_style")
+  mineralPercent      Float?    @map("mineral_percent")
+  weathering          String?
+  structureType       String?   @map("structure_type")
+  notes               String?
+  createdAt           DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @map("updated_at") @db.Timestamptz(3)
+  version             Int
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  drillhole Drillhole @relation(fields: [drillholeId], references: [id])
+
+  @@index([drillholeId])
+  @@index([projectId])
+  @@map("log_intervals")
+}
+
+model Sample {
+  id             String       @id @db.Uuid
+  organizationId String       @map("organization_id")
+  projectId      String       @map("project_id") @db.Uuid
+  createdBy      String       @map("created_by")
+  drillholeId    String       @map("drillhole_id") @db.Uuid
+  sampleNumber   String       @map("sample_number")
+  sampleType     SampleType   @map("sample_type")
+  fromM          Float?       @map("from_m")
+  toM            Float?       @map("to_m")
+  standardRef    String?      @map("standard_ref")
+  parentSampleId String?      @map("parent_sample_id") @db.Uuid
+  note           String?
+  status         SampleStatus
+  createdAt      DateTime     @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  project    Project   @relation(fields: [projectId], references: [id])
+  drillhole  Drillhole @relation(fields: [drillholeId], references: [id])
+  parent     Sample?   @relation("Duplicates", fields: [parentSampleId], references: [id])
+  duplicates Sample[]  @relation("Duplicates")
+
+  @@index([drillholeId])
+  @@index([projectId])
+  @@map("samples")
+}
+
+model QcDismissal {
+  id             String      @id @db.Uuid
+  organizationId String      @map("organization_id")
+  projectId      String      @map("project_id") @db.Uuid
+  createdBy      String      @map("created_by")
+  controlType    ControlType @map("control_type")
+  reason         String
+  createdAt      DateTime    @map("created_at") @db.Timestamptz(3)
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@map("qc_dismissals")
+}
+
+model Photo {
+  id             String           @id @db.Uuid
+  organizationId String           @map("organization_id")
+  projectId      String           @map("project_id") @db.Uuid
+  createdBy      String           @map("created_by")
+  drillholeId    String           @map("drillhole_id") @db.Uuid
+  subjectType    PhotoSubjectType @map("subject_type")
+  subjectId      String           @map("subject_id") @db.Uuid
+  // Denormalised on purpose: a photo is never separated from its depth.
+  holeId         String           @map("hole_id")
+  boxNumber      Int?             @map("box_number")
+  fromM          Float            @map("from_m")
+  toM            Float            @map("to_m")
+  fileName       String           @map("file_name")
+  // The image itself lives in object storage under this key once uploaded;
+  // null until the upload succeeds (photos upload separately from records).
+  storageKey     String?          @map("storage_key")
+  widthPx        Int              @map("width_px")
+  heightPx       Int              @map("height_px")
+  sizeBytes      Int              @map("size_bytes")
+  capturedAt     DateTime         @map("captured_at") @db.Timestamptz(3)
+  note           String?
+  createdAt      DateTime         @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  drillhole Drillhole @relation(fields: [drillholeId], references: [id])
+
+  @@index([subjectType, subjectId])
+  @@index([drillholeId])
+  @@index([projectId])
+  @@map("photos")
+}
+
+// A phone or tablet signed in to an account. "Remove this device" (E1-5) sets
+// revoked_at, and the server then refuses its uploads.
+model Device {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
+  name           String
+  platform       String
+  appVersion     String?   @map("app_version")
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  lastSeenAt     DateTime? @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  numberBlocks SampleNumberBlock[]
+
+  @@index([userId])
+  @@map("devices")
+}
+
+// E6-4: a reserved run of sample numbers held by one device. See
+// packages/domain/src/sampleBlocks.ts for how blocks are issued and used.
+model SampleNumberBlock {
+  id             String   @id @db.Uuid
+  organizationId String   @map("organization_id")
+  projectId      String   @map("project_id") @db.Uuid
+  deviceId       String   @map("device_id") @db.Uuid
+  startNumber    Int      @map("start_number")
+  size           Int
+  issuedAt       DateTime @map("issued_at") @db.Timestamptz(3)
+
+  project Project @relation(fields: [projectId], references: [id])
+  device  Device  @relation(fields: [deviceId], references: [id])
+
+  @@unique([projectId, startNumber])
+  @@index([deviceId])
+  @@map("sample_number_blocks")
+}
+
+// Decision D7 / sync rules: every accepted write also records who did what,
+// when, and from which device. Append-only; nothing updates or deletes a row.
+model AuditEvent {
+  id             String   @id @db.Uuid
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id") @db.Uuid
+  actorUserId    String   @map("actor_user_id")
+  deviceId       String?  @map("device_id") @db.Uuid
+  entityTable    String   @map("entity_table")
+  entityId       String   @map("entity_id") @db.Uuid
+  action         String
+  // The record's version before and after, and what changed.
+  fromVersion    Int?     @map("from_version")
+  toVersion      Int?     @map("to_version")
+  changes        Json?
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([projectId, occurredAt])
+  @@index([entityTable, entityId])
+  @@map("audit_events")
+}

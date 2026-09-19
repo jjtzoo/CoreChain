@@ -619,6 +619,28 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 
 - **Dev-workflow lesson:** after the phone has been in airplane mode, the app's live-reload connection to Metro is dead; edits do not appear until the app is force-stopped and reopened.
 
+### S3 status and S4 start (2026-09-19)
+
+**Sprint 3 is built.** All six stories (E5-1, E5-2, E6-1..E6-3, E9-1) are done and the installable alpha APK exists. What is left is owner-run and is not code: the airplane-mode day (the field-day guide), and showing the alpha to one friendly geologist. The bottom tab bar and "Mark as bagged" are deferred (bagging arrives with custody, E7).
+
+**Sprint 4 (Accounts and backup) has started with the parts that need no cloud account:**
+
+- **E1-4, staying signed in offline: rules done** (`packages/domain/src/session.ts`, 10 tests). A session lasts 30 days from the last time the server confirmed it (sign-in or a successful sync), and the app warns 3 days before. Expired means the data stays readable but can't sync. The wording tells the geologist their data is safe on the phone. Both numbers are configurable.
+- **E6-4, device sample-number blocks: rules done** (`packages/domain/src/sampleBlocks.ts`, 12 tests). The server issues each device a contiguous block (default 100 numbers), starting after every block already issued and after the numbers the project used offline before it had a server. Blocks never overlap, a device uses the lowest free number across its blocks, and the app warns when fewer than 20 are left. The server side of this (an endpoint and a database constraint) comes with the backend.
+- **Backend data model drafted** (`apps/web/prisma/schema.prisma`, checked with `prisma validate`). It mirrors the phone's tables column for column, because PowerSync will stream them down. It adds `organization_id` and `created_by` everywhere, `project_id` on the tables under a drillhole (so sync can be limited to my projects), a devices table, the sample-number blocks table and an append-only audit log. The sign-in tables are not in it yet: Better Auth generates them when sign-in is wired up.
+- **Note on the alpha data:** the offline alpha data on the phone (test-only so far) will attach to the account on first sign-in (E1-3), so the server's first number block starts after the project's own "next sample number".
+
+**Needs the owner before the rest of S4 can start (the decision the risk table lists as "due before S4"):**
+
+1. **Create a managed PostgreSQL database.** Recommended: Neon or Supabase, free tier, in a region close to the Philippines (Singapore).
+2. **Create a PowerSync Cloud account and instance** (free tier) and connect it to that database.
+3. **Choose where the API runs.** Recommended: Vercel (the web app is already Next.js); the phone must be able to reach it over the internet.
+4. **Put the secrets in an environment file, not in chat.** I will add the variable names to a `.env.example` and read them from a local `.env` that is never committed.
+
+I can't create accounts or handle credentials, so this step is the owner's. Everything after it (Better Auth sign-up and sign-in, the upload API, PowerSync sync rules, the phone's sign-in screens) I can build.
+
+**A design risk to settle first (a spike, before the phone's sync code):** the phone's tables are plain SQLite tables the repositories already read and write. PowerSync's default is to manage its own tables. The likely answer is PowerSync's "raw tables", which sync into existing tables, but it must be tried on a device before the sync stories are estimated. If raw tables don't fit, the repositories move onto PowerSync's own tables (more work, no data loss).
+
 ---
 
 ## 8. Field-test plan
