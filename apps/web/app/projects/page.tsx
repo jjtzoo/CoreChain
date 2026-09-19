@@ -1,8 +1,12 @@
-import Link from "next/link";
-import { ArrowUpRight, FolderKanban } from "lucide-react";
+import Image from "next/image";
 import { AppShell } from "@/components/corechain/app-shell";
-import { ProjectSnapshot } from "@/components/corechain/project-snapshot";
 
+/**
+ * The office workspace starts empty, like the field app. Projects created in
+ * CoreChain Field will appear here once cloud sync exists (Sprints 4-5 of the
+ * mobile plan). The Alberta public-data demo still lives under
+ * /projects/alberta-drillhole-demo, linked from the landing page only.
+ */
 export default function ProjectsPage() {
   return (
     <AppShell activeItem="Projects">
@@ -10,29 +14,26 @@ export default function ProjectsPage() {
         <header className="workspace-page-header">
           <div>
             <p className="page-kicker">Projects</p>
-            <h1>Start with one dependable workflow.</h1>
-            <p>
-              The Alberta public-data workspace is the first CoreChain
-              demonstration project.
-            </p>
+            <h1>Projects</h1>
+            <p>Follow the logs, samples and progress your field geologists record.</p>
           </div>
         </header>
 
-        <section className="project-list" aria-label="Available projects">
-          <div className="project-list-marker">
-            <FolderKanban aria-hidden="true" size={20} strokeWidth={1.5} />
-            <span>1 available project</span>
-          </div>
-          <ProjectSnapshot />
+        <section className="empty-state" aria-label="Projects">
+          <Image
+            src="/branding/corechain-symbol.svg"
+            alt=""
+            width={72}
+            height={72}
+            aria-hidden="true"
+          />
+          <h2>No projects yet</h2>
+          <p>
+            When geologists create projects and log core in the CoreChain Field
+            app, they will show up here once syncing is switched on. Until then
+            there is nothing to show.
+          </p>
         </section>
-
-        <Link
-          className="primary-action"
-          href="/projects/alberta-drillhole-demo"
-        >
-          Open Alberta demo
-          <ArrowUpRight aria-hidden="true" size={16} strokeWidth={1.5} />
-        </Link>
       </div>
     </AppShell>
   );
