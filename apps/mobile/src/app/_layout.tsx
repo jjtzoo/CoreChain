@@ -2,6 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -39,6 +40,8 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}>
       <AnimatedSplashOverlay />
+      {/* Dark icons on the light theme, light icons on the dark one. */}
+      <StatusBar style="auto" />
       <Stack
         screenOptions={{
           headerShadowVisible: false,
