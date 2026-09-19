@@ -9,7 +9,8 @@ import {
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
@@ -157,18 +158,18 @@ export default function NewSampleScreen() {
   if (holes.length === 0 && project) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.form}>
+        <FormScrollView contentContainerStyle={styles.form}>
           <ThemedText type="default">
             Create a drillhole before taking samples.
           </ThemedText>
-        </ScrollView>
+        </FormScrollView>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled">
         <QcReminders reminders={reminders} />
@@ -292,7 +293,7 @@ export default function NewSampleScreen() {
         />
 
         <PrimaryButton label="Save sample" onPress={handleSave} loading={saving} />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

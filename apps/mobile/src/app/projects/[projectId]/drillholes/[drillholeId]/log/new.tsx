@@ -6,7 +6,8 @@ import {
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CodePicker } from '@/components/form/code-picker';
@@ -208,7 +209,7 @@ export default function NewIntervalScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled">
         {restored ? (
@@ -306,7 +307,7 @@ export default function NewIntervalScreen() {
           onPress={handleSave}
           loading={saving}
         />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

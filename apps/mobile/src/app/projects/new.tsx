@@ -1,7 +1,8 @@
 import { COORDINATE_SYSTEMS, type CoordinateSystem } from '@corechain/domain';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
@@ -53,7 +54,7 @@ export default function NewProjectScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.form}>
+      <FormScrollView contentContainerStyle={styles.form}>
         <TextField
           label="Project name"
           value={name}
@@ -105,7 +106,7 @@ export default function NewProjectScreen() {
           loading={saving}
           disabled={name.trim().length === 0}
         />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

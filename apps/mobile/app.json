@@ -40,7 +40,16 @@
         {
           "locationAlwaysAndWhenInUsePermission": "CoreChain Field uses your location to record the drillhole collar you're standing at."
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "CoreChain Field uses the camera to photograph core boxes and logged intervals.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

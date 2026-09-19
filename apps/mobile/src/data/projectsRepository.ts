@@ -23,6 +23,7 @@ type ProjectRow = {
   qc_standard_every_n: number;
   qc_blank_every_n: number;
   qc_duplicate_every_n: number;
+  photo_max_mb: number;
   created_at: string;
   updated_at: string;
   version: number;
@@ -43,6 +44,7 @@ function rowToProject(row: ProjectRow): Project {
       blankEveryN: row.qc_blank_every_n,
       duplicateEveryN: row.qc_duplicate_every_n,
     },
+    photoMaxMb: row.photo_max_mb,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     version: row.version,
@@ -160,4 +162,17 @@ export async function updateProjectSamplingSettings(
   );
 
   return getProject(id);
+}
+
+/** E5-1: sets the largest size (in MB) a saved photo may be. */
+export async function updateProjectPhotoMaxMb(
+  id: string,
+  photoMaxMb: number,
+): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(
+    `UPDATE projects SET photo_max_mb = ?, updated_at = ?, version = version + 1
+     WHERE id = ?`,
+    [photoMaxMb, nowIso(), id],
+  );
 }

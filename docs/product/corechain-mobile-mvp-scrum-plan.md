@@ -595,6 +595,16 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 - **Not device-tested:** refusing to delete a primary sample that has a duplicate (unit logic is straightforward, but it was not exercised on the phone). Stale field errors now clear as soon as the field is edited (fixed after the last device check).
 - **Not yet built:** editing a sample (delete and re-add for now), and bagging/dispatch statuses (E7).
 
+**Slice 2 — E9-1 CSV export and E5 photos: built; export verified on the phone, photos partly verified.** Adding the camera, image-manipulator, file-system and sharing modules needed one native rebuild.
+
+- **E9-1 export** (`packages/domain/src/export.ts`, tests in `export.test.ts`): one CSV per table (collars, surveys, log, runs, samples), RFC 4180 escaping, CRLF line ends, `HOLEID`/`FROM`/`TO` columns. GPS collars are labelled WGS84; manually typed collars use the project's coordinate system. Each file goes through the Android share sheet. _On the phone:_ the share sheet opened and the CSV content was correct.
+- **E5 photos** (`packages/domain/src/photos.ts`, tests in `photos.test.ts`): a photo is taken against a core box (E5-1) or a logged interval (E5-2) and its record carries the hole ID, box number, depth range and timestamp. The photo is compressed down a fixed ladder until it fits the project's "largest photo size" (default 1.5 MB, 0.2–10 MB, editable in project settings). Data: migration v5 adds `photos` and `projects.photo_max_mb`.
+- **Photos on the phone:** the camera permission prompt appeared and was granted by the tester; a box photo was captured, filed as "DDH-01 · Box 1 · 0–4.2 m" (1920×2560, 58 KB), showed in the photo list, and moved the box's count to "Photos (1)". The 58 KB file was a black frame (the camera was facing a dark surface), so this did **not** exercise compression on a real, detailed photo.
+- **Not yet device-tested:** compression of a detailed photo to the size limit, deleting a photo, photos against a log interval (E5-2), and the "largest photo size" setting.
+- **Airplane mode:** a tester created a project ("Masbate") and a GPS-collar hole in airplane mode; both were still there after the app was force-stopped and restarted. Logging boxes and intervals in airplane mode was not observed.
+- **Keyboard covering the field being typed into (found by the tester in airplane-mode testing):** the app draws edge to edge on Android, so the keyboard sat on top of the form. Every form screen now uses `FormScrollView` (`apps/mobile/src/components/form/form-scroll-view.tsx`), which measures how much of the screen the keyboard covers, shortens the scroll area by that amount and scrolls the focused field into view. React Native's built-in `KeyboardAvoidingView` was tried first and under-padded by the height of the screen header, so it was dropped. _Checked on the phone:_ the lowest field on the drillhole screen now shows its text above the keyboard. Still to check: the other forms with more text fields (sample, log interval).
+- **Dev-workflow lesson:** after the phone has been in airplane mode, the app's live-reload connection to Metro is dead; edits do not appear until the app is force-stopped and reopened.
+
 ---
 
 ## 8. Field-test plan

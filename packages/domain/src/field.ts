@@ -41,6 +41,8 @@ export type Project = SyncableRecord & {
     blankEveryN: number;
     duplicateEveryN: number;
   };
+  /** Largest size a saved photo may be, in megabytes (E5-1). */
+  photoMaxMb: number;
 };
 
 export type ProjectInput = {

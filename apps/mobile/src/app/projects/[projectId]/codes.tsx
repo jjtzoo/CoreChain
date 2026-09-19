@@ -9,11 +9,11 @@ import { useCallback, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
@@ -88,7 +88,7 @@ export default function CodeLibraryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         <ThemedText type="smallBold">Add a code</ThemedText>
@@ -164,7 +164,7 @@ export default function CodeLibraryScreen() {
             </View>
           );
         })}
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

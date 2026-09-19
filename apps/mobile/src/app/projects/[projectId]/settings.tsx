@@ -1,7 +1,13 @@
-import type { Project } from '@corechain/domain';
+import {
+  isValidPhotoMaxMb,
+  MAX_PHOTO_MAX_MB,
+  MIN_PHOTO_MAX_MB,
+  type Project,
+} from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -10,12 +16,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import {
   getProject,
+  updateProjectPhotoMaxMb,
   updateProjectSamplingSettings,
 } from '@/data/projectsRepository';
 
 /**
- * E1-2: sampling rules the geologist sets for their own project, since
- * there's no admin to have configured them in advance.
+ * E1-2 / E5-1: sampling rules and the photo size limit the geologist sets for
+ * their own project, since there's no admin to have configured them in advance.
  */
 export default function ProjectSettingsScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
@@ -27,6 +34,8 @@ export default function ProjectSettingsScreen() {
   const [standardEveryN, setStandardEveryN] = useState('20');
   const [blankEveryN, setBlankEveryN] = useState('20');
   const [duplicateEveryN, setDuplicateEveryN] = useState('20');
+  const [photoMaxMb, setPhotoMaxMb] = useState('1.5');
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +50,7 @@ export default function ProjectSettingsScreen() {
       setStandardEveryN(String(loaded.qcInsertionRate.standardEveryN));
       setBlankEveryN(String(loaded.qcInsertionRate.blankEveryN));
       setDuplicateEveryN(String(loaded.qcInsertionRate.duplicateEveryN));
+      setPhotoMaxMb(String(loaded.photoMaxMb));
     });
   }, [projectId]);
 
@@ -50,7 +60,15 @@ export default function ProjectSettingsScreen() {
       setError('Next sample number must be a positive whole number.');
       return;
     }
+    const parsedPhotoMb = Number(photoMaxMb);
+    if (!isValidPhotoMaxMb(parsedPhotoMb)) {
+      setPhotoError(
+        `Enter a size between ${MIN_PHOTO_MAX_MB} and ${MAX_PHOTO_MAX_MB} MB.`,
+      );
+      return;
+    }
     setError(null);
+    setPhotoError(null);
     setSaving(true);
     try {
       await updateProjectSamplingSettings(projectId, {
@@ -62,6 +80,7 @@ export default function ProjectSettingsScreen() {
           duplicateEveryN: Number(duplicateEveryN) || 0,
         },
       });
+      await updateProjectPhotoMaxMb(projectId, parsedPhotoMb);
       router.back();
     } finally {
       setSaving(false);
@@ -74,7 +93,7 @@ export default function ProjectSettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.form}>
+      <FormScrollView contentContainerStyle={styles.form}>
         <TextField
           label="Sample ID prefix"
           value={samplePrefix}
@@ -113,8 +132,20 @@ export default function ProjectSettingsScreen() {
           keyboardType="number-pad"
         />
 
+        <ThemedText type="smallBold">Photos</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Photos are compressed to fit under this size before they are saved.
+        </ThemedText>
+        <TextField
+          label="Largest photo size (MB)"
+          value={photoMaxMb}
+          onChangeText={setPhotoMaxMb}
+          keyboardType="decimal-pad"
+          error={photoError ?? undefined}
+        />
+
         <PrimaryButton label="Save" onPress={handleSave} loading={saving} />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

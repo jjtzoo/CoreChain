@@ -63,6 +63,9 @@ export default function ProjectDetailScreen() {
           <Pressable onPress={() => router.push(`/projects/${projectId}/samples`)}>
             <ThemedText type="link">Samples</ThemedText>
           </Pressable>
+          <Pressable onPress={() => router.push(`/projects/${projectId}/export`)}>
+            <ThemedText type="link">Export</ThemedText>
+          </Pressable>
           <Pressable onPress={() => router.push(`/projects/${projectId}/settings`)}>
             <ThemedText type="link">Settings</ThemedText>
           </Pressable>

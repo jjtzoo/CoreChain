@@ -2,7 +2,8 @@ import type { Collar } from '@corechain/domain';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -116,7 +117,7 @@ export default function NewDrillholeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.form}>
+      <FormScrollView contentContainerStyle={styles.form}>
         <TextField
           label="Hole ID"
           value={holeId}
@@ -203,7 +204,7 @@ export default function NewDrillholeScreen() {
           loading={saving}
           disabled={holeId.trim().length === 0 || plannedDepthM.trim().length === 0}
         />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

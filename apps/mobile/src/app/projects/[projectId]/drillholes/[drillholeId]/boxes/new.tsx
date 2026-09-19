@@ -1,7 +1,8 @@
 import { nextBoxDefaults } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
+import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -82,7 +83,7 @@ export default function NewCoreBoxScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled">
         <TextField
@@ -122,7 +123,7 @@ export default function NewCoreBoxScreen() {
           onPress={handleSave}
           loading={saving}
         />
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   );
 }

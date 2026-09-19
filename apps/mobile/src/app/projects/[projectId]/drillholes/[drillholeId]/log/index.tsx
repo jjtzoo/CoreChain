@@ -12,6 +12,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { deleteInterval, listIntervals } from '@/data/intervalsRepository';
+import { countPhotosBySubject } from '@/data/photosRepository';
 
 function describeInterval(interval: LogInterval): string {
   const parts: string[] = [];
@@ -44,10 +45,12 @@ export default function LogScreen() {
   const router = useRouter();
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [intervals, setIntervals] = useState<LogInterval[] | null>(null);
+  const [photoCounts, setPhotoCounts] = useState<Map<string, number>>(new Map());
 
   const reload = useCallback(() => {
     getDrillhole(drillholeId).then(setDrillhole);
     listIntervals(drillholeId).then(setIntervals);
+    countPhotosBySubject(drillholeId, 'interval').then(setPhotoCounts);
   }, [drillholeId]);
 
   useFocusEffect(reload);
@@ -122,6 +125,19 @@ export default function LogScreen() {
                   accessibilityLabel={`Sample interval ${interval.fromM} to ${interval.toM} metres`}
                   hitSlop={Spacing.two}>
                   <ThemedText type="link">Sample</ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    router.push(
+                      `/projects/${projectId}/drillholes/${drillholeId}/photos?subjectType=interval&subjectId=${interval.id}`,
+                    )
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Photos of interval ${interval.fromM} to ${interval.toM} metres`}
+                  hitSlop={Spacing.two}>
+                  <ThemedText type="link">
+                    Photos ({photoCounts.get(interval.id) ?? 0})
+                  </ThemedText>
                 </Pressable>
                 <Pressable
                   onPress={() => confirmDelete(interval)}

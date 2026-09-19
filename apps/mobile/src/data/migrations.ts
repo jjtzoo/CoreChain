@@ -212,4 +212,40 @@ export const MIGRATIONS: readonly Migration[] = [
       ['CREATE INDEX idx_qc_dismissals_project_id ON qc_dismissals (project_id)'],
     ],
   },
+  {
+    // Sprint 3, E5: photos, and the project's largest-photo-size setting.
+    version: 5,
+    commands: [
+      [
+        'ALTER TABLE projects ADD COLUMN photo_max_mb REAL NOT NULL DEFAULT 1.5',
+      ],
+      [
+        // The photo record carries its own hole ID, box number and depth range
+        // (denormalised on purpose), so a photo can never be separated from its
+        // depth even if the box or interval it was taken against changes.
+        `CREATE TABLE photos (
+          id TEXT PRIMARY KEY NOT NULL,
+          drillhole_id TEXT NOT NULL REFERENCES drillholes (id),
+          subject_type TEXT NOT NULL,
+          subject_id TEXT NOT NULL,
+          hole_id TEXT NOT NULL,
+          box_number INTEGER,
+          from_m REAL NOT NULL,
+          to_m REAL NOT NULL,
+          file_name TEXT NOT NULL,
+          width_px INTEGER NOT NULL,
+          height_px INTEGER NOT NULL,
+          size_bytes INTEGER NOT NULL,
+          captured_at TEXT NOT NULL,
+          note TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      ['CREATE INDEX idx_photos_subject ON photos (subject_type, subject_id)'],
+      ['CREATE INDEX idx_photos_drillhole_id ON photos (drillhole_id)'],
+    ],
+  },
 ];
