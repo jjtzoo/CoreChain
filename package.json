@@ -10,9 +10,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
-  "op-sqlite": {
-    "sqlcipher": true
-  },
   "scripts": {
     "dev": "npm run dev --workspace apps/web",
     "dev:mobile": "npm run start --workspace apps/mobile",

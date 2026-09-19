@@ -2,14 +2,15 @@ import { open, type DB } from '@op-engineering/op-sqlite';
 import { getOrCreateEncryptionKey } from './encryptionKey';
 import { MIGRATIONS } from './migrations';
 
-// NOT YET VERIFIED ON A DEVICE. This module typechecks and matches
-// op-sqlite's documented API (open({name, encryptionKey}), db.execute,
-// db.executeBatch), but no Android SDK/emulator was available when it was
-// written (see the Sprint 0 outcome in
-// docs/product/corechain-mobile-mvp-scrum-plan.md). Opening an encrypted
-// database, running these migrations, and reading/writing a row for real is
-// the first thing to confirm once a device is available — that's what makes
-// E8-1 actually Done, not just typechecked.
+// Verified on a physical Android phone (see the Sprint 1 outcome in
+// docs/product/corechain-mobile-mvp-scrum-plan.md): migrations run, and
+// reads/writes survive an app kill.
+//
+// op-sqlite silently ignores `encryptionKey` when SQLCipher isn't compiled in,
+// so a successful open proves nothing about encryption. The flag lives in
+// apps/mobile/package.json ("op-sqlite": { "sqlcipher": true }) — NOT the repo
+// root — and the only real check is that the database file on the device does
+// not start with the plain "SQLite format 3" header.
 
 const DATABASE_NAME = 'corechain.sqlite';
 

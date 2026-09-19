@@ -3,6 +3,9 @@
   "main": "expo-router/entry",
   "version": "0.1.0",
   "private": true,
+  "op-sqlite": {
+    "sqlcipher": true
+  },
   "dependencies": {
     "@corechain/domain": "*",
     "@expo/ui": "~57.0.19",
