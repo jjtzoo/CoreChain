@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { FormScrollView } from '@/components/form/form-scroll-view';
+import { FormSection } from '@/components/form/form-section';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
@@ -54,58 +56,68 @@ export default function NewProjectScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <FormScrollView contentContainerStyle={styles.form}>
-        <TextField
-          label="Project name"
-          value={name}
-          onChangeText={setName}
-          error={nameError}
-          placeholder="e.g. Sipalay Gold Prospect"
-          autoFocus
-        />
+      <FormScrollView
+        contentContainerStyle={styles.form}
+        footer={
+          <StickyActions>
+            <PrimaryButton
+              label="Create project"
+              onPress={handleCreate}
+              loading={saving}
+              disabled={name.trim().length === 0}
+            />
+          </StickyActions>
+        }>
+        <FormSection title="Your project">
+          <TextField
+            label="Project name"
+            value={name}
+            onChangeText={setName}
+            error={nameError}
+            placeholder="e.g. Sipalay Gold Prospect"
+            autoFocus
+          />
 
-        <ChipSelect
-          label="Coordinate system"
-          options={COORDINATE_SYSTEMS}
-          value={coordinateSystem}
-          onChange={setCoordinateSystem}
-        />
+          <ChipSelect
+            label="Coordinate system"
+            options={COORDINATE_SYSTEMS}
+            value={coordinateSystem}
+            onChange={setCoordinateSystem}
+          />
+        </FormSection>
 
-        <TextField
-          label="Commodity"
-          optional
-          value={commodity}
-          onChangeText={setCommodity}
-          placeholder="e.g. Gold"
-        />
+        <FormSection title="About it" hint="Optional. You can fill these in later.">
+          <TextField
+            label="Commodity"
+            optional
+            value={commodity}
+            onChangeText={setCommodity}
+            placeholder="e.g. Gold"
+          />
 
-        <TextField
-          label="Location"
-          optional
-          value={location}
-          onChangeText={setLocation}
-          placeholder="e.g. Negros Occidental, Philippines"
-        />
+          <TextField
+            label="Location"
+            optional
+            value={location}
+            onChangeText={setLocation}
+            placeholder="e.g. Negros Occidental, Philippines"
+          />
+        </FormSection>
 
-        <TextField
-          label="Sample ID prefix"
-          optional
-          value={samplePrefix}
-          onChangeText={setSamplePrefix}
-          placeholder="CC"
-          autoCapitalize="characters"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          The next sample number and QC insertion rate can be set from the
-          project&apos;s settings once it&apos;s created.
-        </ThemedText>
-
-        <PrimaryButton
-          label="Create project"
-          onPress={handleCreate}
-          loading={saving}
-          disabled={name.trim().length === 0}
-        />
+        <FormSection title="Sample tags">
+          <TextField
+            label="Sample ID prefix"
+            optional
+            value={samplePrefix}
+            onChangeText={setSamplePrefix}
+            placeholder="CC"
+            autoCapitalize="characters"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            The next sample number and QC insertion rate can be set from the
+            project&apos;s settings once it&apos;s created.
+          </ThemedText>
+        </FormSection>
       </FormScrollView>
     </SafeAreaView>
   );

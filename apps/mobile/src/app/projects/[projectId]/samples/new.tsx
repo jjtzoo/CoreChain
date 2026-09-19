@@ -8,13 +8,16 @@ import {
   type SampleType,
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChipSelect } from '@/components/form/chip-select';
+import { FormScrollView } from '@/components/form/form-scroll-view';
+import { FormRow, FormSection } from '@/components/form/form-section';
+import { LengthChips } from '@/components/form/length-chips';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { QcReminders } from '@/components/qc-reminders';
 import { ThemedText } from '@/components/themed-text';
@@ -37,11 +40,23 @@ function isSampleType(value: string | undefined): value is SampleType {
   return SAMPLE_TYPES.some((t) => t === value);
 }
 
+/** Where the last primary sample in a hole ended, as text; '' when there is none. */
+function endOfLastPrimary(samples: readonly FieldSample[]): string {
+  let deepest = Number.NEGATIVE_INFINITY;
+  for (const sample of samples) {
+    if (sample.type === 'primary' && sample.toM != null) {
+      deepest = Math.max(deepest, sample.toM);
+    }
+  }
+  return Number.isFinite(deepest) ? String(deepest) : '';
+}
+
 /**
  * E6-1 / E6-2: create a sample. The number is pre-filled with the device's
  * next one; typing a different (pre-printed) tag leaves the counter alone.
- * The fields follow the type: depths for a primary, a reference material ID
- * for a standard, a parent primary sample for a field duplicate.
+ * The fields follow the type: depths for a primary (starting where the last
+ * primary sample ended), a reference material ID for a standard, a parent
+ * primary sample for a field duplicate.
  */
 export default function NewSampleScreen() {
   const params = useLocalSearchParams<{
@@ -72,6 +87,10 @@ export default function NewSampleScreen() {
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  // Once the geologist types a "from" depth (or one was passed in), it is theirs.
+  // (A ref for the async load, a state for what the screen shows.)
+  const fromIsTheirs = useRef(params.fromM != null);
+  const [fromEdited, setFromEdited] = useState(params.fromM != null);
 
   // A field's error goes away as soon as the geologist changes it.
   function clearErrors(...keys: string[]) {
@@ -101,7 +120,12 @@ export default function NewSampleScreen() {
     // A previously chosen parent from another hole simply stops matching (sample
     // numbers are unique per project), so there's nothing to reset here.
     if (holeId) {
-      listHoleSamples(holeId).then(setHoleSamples);
+      listHoleSamples(holeId).then((loaded) => {
+        setHoleSamples(loaded);
+        if (!fromIsTheirs.current) {
+          setFromM(endOfLastPrimary(loaded));
+        }
+      });
     }
   }, [holeId]);
 
@@ -171,92 +195,118 @@ export default function NewSampleScreen() {
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView
         contentContainerStyle={styles.form}
-        keyboardShouldPersistTaps="handled">
+        footer={
+          <StickyActions>
+            <PrimaryButton label="Save sample" onPress={handleSave} loading={saving} />
+          </StickyActions>
+        }>
         <QcReminders reminders={reminders} />
 
-        <ChipSelect
-          label="Hole"
-          options={holes.map((h) => h.id)}
-          value={holeId}
-          onChange={(id) => {
-            setHoleId(id);
-            setErrors({});
-          }}
-          formatOption={(id) => holeName.get(id) ?? id}
-        />
-        {errors.hole ? (
-          <ThemedText type="small" themeColor="danger">
-            {errors.hole}
+        <FormSection title="Which sample">
+          <ChipSelect
+            label="Hole"
+            options={holes.map((h) => h.id)}
+            value={holeId}
+            onChange={(id) => {
+              setHoleId(id);
+              setErrors({});
+            }}
+            formatOption={(id) => holeName.get(id) ?? id}
+          />
+          {errors.hole ? (
+            <ThemedText type="small" themeColor="danger">
+              {errors.hole}
+            </ThemedText>
+          ) : null}
+
+          <ChipSelect
+            label="Type"
+            options={SAMPLE_TYPES}
+            value={type}
+            onChange={(t) => {
+              setType(t);
+              setErrors({});
+            }}
+            formatOption={capitalise}
+          />
+
+          <TextField
+            label="Sample number"
+            value={sampleNumber}
+            onChangeText={(v) => {
+              setSampleNumber(v);
+              clearErrors('sampleNumber');
+            }}
+            error={errors.sampleNumber}
+            autoCapitalize="characters"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            {sampleNumber.trim() === suggested
+              ? 'The device’s next number. Type a different one to use a pre-printed tag.'
+              : 'Using a typed tag number. The device’s own count is left alone.'}
           </ThemedText>
-        ) : null}
-
-        <ChipSelect
-          label="Type"
-          options={SAMPLE_TYPES}
-          value={type}
-          onChange={(t) => {
-            setType(t);
-            setErrors({});
-          }}
-          formatOption={capitalise}
-        />
-
-        <TextField
-          label="Sample number"
-          value={sampleNumber}
-          onChangeText={(v) => {
-            setSampleNumber(v);
-            clearErrors('sampleNumber');
-          }}
-          error={errors.sampleNumber}
-          autoCapitalize="characters"
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          {sampleNumber.trim() === suggested
-            ? 'The device’s next number. Type a different one to use a pre-printed tag.'
-            : 'Using a typed tag number. The device’s own count is left alone.'}
-        </ThemedText>
+        </FormSection>
 
         {type === 'primary' ? (
-          <>
-            <TextField
-              label="From depth (m)"
-              value={fromM}
-              onChangeText={(v) => {
-                setFromM(v);
-                clearErrors('fromM', 'toM');
-              }}
-              error={errors.fromM}
-              keyboardType="decimal-pad"
-            />
-            <TextField
-              label="To depth (m)"
-              value={toM}
-              onChangeText={(v) => {
+          <FormSection
+            title="Depth sampled"
+            hint={
+              fromM !== '' && !fromEdited
+                ? 'Starts where your last sample ended.'
+                : undefined
+            }>
+            <FormRow>
+              <TextField
+                label="From depth (m)"
+                value={fromM}
+                onChangeText={(v) => {
+                  fromIsTheirs.current = true;
+                  setFromEdited(true);
+                  setFromM(v);
+                  clearErrors('fromM', 'toM');
+                }}
+                error={errors.fromM}
+                keyboardType="decimal-pad"
+              />
+              <TextField
+                label="To depth (m)"
+                value={toM}
+                onChangeText={(v) => {
+                  setToM(v);
+                  clearErrors('fromM', 'toM');
+                }}
+                error={errors.toM}
+                keyboardType="decimal-pad"
+              />
+            </FormRow>
+            <LengthChips
+              fromText={fromM}
+              lengths={[0.5, 1, 2]}
+              onPick={(v) => {
                 setToM(v);
                 clearErrors('fromM', 'toM');
               }}
-              error={errors.toM}
-              keyboardType="decimal-pad"
             />
-          </>
+          </FormSection>
         ) : null}
 
         {type === 'standard' ? (
-          <TextField
-            label="Reference material ID"
-            value={standardRef}
-            onChangeText={(v) => {
-              setStandardRef(v);
-              clearErrors('standardRef');
-            }}
-            error={errors.standardRef}
-            placeholder="e.g. OREAS 45e"
-          />
+          <FormSection title="Certified standard">
+            <TextField
+              label="Reference material ID"
+              value={standardRef}
+              onChangeText={(v) => {
+                setStandardRef(v);
+                clearErrors('standardRef');
+              }}
+              error={errors.standardRef}
+              placeholder="e.g. OREAS 45e"
+            />
+          </FormSection>
         ) : null}
 
         {type === 'duplicate' ? (
-          <>
+          <FormSection title="Which sample is this a duplicate of?">
             {primaries.length > 0 ? (
               <ChipSelect
                 label="Duplicate of"
@@ -282,17 +332,17 @@ export default function NewSampleScreen() {
                 Takes its parent’s depth: {parent.fromM}–{parent.toM} m.
               </ThemedText>
             ) : null}
-          </>
+          </FormSection>
         ) : null}
 
-        <TextField
-          label="Note"
-          optional
-          value={note}
-          onChangeText={setNote}
-        />
-
-        <PrimaryButton label="Save sample" onPress={handleSave} loading={saving} />
+        <FormSection>
+          <TextField
+            label="Note"
+            optional
+            value={note}
+            onChangeText={setNote}
+          />
+        </FormSection>
       </FormScrollView>
     </SafeAreaView>
   );

@@ -7,13 +7,15 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
-import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CodePicker } from '@/components/form/code-picker';
+import { FormScrollView } from '@/components/form/form-scroll-view';
+import { FormRow, FormSection } from '@/components/form/form-section';
+import { LengthChips } from '@/components/form/length-chips';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
-import { WarningList } from '@/components/form/warning-list';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { listCodes } from '@/data/codesRepository';
@@ -211,102 +213,119 @@ export default function NewIntervalScreen() {
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView
         contentContainerStyle={styles.form}
-        keyboardShouldPersistTaps="handled">
+        footer={
+          <StickyActions warnings={activeWarnings}>
+            <PrimaryButton
+              label={activeWarnings.length > 0 ? 'Save anyway' : 'Save interval'}
+              onPress={handleSave}
+              loading={saving}
+            />
+          </StickyActions>
+        }>
         {restored ? (
           <ThemedText type="small" themeColor="textSecondary">
             Restored your unsaved entry.
           </ThemedText>
         ) : null}
 
-        <TextField
-          label="From depth (m)"
-          value={form.fromM}
-          onChangeText={(v) => update('fromM', v)}
-          error={errors.fromM}
-          keyboardType="decimal-pad"
-        />
-        <TextField
-          label="To depth (m)"
-          value={form.toM}
-          onChangeText={(v) => update('toM', v)}
-          error={errors.toM}
-          keyboardType="decimal-pad"
-          autoFocus={!restored}
-        />
+        <FormSection title="Depth">
+          <FormRow>
+            <TextField
+              label="From depth (m)"
+              value={form.fromM}
+              onChangeText={(v) => update('fromM', v)}
+              error={errors.fromM}
+              keyboardType="decimal-pad"
+            />
+            <TextField
+              label="To depth (m)"
+              value={form.toM}
+              onChangeText={(v) => update('toM', v)}
+              error={errors.toM}
+              keyboardType="decimal-pad"
+              autoFocus={!restored}
+            />
+          </FormRow>
+          <LengthChips
+            fromText={form.fromM}
+            lengths={[1, 2, 3, 5]}
+            onPick={(v) => update('toM', v)}
+          />
+          <PrimaryButton
+            label="Copy previous interval"
+            variant="secondary"
+            icon="content-copy"
+            disabled={!previous}
+            onPress={handleCopyPrevious}
+          />
+        </FormSection>
 
-        <PrimaryButton
-          label="Copy previous interval"
-          variant="secondary"
-          disabled={!previous}
-          onPress={handleCopyPrevious}
-        />
+        <FormSection title="Rock and alteration">
+          <CodePicker
+            category="lithology"
+            codes={codes}
+            value={form.lithology}
+            onChange={(v) => update('lithology', v)}
+          />
+          <CodePicker
+            category="alteration_type"
+            codes={codes}
+            value={form.alterationType}
+            onChange={(v) => update('alterationType', v)}
+          />
+          <CodePicker
+            category="alteration_intensity"
+            codes={codes}
+            value={form.alterationIntensity}
+            onChange={(v) => update('alterationIntensity', v)}
+          />
+        </FormSection>
 
-        <CodePicker
-          category="lithology"
-          codes={codes}
-          value={form.lithology}
-          onChange={(v) => update('lithology', v)}
-        />
-        <CodePicker
-          category="alteration_type"
-          codes={codes}
-          value={form.alterationType}
-          onChange={(v) => update('alterationType', v)}
-        />
-        <CodePicker
-          category="alteration_intensity"
-          codes={codes}
-          value={form.alterationIntensity}
-          onChange={(v) => update('alterationIntensity', v)}
-        />
-        <CodePicker
-          category="mineral"
-          codes={codes}
-          value={form.mineral}
-          onChange={(v) => update('mineral', v)}
-        />
-        <CodePicker
-          category="mineral_style"
-          codes={codes}
-          value={form.mineralStyle}
-          onChange={(v) => update('mineralStyle', v)}
-        />
-        <TextField
-          label="Mineral content (%)"
-          optional
-          value={form.mineralPercent}
-          onChangeText={(v) => update('mineralPercent', v)}
-          error={errors.mineralPercent}
-          keyboardType="decimal-pad"
-        />
-        <CodePicker
-          category="weathering"
-          codes={codes}
-          value={form.weathering}
-          onChange={(v) => update('weathering', v)}
-        />
-        <CodePicker
-          category="structure_type"
-          codes={codes}
-          value={form.structureType}
-          onChange={(v) => update('structureType', v)}
-        />
-        <TextField
-          label="Structure notes and comments"
-          optional
-          value={form.notes}
-          onChangeText={(v) => update('notes', v)}
-          multiline
-          style={styles.notes}
-        />
+        <FormSection title="Mineralisation">
+          <CodePicker
+            category="mineral"
+            codes={codes}
+            value={form.mineral}
+            onChange={(v) => update('mineral', v)}
+          />
+          <CodePicker
+            category="mineral_style"
+            codes={codes}
+            value={form.mineralStyle}
+            onChange={(v) => update('mineralStyle', v)}
+          />
+          <TextField
+            label="Mineral content (%)"
+            optional
+            value={form.mineralPercent}
+            onChangeText={(v) => update('mineralPercent', v)}
+            error={errors.mineralPercent}
+            keyboardType="decimal-pad"
+          />
+        </FormSection>
 
-        <WarningList warnings={activeWarnings} />
-
-        <PrimaryButton
-          label={activeWarnings.length > 0 ? 'Save anyway' : 'Save interval'}
-          onPress={handleSave}
-          loading={saving}
-        />
+        <FormSection title="Weathering and structure">
+          <CodePicker
+            category="weathering"
+            codes={codes}
+            value={form.weathering}
+            onChange={(v) => update('weathering', v)}
+          />
+          <CodePicker
+            category="structure_type"
+            codes={codes}
+            value={form.structureType}
+            onChange={(v) => update('structureType', v)}
+          />
+          <TextField
+            label="Structure notes and comments"
+            optional
+            value={form.notes}
+            onChangeText={(v) => update('notes', v)}
+            multiline
+            style={styles.notes}
+          />
+        </FormSection>
       </FormScrollView>
     </SafeAreaView>
   );

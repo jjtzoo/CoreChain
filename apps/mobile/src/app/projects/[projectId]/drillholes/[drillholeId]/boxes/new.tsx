@@ -2,12 +2,14 @@ import { nextBoxDefaults } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
-import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FormRow, FormSection } from '@/components/form/form-section';
+import { FormScrollView } from '@/components/form/form-scroll-view';
+import { LengthChips } from '@/components/form/length-chips';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
-import { WarningList } from '@/components/form/warning-list';
 import { Spacing } from '@/constants/theme';
 import { createBox, listBoxes } from '@/data/coreRepository';
 import { parseRequiredNumber } from '@/utils/numbers';
@@ -85,44 +87,52 @@ export default function NewCoreBoxScreen() {
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView
         contentContainerStyle={styles.form}
-        keyboardShouldPersistTaps="handled">
-        <TextField
-          label="Box number"
-          value={boxNumber}
-          onChangeText={setBoxNumber}
-          error={errors.boxNumber}
-          keyboardType="number-pad"
-        />
-        <TextField
-          label="From depth (m)"
-          value={fromM}
-          onChangeText={setFromM}
-          error={errors.fromM}
-          keyboardType="decimal-pad"
-        />
-        <TextField
-          label="To depth (m)"
-          value={toM}
-          onChangeText={setToM}
-          error={errors.toM}
-          keyboardType="decimal-pad"
-          autoFocus
-        />
-        <TextField
-          label="Note"
-          optional
-          value={note}
-          onChangeText={setNote}
-          placeholder="e.g. broken core, wet"
-        />
+        footer={
+          <StickyActions warnings={activeWarnings}>
+            <PrimaryButton
+              label={activeWarnings.length > 0 ? 'Save anyway' : 'Save box'}
+              onPress={handleSave}
+              loading={saving}
+            />
+          </StickyActions>
+        }>
+        <FormSection title="This box">
+          <TextField
+            label="Box number"
+            value={boxNumber}
+            onChangeText={setBoxNumber}
+            error={errors.boxNumber}
+            keyboardType="number-pad"
+          />
+          <FormRow>
+            <TextField
+              label="From depth (m)"
+              value={fromM}
+              onChangeText={setFromM}
+              error={errors.fromM}
+              keyboardType="decimal-pad"
+            />
+            <TextField
+              label="To depth (m)"
+              value={toM}
+              onChangeText={setToM}
+              error={errors.toM}
+              keyboardType="decimal-pad"
+              autoFocus
+            />
+          </FormRow>
+          <LengthChips fromText={fromM} lengths={[3, 4, 5]} onPick={setToM} />
+        </FormSection>
 
-        <WarningList warnings={activeWarnings} />
-
-        <PrimaryButton
-          label={activeWarnings.length > 0 ? 'Save anyway' : 'Save box'}
-          onPress={handleSave}
-          loading={saving}
-        />
+        <FormSection>
+          <TextField
+            label="Note"
+            optional
+            value={note}
+            onChangeText={setNote}
+            placeholder="e.g. broken core, wet"
+          />
+        </FormSection>
       </FormScrollView>
     </SafeAreaView>
   );

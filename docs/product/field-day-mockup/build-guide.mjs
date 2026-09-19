@@ -212,7 +212,7 @@ const part2 = `
   <h2><span class="num">2</span>Core reception</h2>
   <p class="meta">About 45 minutes. The rig has sent up the core in runs of 3 m; you enter what the driller wrote on each block, then the boxes.</p>
 
-  ${step('2.1', 'On the hole screen tap the <b>Core runs</b> tile, then <b>Add run</b>. Enter the runs in order. The from-depth fills in for you after the first one.')}
+  ${step('2.1', 'On the hole screen tap the <b>Core runs</b> tile, then <b>Add run</b>. Enter the runs in order. The from-depth fills in for you after the first one. Under the depths, the <b>3 m</b> chip sets the to-depth for you, and <b>Full recovery</b> fills in the recovered length.')}
   ${table(
     ['Run', 'From (m)', 'To (m)', 'Recovered length (m)', 'Pieces ≥ 10 cm, total length (m)', 'Recovery', 'RQD'],
     runRows,
@@ -228,7 +228,7 @@ const part2 = `
 </section>
 
 <section class="page">
-  ${step('2.2', 'Back on the hole screen tap <b>Core boxes</b>, then <b>Add box</b>. The box number and from-depth fill in for you.')}
+  ${step('2.2', 'Back on the hole screen tap <b>Core boxes</b>, then <b>Add box</b>. The box number and from-depth fill in for you, and the <b>5 m</b> chip sets the to-depth.')}
   ${table(['Box number', 'From (m)', 'To (m)', 'Note (optional)'], boxRows, { cls: 'data' })}
 
   ${should(`<ul>
@@ -302,7 +302,7 @@ const logRows = intervals.map((i, n) =>
 const part4 = `
 <section class="wide">
   <h2><span class="num">4</span>Log the core</h2>
-  <p class="meta">About 60 minutes. Core log → <b>Add interval</b>. The from-depth fills in with the end of the last interval. Tap a code chip, or type the code.</p>
+  <p class="meta">About 60 minutes. Core log → <b>Add interval</b>. The from-depth fills in with the end of the last interval. Tap a code chip, or type the code. The <b>1 m</b>, <b>2 m</b>, <b>3 m</b>, <b>5 m</b> chips set the to-depth.</p>
 
   ${table(
     ['#', 'From', 'To', 'Lithology', 'Alteration type', 'Alteration intensity', 'Mineralisation: mineral', 'Mineralisation: style', 'Mineral content (%)', 'Weathering', 'Structure type', 'Structure notes and comments'],
@@ -351,7 +351,7 @@ samples.forEach((s, i) => {
 const part5 = `
 <section class="wide">
   <h2><span class="num">5</span>Sample the core</h2>
-  <p class="meta">About 75 minutes. Samples → <b>New sample</b>. Choose the hole chip <b>${esc(hole.holeId)}</b> and the type chip. The <b>Sample number</b> is filled in for you and should match the table.</p>
+  <p class="meta">About 75 minutes. Samples → <b>New sample</b>. Choose the hole chip <b>${esc(hole.holeId)}</b> and the type chip. The <b>Sample number</b> is filled in for you and should match the table. For a primary sample the <b>From depth</b> is filled in with where your last sample ended, so you only set the to-depth (type it, or tap the <b>1 m</b> or <b>2 m</b> chip). Check that it matches the table.</p>
 
   ${table(['#', 'Sample number', 'Type', 'Depth (m)', 'Also enter', 'Note (optional)', 'Done'], sampleRows, { cls: 'data' })}
 

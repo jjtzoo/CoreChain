@@ -1,7 +1,7 @@
 import type { FieldDrillhole, LogInterval } from '@corechain/domain';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContinuityStrip } from '@/components/continuity-strip';
@@ -9,6 +9,7 @@ import { ContinuitySummary } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { deleteInterval, listIntervals } from '@/data/intervalsRepository';
@@ -103,48 +104,41 @@ export default function LogScreen() {
         ) : (
           (intervals ?? []).map((interval) => (
             <Card key={interval.id} style={styles.card}>
-              <View style={styles.row}>
-                <View style={styles.rowText}>
-                  <ThemedText type="default">
-                    {interval.fromM}–{interval.toM} m
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {describeInterval(interval)}
-                  </ThemedText>
-                </View>
-                <Pressable
+              <View style={styles.rowText}>
+                <ThemedText type="heading">
+                  {interval.fromM}–{interval.toM} m
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {describeInterval(interval)}
+                </ThemedText>
+              </View>
+              <View style={styles.actions}>
+                <RowAction
+                  icon="flask-outline"
+                  label="Sample"
                   onPress={() =>
                     router.push(
                       `/projects/${projectId}/samples/new?drillholeId=${drillholeId}&fromM=${interval.fromM}&toM=${interval.toM}`,
                     )
                   }
-                  accessibilityRole="button"
                   accessibilityLabel={`Sample interval ${interval.fromM} to ${interval.toM} metres`}
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="link">Sample</ThemedText>
-                </Pressable>
-                <Pressable
+                />
+                <RowAction
+                  icon="camera-outline"
+                  label={`Photos (${photoCounts.get(interval.id) ?? 0})`}
                   onPress={() =>
                     router.push(
                       `/projects/${projectId}/drillholes/${drillholeId}/photos?subjectType=interval&subjectId=${interval.id}`,
                     )
                   }
-                  accessibilityRole="button"
                   accessibilityLabel={`Photos of interval ${interval.fromM} to ${interval.toM} metres`}
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="link">
-                    Photos ({photoCounts.get(interval.id) ?? 0})
-                  </ThemedText>
-                </Pressable>
-                <Pressable
+                />
+                <RowAction
+                  icon="trash-can-outline"
+                  tone="danger"
                   onPress={() => confirmDelete(interval)}
-                  accessibilityRole="button"
                   accessibilityLabel={`Delete interval ${interval.fromM} to ${interval.toM} metres`}
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Delete
-                  </ThemedText>
-                </Pressable>
+                />
               </View>
             </Card>
           ))
@@ -155,6 +149,12 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: Spacing.two,
+  },
   safeArea: {
     flex: 1,
   },

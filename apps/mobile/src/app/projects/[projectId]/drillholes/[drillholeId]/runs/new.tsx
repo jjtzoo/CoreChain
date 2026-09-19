@@ -5,14 +5,18 @@ import {
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
-import { FormScrollView } from '@/components/form/form-scroll-view';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FormRow, FormSection } from '@/components/form/form-section';
+import { FormScrollView } from '@/components/form/form-scroll-view';
+import { LengthChips } from '@/components/form/length-chips';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
-import { WarningList } from '@/components/form/warning-list';
 import { ThemedText } from '@/components/themed-text';
+import { Chip } from '@/components/ui/chip';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { createRun, listRuns } from '@/data/coreRepository';
 import { parseOptionalNumber, parseRequiredNumber } from '@/utils/numbers';
@@ -87,60 +91,89 @@ export default function NewCoreRunScreen() {
     }
   }
 
+  const drilledKnown = Number.isFinite(drilled) && drilled > 0;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView
         contentContainerStyle={styles.form}
-        keyboardShouldPersistTaps="handled">
-        <TextField
-          label="From depth (m)"
-          value={fromM}
-          onChangeText={setFromM}
-          error={errors.fromM}
-          keyboardType="decimal-pad"
-        />
-        <TextField
-          label="To depth (m)"
-          value={toM}
-          onChangeText={setToM}
-          error={errors.toM}
-          keyboardType="decimal-pad"
-          autoFocus
-        />
-        <TextField
-          label="Recovered length (m)"
-          value={recoveredM}
-          onChangeText={setRecoveredM}
-          error={errors.recoveredM}
-          keyboardType="decimal-pad"
-        />
-        {liveRecovery != null && Number.isFinite(recovered) ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            Recovery: {liveRecovery}%
-          </ThemedText>
-        ) : null}
+        footer={
+          <StickyActions warnings={activeWarnings}>
+            <PrimaryButton
+              label={activeWarnings.length > 0 ? 'Save anyway' : 'Save run'}
+              onPress={handleSave}
+              loading={saving}
+            />
+          </StickyActions>
+        }>
+        <FormSection title="Depth drilled">
+          <FormRow>
+            <TextField
+              label="From depth (m)"
+              value={fromM}
+              onChangeText={setFromM}
+              error={errors.fromM}
+              keyboardType="decimal-pad"
+            />
+            <TextField
+              label="To depth (m)"
+              value={toM}
+              onChangeText={setToM}
+              error={errors.toM}
+              keyboardType="decimal-pad"
+              autoFocus
+            />
+          </FormRow>
+          <LengthChips fromText={fromM} lengths={[1.5, 3, 4.5, 6]} onPick={setToM} />
+        </FormSection>
 
-        <TextField
-          label="Pieces ≥ 10 cm, total length (m)"
-          optional
-          value={rqdPiecesM}
-          onChangeText={setRqdPiecesM}
-          error={errors.rqdPiecesM}
-          keyboardType="decimal-pad"
-        />
-        {liveRqd != null ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            RQD: {liveRqd}%
-          </ThemedText>
-        ) : null}
+        <FormSection title="Core recovered">
+          <TextField
+            label="Recovered length (m)"
+            value={recoveredM}
+            onChangeText={setRecoveredM}
+            error={errors.recoveredM}
+            keyboardType="decimal-pad"
+          />
+          {drilledKnown ? (
+            <View style={styles.chips}>
+              <Chip
+                label="Full recovery"
+                selected={false}
+                onPress={() => setRecoveredM(String(Math.round(drilled * 1000) / 1000))}
+              />
+            </View>
+          ) : null}
+          <TextField
+            label="Pieces ≥ 10 cm, total length (m)"
+            optional
+            value={rqdPiecesM}
+            onChangeText={setRqdPiecesM}
+            error={errors.rqdPiecesM}
+            keyboardType="decimal-pad"
+          />
+        </FormSection>
 
-        <WarningList warnings={activeWarnings} />
-
-        <PrimaryButton
-          label={activeWarnings.length > 0 ? 'Save anyway' : 'Save run'}
-          onPress={handleSave}
-          loading={saving}
-        />
+        <Card style={styles.results}>
+          <View style={styles.result}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              RECOVERY
+            </ThemedText>
+            <ThemedText type="heading">
+              {liveRecovery != null && Number.isFinite(recovered)
+                ? `${liveRecovery}%`
+                : '–'}
+            </ThemedText>
+          </View>
+          <View style={styles.result}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              RQD
+            </ThemedText>
+            <ThemedText type="heading">
+              {liveRqd != null ? `${liveRqd}%` : '–'}
+            </ThemedText>
+          </View>
+        </Card>
       </FormScrollView>
     </SafeAreaView>
   );
@@ -153,5 +186,16 @@ const styles = StyleSheet.create({
   form: {
     padding: Spacing.three,
     gap: Spacing.three,
+  },
+  chips: {
+    flexDirection: 'row',
+  },
+  results: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  result: {
+    flex: 1,
+    gap: Spacing.half,
   },
 });

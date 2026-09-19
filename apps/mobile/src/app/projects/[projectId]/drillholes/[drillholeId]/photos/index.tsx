@@ -6,12 +6,13 @@ import {
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { deletePhotoFile, photoFile } from '@/data/photoFiles';
 import { deletePhotoRecord, listPhotos } from '@/data/photosRepository';
@@ -93,15 +94,12 @@ export default function PhotosScreen() {
                     {describeSize(photo.sizeBytes)}
                   </ThemedText>
                 </View>
-                <Pressable
+                <RowAction
+                  icon="trash-can-outline"
+                  tone="danger"
                   onPress={() => confirmDelete(photo)}
-                  accessibilityRole="button"
                   accessibilityLabel="Delete photo"
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Delete
-                  </ThemedText>
-                </Pressable>
+                />
               </View>
             </Card>
           ))

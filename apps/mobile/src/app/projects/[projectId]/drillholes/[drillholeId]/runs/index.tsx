@@ -6,13 +6,14 @@ import {
 } from '@corechain/domain';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContinuitySummary } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { deleteRun, listRuns } from '@/data/coreRepository';
 
@@ -86,24 +87,21 @@ export default function CoreRunsScreen() {
         ) : (
           (runs ?? []).map((run) => (
             <Card key={run.id} style={styles.card}>
-              <View style={styles.row}>
-                <View style={styles.rowText}>
-                  <ThemedText type="default">
-                    {run.fromM}–{run.toM} m
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {describeRun(run)}
-                  </ThemedText>
-                </View>
-                <Pressable
+              <View style={styles.rowText}>
+                <ThemedText type="heading">
+                  {run.fromM}–{run.toM} m
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {describeRun(run)}
+                </ThemedText>
+              </View>
+              <View style={styles.actions}>
+                <RowAction
+                  icon="trash-can-outline"
+                  tone="danger"
                   onPress={() => confirmDelete(run)}
-                  accessibilityRole="button"
                   accessibilityLabel={`Delete run ${run.fromM} to ${run.toM} metres`}
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Delete
-                  </ThemedText>
-                </Pressable>
+                />
               </View>
             </Card>
           ))
@@ -114,6 +112,12 @@ export default function CoreRunsScreen() {
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: Spacing.two,
+  },
   safeArea: {
     flex: 1,
   },

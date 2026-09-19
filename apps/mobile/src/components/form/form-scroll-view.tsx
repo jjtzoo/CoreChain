@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Keyboard,
   ScrollView,
@@ -15,11 +15,17 @@ import {
  * then scrolls the field being typed into into view. Taps still reach buttons
  * while the keyboard is open.
  *
+ * `footer` is pinned under the scrolling form (a Save bar, say), so the main
+ * action is always on screen and rides up above the keyboard.
+ *
  * (React Native's own KeyboardAvoidingView isn't used: it measures from the
  * wrong origin under a screen header, so it leaves the bottom of the form
  * behind the keyboard.)
  */
-export function FormScrollView(props: ScrollViewProps) {
+export function FormScrollView({
+  footer,
+  ...props
+}: ScrollViewProps & { footer?: ReactNode }) {
   const areaRef = useRef<View>(null);
   const [covered, setCovered] = useState(0);
 
@@ -39,6 +45,7 @@ export function FormScrollView(props: ScrollViewProps) {
   return (
     <View ref={areaRef} style={[styles.area, { paddingBottom: covered }]}>
       <ScrollView keyboardShouldPersistTaps="handled" {...props} />
+      {footer}
     </View>
   );
 }

@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { FormScrollView } from '@/components/form/form-scroll-view';
+import { FormRow, FormSection } from '@/components/form/form-section';
+import { StickyActions } from '@/components/form/sticky-actions';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -117,93 +119,103 @@ export default function NewDrillholeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <FormScrollView contentContainerStyle={styles.form}>
-        <TextField
-          label="Hole ID"
-          value={holeId}
-          onChangeText={setHoleId}
-          error={errors.holeId}
-          placeholder="e.g. DDH-01"
-          autoCapitalize="characters"
-          autoFocus
-        />
-
-        <TextField
-          label="Planned depth (m)"
-          value={plannedDepthM}
-          onChangeText={setPlannedDepthM}
-          error={errors.plannedDepthM}
-          keyboardType="decimal-pad"
-        />
-
-        <TextField
-          label="Planned azimuth (0-360°)"
-          optional
-          value={plannedAzimuthDeg}
-          onChangeText={setPlannedAzimuthDeg}
-          error={errors.plannedAzimuthDeg}
-          keyboardType="decimal-pad"
-        />
-
-        <TextField
-          label="Planned inclination / dip (-90 to 90°)"
-          optional
-          value={plannedInclinationDeg}
-          onChangeText={setPlannedInclinationDeg}
-          error={errors.plannedInclinationDeg}
-          keyboardType="decimal-pad"
-        />
-
-        <ThemedText type="smallBold">Collar location</ThemedText>
-        {collar ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            GPS fix: {collar.latitude.toFixed(6)}, {collar.longitude.toFixed(6)}
-            {collar.accuracyM != null
-              ? ` (±${Math.round(collar.accuracyM)}m)`
-              : ''}
-          </ThemedText>
-        ) : (
-          <ThemedText type="small" themeColor="textSecondary">
-            Use GPS at the collar, or enter coordinates manually below.
-          </ThemedText>
-        )}
-        <PrimaryButton
-          label="Use GPS"
-          variant="secondary"
-          onPress={handleUseGps}
-          loading={locatingGps}
-        />
-        {errors.collar ? (
-          <ThemedText type="small" themeColor="danger">
-            {errors.collar}
-          </ThemedText>
-        ) : null}
-
-        {!collar && (
-          <>
-            <TextField
-              label="Latitude"
-              optional
-              value={manualLatitude}
-              onChangeText={setManualLatitude}
-              keyboardType="numbers-and-punctuation"
+      <FormScrollView
+        contentContainerStyle={styles.form}
+        footer={
+          <StickyActions>
+            <PrimaryButton
+              label="Create drillhole"
+              onPress={handleCreate}
+              loading={saving}
+              disabled={holeId.trim().length === 0 || plannedDepthM.trim().length === 0}
             />
-            <TextField
-              label="Longitude"
-              optional
-              value={manualLongitude}
-              onChangeText={setManualLongitude}
-              keyboardType="numbers-and-punctuation"
-            />
-          </>
-        )}
+          </StickyActions>
+        }>
+        <FormSection title="The hole">
+          <TextField
+            label="Hole ID"
+            value={holeId}
+            onChangeText={setHoleId}
+            error={errors.holeId}
+            placeholder="e.g. DDH-01"
+            autoCapitalize="characters"
+            autoFocus
+          />
 
-        <PrimaryButton
-          label="Create drillhole"
-          onPress={handleCreate}
-          loading={saving}
-          disabled={holeId.trim().length === 0 || plannedDepthM.trim().length === 0}
-        />
+          <TextField
+            label="Planned depth (m)"
+            value={plannedDepthM}
+            onChangeText={setPlannedDepthM}
+            error={errors.plannedDepthM}
+            keyboardType="decimal-pad"
+          />
+        </FormSection>
+
+        <FormSection title="Planned direction" hint="Optional.">
+          <TextField
+            label="Planned azimuth (0-360°)"
+            optional
+            value={plannedAzimuthDeg}
+            onChangeText={setPlannedAzimuthDeg}
+            error={errors.plannedAzimuthDeg}
+            keyboardType="decimal-pad"
+          />
+
+          <TextField
+            label="Planned inclination / dip (-90 to 90°)"
+            optional
+            value={plannedInclinationDeg}
+            onChangeText={setPlannedInclinationDeg}
+            error={errors.plannedInclinationDeg}
+            keyboardType="decimal-pad"
+          />
+        </FormSection>
+
+        <FormSection title="Collar location">
+          {collar ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              GPS fix: {collar.latitude.toFixed(6)}, {collar.longitude.toFixed(6)}
+              {collar.accuracyM != null
+                ? ` (±${Math.round(collar.accuracyM)}m)`
+                : ''}
+            </ThemedText>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              Use GPS at the collar, or enter coordinates manually below.
+            </ThemedText>
+          )}
+          <PrimaryButton
+            label="Use GPS"
+            variant="secondary"
+            icon="crosshairs-gps"
+            onPress={handleUseGps}
+            loading={locatingGps}
+          />
+          {errors.collar ? (
+            <ThemedText type="small" themeColor="danger">
+              {errors.collar}
+            </ThemedText>
+          ) : null}
+
+          {!collar && (
+            <FormRow>
+              <TextField
+                label="Latitude"
+                optional
+                value={manualLatitude}
+                onChangeText={setManualLatitude}
+                keyboardType="numbers-and-punctuation"
+              />
+              <TextField
+                label="Longitude"
+                optional
+                value={manualLongitude}
+                onChangeText={setManualLongitude}
+                keyboardType="numbers-and-punctuation"
+              />
+            </FormRow>
+          )}
+        </FormSection>
       </FormScrollView>
     </SafeAreaView>
   );
