@@ -36,7 +36,9 @@ export function PrimaryButton({
       ) : (
         <ThemedText
           type="smallBold"
-          style={variant === 'primary' ? styles.primaryLabel : undefined}>
+          style={
+            variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel
+          }>
           {label}
         </ThemedText>
       )}
@@ -49,6 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.four,
     borderRadius: Spacing.two,
   },
   primary: {
@@ -57,8 +60,14 @@ const styles = StyleSheet.create({
   primaryLabel: {
     color: '#ffffff',
   },
+  // Outlined, so a secondary action still reads as a button and not as text.
   secondary: {
     backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#208AEF',
+  },
+  secondaryLabel: {
+    color: '#208AEF',
   },
   disabled: {
     opacity: 0.5,

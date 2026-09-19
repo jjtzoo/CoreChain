@@ -81,6 +81,13 @@ export default function ProjectDetailScreen() {
           data={visibleDrillholes}
           keyExtractor={(d) => d.id}
           contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <ThemedView type="backgroundElement" style={styles.emptyState}>
+              <ThemedText type="default">
+                No holes match &ldquo;{query.trim()}&rdquo;.
+              </ThemedText>
+            </ThemedView>
+          }
           renderItem={({ item }) => {
             const progress = loggingProgress(LOGGED_METRES_PLACEHOLDER, item);
             return (

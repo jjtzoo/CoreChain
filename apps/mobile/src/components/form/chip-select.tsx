@@ -42,11 +42,13 @@ export function ChipSelect<T extends string>({
                 styles.chip,
                 {
                   backgroundColor: selected
-                    ? theme.backgroundSelected
+                    ? SELECTED_COLOR
                     : theme.backgroundElement,
                 },
               ]}>
-              <ThemedText type="small">
+              <ThemedText
+                type={selected ? 'smallBold' : 'small'}
+                style={selected ? styles.selectedLabel : undefined}>
                 {formatOption ? formatOption(option) : option}
               </ThemedText>
             </Pressable>
@@ -57,9 +59,17 @@ export function ChipSelect<T extends string>({
   );
 }
 
+// A solid fill with a white bold label, so the selected option stays obvious
+// in direct sunlight — the neutral "selected" grey is only a few shades off the
+// unselected chip.
+const SELECTED_COLOR = '#208AEF';
+
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.one,
+  },
+  selectedLabel: {
+    color: '#ffffff',
   },
   row: {
     flexDirection: 'row',
