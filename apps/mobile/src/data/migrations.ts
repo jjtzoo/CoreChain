@@ -170,4 +170,46 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // Sprint 3, E6: samples (primary and QC) and QC-reminder dismissals.
+    version: 4,
+    commands: [
+      [
+        `CREATE TABLE samples (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          drillhole_id TEXT NOT NULL REFERENCES drillholes (id),
+          sample_number TEXT NOT NULL,
+          sample_type TEXT NOT NULL,
+          from_m REAL,
+          to_m REAL,
+          standard_ref TEXT,
+          parent_sample_id TEXT REFERENCES samples (id),
+          note TEXT,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      [
+        // Deliberately spans deleted rows too: a sample number is a physical
+        // tag, so a number is never reused even after its sample is deleted.
+        'CREATE UNIQUE INDEX idx_samples_project_number ON samples (project_id, sample_number COLLATE NOCASE)',
+      ],
+      ['CREATE INDEX idx_samples_drillhole_id ON samples (drillhole_id)'],
+      [
+        // A dismissed QC reminder restarts that control's count, and records why.
+        `CREATE TABLE qc_dismissals (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          control_type TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )`,
+      ],
+      ['CREATE INDEX idx_qc_dismissals_project_id ON qc_dismissals (project_id)'],
+    ],
+  },
 ];

@@ -59,9 +59,14 @@ export default function ProjectDetailScreen() {
             {project.coordinateSystem}
           </ThemedText>
         </View>
-        <Pressable onPress={() => router.push(`/projects/${projectId}/settings`)}>
-          <ThemedText type="link">Settings</ThemedText>
-        </Pressable>
+        <View style={styles.headerLinks}>
+          <Pressable onPress={() => router.push(`/projects/${projectId}/samples`)}>
+            <ThemedText type="link">Samples</ThemedText>
+          </Pressable>
+          <Pressable onPress={() => router.push(`/projects/${projectId}/settings`)}>
+            <ThemedText type="link">Settings</ThemedText>
+          </Pressable>
+        </View>
       </View>
 
       <TextField
@@ -131,6 +136,10 @@ const styles = StyleSheet.create({
   },
   headerText: {
     gap: Spacing.half,
+  },
+  headerLinks: {
+    alignItems: 'flex-end',
+    gap: Spacing.two,
   },
   list: {
     gap: Spacing.two,

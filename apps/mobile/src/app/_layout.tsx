@@ -29,6 +29,14 @@ export default function RootLayout() {
           options={{ title: 'Sampling settings' }}
         />
         <Stack.Screen
+          name="projects/[projectId]/samples/index"
+          options={{ title: 'Samples' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/samples/new"
+          options={{ title: 'New sample', presentation: 'modal' }}
+        />
+        <Stack.Screen
           name="projects/[projectId]/codes"
           options={{ title: 'Code library' }}
         />

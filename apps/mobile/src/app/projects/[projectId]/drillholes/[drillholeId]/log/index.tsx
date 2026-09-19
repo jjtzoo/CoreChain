@@ -113,6 +113,17 @@ export default function LogScreen() {
                   </ThemedText>
                 </View>
                 <Pressable
+                  onPress={() =>
+                    router.push(
+                      `/projects/${projectId}/samples/new?drillholeId=${drillholeId}&fromM=${interval.fromM}&toM=${interval.toM}`,
+                    )
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sample interval ${interval.fromM} to ${interval.toM} metres`}
+                  hitSlop={Spacing.two}>
+                  <ThemedText type="link">Sample</ThemedText>
+                </Pressable>
+                <Pressable
                   onPress={() => confirmDelete(interval)}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete interval ${interval.fromM} to ${interval.toM} metres`}

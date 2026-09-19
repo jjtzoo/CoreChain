@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { listBoxes, listRuns } from '@/data/coreRepository';
 import { listIntervals } from '@/data/intervalsRepository';
+import { listHoleSamples } from '@/data/samplesRepository';
 import {
   getDrillhole,
   updateDrillholeActuals,
@@ -38,6 +39,7 @@ export default function DrillholeDetailScreen() {
   const [boxCount, setBoxCount] = useState(0);
   const [runCount, setRunCount] = useState(0);
   const [intervalCount, setIntervalCount] = useState(0);
+  const [sampleCount, setSampleCount] = useState(0);
   // Deepest depth recorded by any core box, run or log interval — what the
   // E2-2 "final depth is shallower than what's recorded" warning compares to.
   const [deepestRecordedM, setDeepestRecordedM] = useState(0);
@@ -60,6 +62,7 @@ export default function DrillholeDetailScreen() {
         loaded.actualFinalDepthM != null ? String(loaded.actualFinalDepthM) : '',
       );
     });
+    listHoleSamples(drillholeId).then((samples) => setSampleCount(samples.length));
     Promise.all([
       listBoxes(drillholeId),
       listRuns(drillholeId),
@@ -178,6 +181,14 @@ export default function DrillholeDetailScreen() {
           variant="secondary"
           onPress={() =>
             router.push(`/projects/${projectId}/drillholes/${drillholeId}/log`)
+          }
+        />
+
+        <PrimaryButton
+          label={`Samples (${sampleCount})`}
+          variant="secondary"
+          onPress={() =>
+            router.push(`/projects/${projectId}/samples?drillholeId=${drillholeId}`)
           }
         />
 

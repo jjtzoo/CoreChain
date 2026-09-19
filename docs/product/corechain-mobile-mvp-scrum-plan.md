@@ -576,6 +576,25 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 - **Found on the device:** a restored draft still popped the keyboard, because `autoFocus` only applies on mount and the draft hadn't loaded yet; the form now renders only after loading. (Fixed after the last device check; worth a re-test.) Tapping chips shifts the layout as each selection adds its description line, which makes scripted testing fiddly and is a small real-world annoyance too.
 - **Not yet built:** editing an existing box, run or interval (delete and re-add for now), renaming a code's short code, and per-hole log export (Sprint 3). With E3 and E4 done, Sprint 2's goal — log a complete hole offline — is met, but it has only been exercised on short test holes.
 
+### S3 progress (2026-09-19)
+
+**Slice 1 — E6 sampling (E6-1, E6-2, E6-3): done and verified on the phone.** Photos (E5-1, E5-2), CSV export (E9-1) and the internal-alpha build are next; those need new native modules (camera, image compression, file sharing), so they will share one native rebuild.
+
+- **Domain** (`packages/domain/src/sampling.ts`, 32 new tests, 120 total): `validateSampleInput`, `qcReminders`, `qcAchievement`, `filterSamples`, `sampleDepth` and a provisional `formatSampleNumber` (`SIP-00001`; the real tag-book format is to be confirmed with testers). The web-demo `Sample` name is taken, so the type is `FieldSample`.
+- **Modelling choices:**
+  - A primary sample needs a depth range inside the hole (actual final depth, else planned) and may not overlap another primary; touching end to end is fine.
+  - A standard needs a reference material ID and has no depth; a blank has no depth; a field duplicate must name a primary sample in the same hole and takes that sample's depth.
+  - A QC control is "due" once N primaries have been created since the last control of that type _or_ since its reminder was dismissed. A rate of 0 switches a reminder off. Dismissing needs a reason, which is stored.
+  - Sample numbers are never reused, even after a delete (a unique index spans deleted rows), because the number is a physical tag. A primary that a duplicate points at can't be deleted until the duplicate is.
+  - Numbers come from the project's counter (E1-2) until Sprint 4's device-issued blocks (E6-4). The counter only moves when the geologist keeps the suggested number; typing a pre-printed tag leaves it alone.
+- **Data:** migration v4 adds `samples` and `qc_dismissals`.
+- **On the phone (Infinix, Android), with QC rates temporarily lowered to 2 / 3 / 4 to trigger reminders quickly:**
+  - E6-1: a sample past the hole's depth was refused ("must fall inside the hole's depth (0–5 m)"); an overlapping primary was refused ("Overlaps a primary sample at 1–2 m"); numbers ran SIP-00001 to 00004; a typed tag (TAG-777) saved and the next suggestion stayed SIP-00005.
+  - E6-2: "A standard is due" appeared after 2 primaries; dismissing without a reason was refused and dismissing with one cleared it; a standard (reference OREAS 45e) and a duplicate (of SIP-00002, taking its 1–2 m depth) saved; a duplicate without a parent was refused; "A blank is due" then appeared after 3 primaries.
+  - E6-3: the register shows type, depth, status and a QC flag, filters by hole/type/status, and shows the achieved QC rate against each target ("Standards: 1 (1 per 2 samples, target 1 per 2)").
+- **Not device-tested:** refusing to delete a primary sample that has a duplicate (unit logic is straightforward, but it was not exercised on the phone). Stale field errors now clear as soon as the field is edited (fixed after the last device check).
+- **Not yet built:** editing a sample (delete and re-add for now), and bagging/dispatch statuses (E7).
+
 ---
 
 ## 8. Field-test plan
