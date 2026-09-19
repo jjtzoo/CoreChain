@@ -165,3 +165,5 @@ export type AlbertaDemoDataset = {
   assays: readonly AssayRecord[];
   integrity: ImportIntegrity;
 };
+
+export * from "./field";

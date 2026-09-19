@@ -1,69 +1,110 @@
-import type { RecordOrigin } from '@corechain/domain';
-import { StyleSheet } from 'react-native';
+import type { Project } from '@corechain/domain';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { listProjects } from '@/data/projectsRepository';
 
-// Proves @corechain/domain resolves as a workspace package from the mobile
-// app (type-checked by `tsc`; see docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 0).
-const skeletonOrigin: RecordOrigin = 'Synthetic demonstration data';
+/**
+ * E1-1: the app's home screen. A field geologist working alone has no admin
+ * assigning them a project, so this is where they create their own.
+ */
+export default function ProjectsScreen() {
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-export default function HomeScreen() {
+  const reload = useCallback(() => {
+    listProjects()
+      .then(setProjects)
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : String(err));
+      });
+  }, []);
+
+  useFocusEffect(reload);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <ThemedText type="title" style={styles.title}>
-            CoreChain Field
-          </ThemedText>
-          <ThemedText type="small" style={styles.subtitle}>
-            Sprint 0 skeleton. No field workflow is built yet — see the Sprint
-            plan in docs/product/corechain-mobile-mvp-scrum-plan.md.
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <ThemedText type="subtitle">Projects</ThemedText>
+        <PrimaryButton
+          label="New project"
+          onPress={() => router.push('/projects/new')}
+        />
+      </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <ThemedText type="code">{skeletonOrigin}</ThemedText>
+      {error ? (
+        <ThemedText type="small" style={styles.errorText}>
+          Couldn&apos;t load projects: {error}
+        </ThemedText>
+      ) : null}
+
+      {projects && projects.length === 0 ? (
+        <ThemedView type="backgroundElement" style={styles.emptyState}>
+          <ThemedText type="default">No projects yet.</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Create one to start logging a drillhole — everything works
+            offline.
+          </ThemedText>
         </ThemedView>
-      </SafeAreaView>
-    </ThemedView>
+      ) : (
+        <FlatList
+          data={projects ?? []}
+          keyExtractor={(project) => project.id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <Link href={`/projects/${item.id}`} asChild>
+              <Pressable>
+                <ThemedView type="backgroundElement" style={styles.projectCard}>
+                  <ThemedText type="default">{item.name}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {item.coordinateSystem}
+                    {item.commodity ? ` · ${item.commodity}` : ''}
+                  </ThemedText>
+                </ThemedView>
+              </Pressable>
+            </Link>
+          )}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+    gap: Spacing.three,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: Spacing.three,
+    gap: Spacing.three,
+  },
+  list: {
+    gap: Spacing.two,
+    paddingBottom: Spacing.four,
+  },
+  projectCard: {
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
+    gap: Spacing.half,
+  },
+  emptyState: {
+    padding: Spacing.four,
+    borderRadius: Spacing.two,
+    gap: Spacing.one,
+  },
+  errorText: {
+    color: '#d92d20',
   },
 });
