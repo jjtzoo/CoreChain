@@ -1,0 +1,380 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>CoreChain Field — A day in the field</title><style>
+@page { size: A4; margin: 14mm 14mm 16mm; @bottom-left { content: "CoreChain Field · A day in the field · v1"; font: 8pt 'Segoe UI', Arial, sans-serif; color: #7A828E; } @bottom-right { content: "Page " counter(page); font: 8pt 'Segoe UI', Arial, sans-serif; color: #7A828E; } }
+@page wide { size: A4 landscape; margin: 12mm 12mm 14mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font: 10pt/1.45 'Segoe UI', Arial, sans-serif; color: #0E1116; margin: 0; }
+section.page { break-before: page; }
+section.wide { break-before: page; page: wide; }
+section.cover { break-after: page; }
+h1 { font-size: 34pt; line-height: 1.05; margin: 6px 0 10px; letter-spacing: -0.5px; }
+h2 { font-size: 17pt; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+h3 { font-size: 11.5pt; margin: 16px 0 6px; }
+h4 { font-size: 9.5pt; margin: 0 0 4px; color: #1660E8; }
+p { margin: 5px 0; }
+.num { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; background: #1660E8; color: #fff; align-items: center; justify-content: center; font-size: 12pt; font-weight: 600; flex: none; }
+.kicker { color: #1660E8; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 9pt; margin-top: 22mm; }
+.lede { font-size: 13pt; line-height: 1.45; color: #2a3038; max-width: 165mm; }
+.meta { color: #525A67; margin: 0 0 10px; }
+.small, .small-text { font-size: 8.5pt; }
+.facts { display: flex; gap: 10px; margin: 18px 0 16px; }
+.facts div { flex: 1; background: #E6EFFD; border-radius: 10px; padding: 10px 12px; }
+.facts span { display: block; font-size: 8pt; color: #525A67; text-transform: uppercase; letter-spacing: .05em; }
+.facts b { font-size: 12pt; }
+.cols { display: flex; gap: 10px; align-items: stretch; }
+.cols > * { flex: 1; }
+.cols.two { margin-top: 8px; }
+.box { border: 1px solid #DCE1E8; border-radius: 12px; padding: 4px 14px 10px; }
+.box h3 { margin-top: 10px; }
+.box ul { margin: 4px 0; padding-left: 16px; }
+.box li { margin-bottom: 3px; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0 10px; font-size: 9.5pt; }
+th { background: #E6EFFD; text-align: left; font-weight: 600; }
+th, td { border: 1px solid #DCE1E8; padding: 4px 7px; vertical-align: top; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+tr.alt td { background: #F7F9FC; }
+tr.group td { background: #0E1116; color: #fff; font-weight: 600; }
+tr.total td { background: #E6EFFD; }
+table.entry td:first-child { width: 42%; color: #525A67; }
+table.data td, table.data th { padding: 3.5px 6px; }
+table.small-text { font-size: 8.5pt; }
+code { font: 600 9.5pt Consolas, 'Courier New', monospace; background: #F1F3F6; border-radius: 4px; padding: 0 4px; }
+.cb { display: inline-block; width: 12px; height: 12px; border: 1.5px solid #525A67; border-radius: 3px; vertical-align: -2px; }
+.step { display: flex; gap: 9px; margin: 12px 0 4px; align-items: flex-start; }
+.step .cb { margin-top: 4px; flex: none; }
+.plain { margin: 4px 0 6px; padding-left: 22px; }
+.see { border-left: 4px solid #0E7A55; background: #E9F6F0; border-radius: 0 8px 8px 0; padding: 7px 12px; margin: 10px 0; break-inside: avoid; }
+.see b { display: block; color: #0E7A55; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.see ul { margin: 2px 0; padding-left: 16px; }
+.tip { border-left: 4px solid #1660E8; background: #EEF4FE; border-radius: 0 8px 8px 0; padding: 7px 12px; margin: 10px 0; break-inside: avoid; }
+.tip b:first-child { display: block; color: #1660E8; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.numbers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.numbers div { background: #F4F6F8; border-radius: 10px; padding: 8px 10px; }
+.numbers b { display: block; font-size: 14pt; color: #1660E8; }
+.numbers span { font-size: 8.5pt; color: #525A67; }
+.codegrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.code { display: flex; gap: 8px; align-items: baseline; margin-bottom: 3px; }
+.code code { min-width: 44px; text-align: center; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 10px 0; }
+.form div { display: flex; gap: 8px; align-items: flex-end; }
+.form span { font-size: 8.5pt; color: #525A67; white-space: nowrap; }
+.form i, .lines i { flex: 1; border-bottom: 1px solid #9aa2ad; height: 18px; display: block; }
+.lines i { margin: 4px 0 8px; }
+.lines h3 { margin: 12px 0 2px; }
+</style></head><body>
+
+<section class="cover">
+  <div class="kicker">CoreChain Field · Official test script</div>
+  <h1>A day in the field</h1>
+  <p class="lede">One drillhole, from setting up the project to exporting the data. Follow it
+  step by step on your phone. Every value to type is here, and so is what the app should show
+  when you get it right.</p>
+
+  <div class="facts">
+    <div><span>Project</span><b>Masbate Gold Pilot</b></div>
+    <div><span>Hole</span><b>MB-DDH-001</b></div>
+    <div><span>Final depth</span><b>45.3 m</b></div>
+    <div><span>Time</span><b>about one working day</b></div>
+  </div>
+
+  <div class="cols">
+    <div class="box">
+      <h3>What this is</h3>
+      <p>A realistic day for a field geologist working alone: the drillers have finished a
+      45.3 m core hole, and you log it and sample it. It is fictional data for testing,
+      so nothing here is a real result and no real coordinates are used.</p>
+      <p>It is also our official demo of the app. If the app can do this whole day smoothly, with no
+      signal, it is ready for a real hole.</p>
+    </div>
+    <div class="box">
+      <h3>What you need</h3>
+      <ul>
+        <li>The CoreChain Field app on an Android phone, charged</li>
+        <li>Camera and location allowed when the app asks</li>
+        <li>Something to photograph as "core boxes": a table, a shelf, real boxes if you have them</li>
+        <li>A computer with Excel or Google Sheets for Part 8</li>
+        <li>This guide printed, or open on a second screen</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>How to use it</h3>
+      <ul>
+        <li>Do the parts in order. Tick each step as you go.</li>
+        <li>Turn on <b>airplane mode</b> before you start. The app must work with no signal.</li>
+        <li>Green <b>You should see</b> boxes are checkpoints. If the app shows something
+        different, take a screenshot and write the step number on the sign-off sheet.</li>
+        <li>Anything that confused you counts, even if it "worked".</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="page">
+  <h2>The day at a glance</h2>
+  <p>Target times are what a practised user should manage. Note your own on the sign-off sheet.</p>
+  
+  <table class="">
+    <thead><tr><th>Part</th><th>What you do</th><th>What you record</th><th>Target time</th></tr></thead>
+    <tbody><tr class=""><td>1</td><td>Set up the project and the hole</td><td>1 project, 1 hole</td><td>10 min</td></tr><tr class=""><td>2</td><td>Core reception: enter the drillers’ runs and the core boxes</td><td>15 runs, 9 boxes</td><td>45 min</td></tr><tr class=""><td>3</td><td>Photograph the core</td><td>11 photos</td><td>25 min</td></tr><tr class=""><td>4</td><td>Log the core</td><td>12 intervals</td><td>60 min</td></tr><tr class=""><td>5</td><td>Sample the core, with QC</td><td>25 samples (22 primary + 3 QC)</td><td>75 min</td></tr><tr class=""><td>6</td><td>Close out the hole</td><td>Status "Logged"</td><td>5 min</td></tr><tr class=""><td>7</td><td>Trace samples back to the core</td><td>4 samples checked</td><td>10 min</td></tr><tr class=""><td>8</td><td>Export the data and check it in Excel</td><td>5 CSV files</td><td>15 min</td></tr><tr class=""><td>9</td><td>Try to break it</td><td>A scratch hole, 16 steps</td><td>20 min</td></tr><tr class="total"><td><b>Total</b></td><td></td><td></td><td><b>about 4 h 25 min</b></td></tr></tbody>
+  </table>
+
+  <h3>At the end of the day you should have</h3>
+  <div class="numbers">
+    <div><b>15</b><span>core runs</span></div>
+    <div><b>94.5%</b><span>core recovery</span></div>
+    <div><b>9</b><span>core boxes</span></div>
+    <div><b>11</b><span>photos</span></div>
+    <div><b>12</b><span>logged intervals</span></div>
+    <div><b>45.3 of 45.3 m</b><span>core logged</span></div>
+    <div><b>25</b><span>samples</span></div>
+    <div><b>1 / 1 / 1</b><span>standard / blank / duplicate</span></div>
+  </div>
+
+  <h3>The story of the hole, in one look</h3>
+  <table class="story">
+    <thead><tr><th>Depth (m)</th><th>What the core is</th><th>Why it matters for the test</th></tr></thead>
+    <tbody>
+      <tr class=""><td>0–3</td><td>Soft, clay-rich saprolite</td><td>Poor recovery (60%). Tests low recovery and box 1 notes.</td></tr>
+      <tr class=""><td>3–14</td><td>Altered andesite</td><td>Weathering changes from highly to moderately weathered.</td></tr>
+      <tr class=""><td>18–21</td><td>Fault breccia</td><td>Recovery 90%, RQD 53%. Photographed close up. Structure code FLT.</td></tr>
+      <tr class=""><td>21–33</td><td>Silicified diorite with a quartz stockwork</td><td>The mineralised zone: sampled every metre.</td></tr>
+      <tr class=""><td>27–28.2</td><td>Quartz vein with visible gold</td><td>The sample that gets a duplicate. Traced back in Part 7.</td></tr>
+      <tr class=""><td>33–45.3</td><td>Fresh granodiorite</td><td>Sampled to 40 m, then no more. End of hole at 45.3 m.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="page">
+  <h2><span class="num">1</span>Set up the project and the hole</h2>
+  <p class="meta">About 10 minutes. Airplane mode on.</p>
+
+  <div class="step"><span class="cb"></span><div><b>1.1</b> Open CoreChain. On the home screen tap <b>New project</b> and fill in:</div></div>
+  
+  <table class="entry">
+    <thead><tr><th>Field</th><th>Enter</th></tr></thead>
+    <tbody><tr class=""><td>Project name</td><td><code>Masbate Gold Pilot</code></td></tr><tr class=""><td>Coordinate system</td><td>Tap the <b>WGS84</b> chip</td></tr><tr class=""><td>Commodity</td><td><code>Gold</code></td></tr><tr class=""><td>Location</td><td><code>Masbate, Philippines</code></td></tr><tr class=""><td>Sample ID prefix</td><td><code>MB</code></td></tr></tbody>
+  </table>
+  <p>Tap <b>Create project</b>.</p>
+
+  <div class="step"><span class="cb"></span><div><b>1.2</b> Open the project and tap <b>Settings</b>. Look, but do not change anything.</div></div>
+  <div class="see"><b>You should see</b><ul>
+    <li>Sample ID prefix <b>MB</b>, Next sample number <b>1</b></li>
+    <li>Standard, Blank and Field duplicate: every <b>20</b> samples</li>
+    <li>Largest photo size <b>1.5 MB</b></li>
+  </ul></div>
+
+  <div class="step"><span class="cb"></span><div><b>1.3</b> Back on the project screen, tap <b>New drillhole</b> and fill in:</div></div>
+  
+  <table class="entry">
+    <thead><tr><th>Field</th><th>Enter</th></tr></thead>
+    <tbody><tr class=""><td>Hole ID</td><td><code>MB-DDH-001</code></td></tr><tr class=""><td>Planned depth (m)</td><td><code>45</code></td></tr><tr class=""><td>Planned azimuth (0-360°)</td><td><code>90</code></td></tr><tr class=""><td>Planned inclination / dip (-90 to 90°)</td><td><code>-60</code></td></tr><tr class=""><td>Collar</td><td>Outdoors: tap <b>Use GPS</b> and wait for the fix.<br>Indoors: type Latitude <code>12.3714</code> and Longitude <code>123.5987</code></td></tr></tbody>
+  </table>
+  <p>Tap <b>Create drillhole</b>, then open it from the list.</p>
+
+  <div class="step"><span class="cb"></span><div><b>1.4</b> The drillers finished yesterday, so you already know the final depth. On the hole screen:</div></div>
+  <ul class="plain">
+    <li>Tap the <b>Complete</b> status chip.</li>
+    <li>In <b>Actual details</b>: tap <b>Started</b> and pick the date <b>3 days ago</b> in the calendar. Tap <b>Completed</b> and pick <b>yesterday</b>.</li>
+    <li><b>Actual final depth (m)</b>: <code>45.3</code>. Tap <b>Save actual details</b>.</li>
+  </ul>
+
+  <div class="see"><b>You should see</b><ul>
+    <li>Title <b>MB-DDH-001</b> with a <b>Complete</b> pill</li>
+    <li>"Masbate Gold Pilot · 45.3 m final · azimuth 90° · dip -60°"</li>
+    <li>A collar line (GPS or the coordinates you typed)</li>
+    <li>Core logged <b>0 of 45.3 m</b>, and the big button says <b>Add first core box</b></li>
+  </ul></div>
+</section>
+<section class="page">
+  <h2><span class="num">2</span>Core reception</h2>
+  <p class="meta">About 45 minutes. The rig has sent up the core in runs of 3 m; you enter what the driller wrote on each block, then the boxes.</p>
+
+  <div class="step"><span class="cb"></span><div><b>2.1</b> On the hole screen tap the <b>Core runs</b> tile, then <b>Add run</b>. Enter the runs in order. The from-depth fills in for you after the first one.</div></div>
+  
+  <table class="data">
+    <thead><tr><th>Run</th><th>From (m)</th><th>To (m)</th><th>Recovered length (m)</th><th>Pieces ≥ 10 cm, total length (m)</th><th>Recovery</th><th>RQD</th></tr></thead>
+    <tbody><tr class=""><td>1</td><td>0.0</td><td>3.0</td><td>1.80</td><td>0.40</td><td>60%</td><td>13.3%</td></tr><tr class="alt"><td>2</td><td>3.0</td><td>6.0</td><td>2.40</td><td>1.20</td><td>80%</td><td>40%</td></tr><tr class=""><td>3</td><td>6.0</td><td>9.0</td><td>2.85</td><td>2.00</td><td>95%</td><td>66.7%</td></tr><tr class="alt"><td>4</td><td>9.0</td><td>12.0</td><td>3.00</td><td>2.40</td><td>100%</td><td>80%</td></tr><tr class=""><td>5</td><td>12.0</td><td>15.0</td><td>2.94</td><td>2.10</td><td>98%</td><td>70%</td></tr><tr class="alt"><td>6</td><td>15.0</td><td>18.0</td><td>3.00</td><td>2.60</td><td>100%</td><td>86.7%</td></tr><tr class=""><td>7</td><td>18.0</td><td>21.0</td><td>2.70</td><td>1.60</td><td>90%</td><td>53.3%</td></tr><tr class="alt"><td>8</td><td>21.0</td><td>24.0</td><td>2.91</td><td>2.20</td><td>97%</td><td>73.3%</td></tr><tr class=""><td>9</td><td>24.0</td><td>27.0</td><td>3.00</td><td>2.70</td><td>100%</td><td>90%</td></tr><tr class="alt"><td>10</td><td>27.0</td><td>30.0</td><td>3.00</td><td>2.80</td><td>100%</td><td>93.3%</td></tr><tr class=""><td>11</td><td>30.0</td><td>33.0</td><td>2.97</td><td>2.50</td><td>99%</td><td>83.3%</td></tr><tr class="alt"><td>12</td><td>33.0</td><td>36.0</td><td>3.00</td><td>2.90</td><td>100%</td><td>96.7%</td></tr><tr class=""><td>13</td><td>36.0</td><td>39.0</td><td>3.00</td><td>2.85</td><td>100%</td><td>95%</td></tr><tr class="alt"><td>14</td><td>39.0</td><td>42.0</td><td>2.94</td><td>2.60</td><td>98%</td><td>86.7%</td></tr><tr class=""><td>15</td><td>42.0</td><td>45.3</td><td>3.30</td><td>3.00</td><td>100%</td><td>90.9%</td></tr></tbody>
+  </table>
+  <p class="small">The last two columns are worked out by the app. <b>Do not type them.</b> Use them to check your entries.</p>
+
+  <div class="see"><b>You should see</b><ul>
+    <li>Run 1 shows recovery <b>60%</b>, RQD <b>13.3%</b>. Run 7 shows <b>90%</b> and <b>53.3%</b>.</li>
+    <li>No amber gap or overlap warnings while entering any run.</li>
+    <li>On the hole screen the Core runs tile says <b>15 runs · 94.5% recovery</b>.</li>
+  </ul></div>
+</section>
+
+<section class="page">
+  <div class="step"><span class="cb"></span><div><b>2.2</b> Back on the hole screen tap <b>Core boxes</b>, then <b>Add box</b>. The box number and from-depth fill in for you.</div></div>
+  
+  <table class="data">
+    <thead><tr><th>Box number</th><th>From (m)</th><th>To (m)</th><th>Note (optional)</th></tr></thead>
+    <tbody><tr class=""><td>1</td><td>0.0</td><td>5.0</td><td>Clay-rich, broken, wet</td></tr><tr class="alt"><td>2</td><td>5.0</td><td>10.0</td><td>–</td></tr><tr class=""><td>3</td><td>10.0</td><td>15.0</td><td>–</td></tr><tr class="alt"><td>4</td><td>15.0</td><td>20.0</td><td>Fault zone 19.2 to 19.5 m, gouge</td></tr><tr class=""><td>5</td><td>20.0</td><td>25.0</td><td>–</td></tr><tr class="alt"><td>6</td><td>25.0</td><td>30.0</td><td>Quartz vein 27.0 to 28.2 m, visible gold</td></tr><tr class=""><td>7</td><td>30.0</td><td>35.0</td><td>–</td></tr><tr class="alt"><td>8</td><td>35.0</td><td>40.0</td><td>–</td></tr><tr class=""><td>9</td><td>40.0</td><td>45.3</td><td>End of hole</td></tr></tbody>
+  </table>
+
+  <div class="see"><b>You should see</b><ul>
+    <li>The Core boxes tile says <b>9 boxes</b>.</li>
+    <li>No "Gap in core boxes" warning on the hole screen.</li>
+    <li>The last box ends at <b>45.3 m</b>, the same depth as the last run.</li>
+  </ul></div>
+  <div class="tip"><b>Tip</b>If you make a mistake in a run or a box, delete it and add it again. Editing an existing entry is not built yet.</div>
+</section>
+<section class="page">
+  <h2><span class="num">3</span>Photograph the core</h2>
+  <p class="meta">About 25 minutes. The first time you take a photo, the phone asks for camera permission: choose <b>While using the app</b>.</p>
+  <p>Each photo is filed automatically against the box or interval you took it from, with the hole ID, box number, depth range and time. You do not name anything. Photos are shrunk to under 1.5 MB on the phone.</p>
+
+  
+  <table class="data">
+    <thead><tr><th>Done</th><th>Photo of</th><th>Depth</th><th>Where to tap</th><th>What to include</th></tr></thead>
+    <tbody><tr class=""><td><span class="cb"></span></td><td>Box 1</td><td>0–5 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class="alt"><td><span class="cb"></span></td><td>Box 2</td><td>5–10 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class=""><td><span class="cb"></span></td><td>Box 3</td><td>10–15 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class="alt"><td><span class="cb"></span></td><td>Box 4</td><td>15–20 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Include the gouge at 19.2 to 19.5 m</td></tr><tr class=""><td><span class="cb"></span></td><td>Box 5</td><td>20–25 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class="alt"><td><span class="cb"></span></td><td>Box 6</td><td>25–30 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Include the quartz vein at 27.0 to 28.2 m</td></tr><tr class=""><td><span class="cb"></span></td><td>Box 7</td><td>30–35 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class="alt"><td><span class="cb"></span></td><td>Box 8</td><td>35–40 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class=""><td><span class="cb"></span></td><td>Box 9</td><td>40–45.3 m</td><td>Core boxes → <b>Photos (0)</b> under the box → <b>Take photo</b></td><td>Lid open, core wet, label in view</td></tr><tr class="alt"><td><span class="cb"></span></td><td>Interval</td><td>18–21 m</td><td>Core log → <b>Photos (0)</b> on the interval → <b>Take photo</b> (after Part 4)</td><td>Close-up of the fault breccia</td></tr><tr class=""><td><span class="cb"></span></td><td>Interval</td><td>27–28.2 m</td><td>Core log → <b>Photos (0)</b> on the interval → <b>Take photo</b> (after Part 4)</td><td>Close-up of the vein and the gold</td></tr></tbody>
+  </table>
+
+  <div class="see"><b>You should see</b><ul>
+    <li>The camera screen shows the label at the top, for example <b>MB-DDH-001 · Box 6 · 25–30 m</b>.</li>
+    <li>After the shutter, you go back to the photo list with a thumbnail, the time, the size (well under 1.5 MB) and <b>Delete</b>.</li>
+    <li>Every box now says <b>Photos (1)</b>.</li>
+  </ul></div>
+  <div class="tip"><b>Tip</b>Hold the phone flat above the box. Photograph the whole box, not just one row. If you get a bad photo, tap Delete and take it again.</div>
+</section>
+<section class="wide">
+  <h2><span class="num">4</span>Log the core</h2>
+  <p class="meta">About 60 minutes. Core log → <b>Add interval</b>. The from-depth fills in with the end of the last interval. Tap a code chip, or type the code.</p>
+
+  
+  <table class="data small-text">
+    <thead><tr><th>#</th><th>From</th><th>To</th><th>Lithology</th><th>Alteration type</th><th>Alteration intensity</th><th>Mineralisation: mineral</th><th>Mineralisation: style</th><th>Mineral content (%)</th><th>Weathering</th><th>Structure type</th><th>Structure notes and comments</th></tr></thead>
+    <tbody><tr class=""><td>1</td><td>0</td><td>3</td><td>OVB</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>CW</td><td>–</td><td>Saprolite, clay-rich, orange-brown. Core broken.</td></tr><tr class="alt"><td>2</td><td>3</td><td>8</td><td>AND</td><td>ARG</td><td>3</td><td>–</td><td>–</td><td>–</td><td>HW</td><td>–</td><td>Limonite on fractures. Original texture still visible.</td></tr><tr class=""><td>3</td><td>8</td><td>14</td><td>AND</td><td>PHY</td><td>2</td><td>PY</td><td>DISS</td><td>2</td><td>MW</td><td>–</td><td>–</td></tr><tr class="alt"><td>4</td><td>14</td><td>18</td><td>AND</td><td>PHY</td><td>3</td><td>PY</td><td>VNL</td><td>3</td><td>SW</td><td>–</td><td>Sericite-pyrite veinlets, 1 to 3 mm.</td></tr><tr class=""><td>5</td><td>18</td><td>21</td><td>BX</td><td>PHY</td><td>3</td><td>PY</td><td>BXH</td><td>4</td><td>SW</td><td>FLT</td><td>Fault breccia. Gouge at 19.2 to 19.5 m. Poor recovery.</td></tr><tr class="alt"><td>6</td><td>21</td><td>27</td><td>DIO</td><td>SIL</td><td>4</td><td>PY</td><td>STK</td><td>5</td><td>FR</td><td>–</td><td>Quartz stockwork, about 8 veinlets per metre.</td></tr><tr class=""><td>7</td><td>27</td><td>28.2</td><td>QV</td><td>SIL</td><td>4</td><td>AU</td><td>VNL</td><td>0.1</td><td>FR</td><td>VEIN</td><td>Vuggy quartz vein. Visible gold at 27.6 m.</td></tr><tr class="alt"><td>8</td><td>28.2</td><td>33</td><td>DIO</td><td>SIL</td><td>3</td><td>PY</td><td>STK</td><td>4</td><td>FR</td><td>–</td><td>–</td></tr><tr class=""><td>9</td><td>33</td><td>36</td><td>DIO</td><td>PHY</td><td>2</td><td>PY</td><td>DISS</td><td>2</td><td>FR</td><td>–</td><td>–</td></tr><tr class="alt"><td>10</td><td>36</td><td>39.5</td><td>GRD</td><td>PROP</td><td>2</td><td>–</td><td>–</td><td>–</td><td>FR</td><td>–</td><td>Chlorite and epidote after biotite.</td></tr><tr class=""><td>11</td><td>39.5</td><td>40.5</td><td>GRD</td><td>PROP</td><td>2</td><td>–</td><td>–</td><td>–</td><td>FR</td><td>FRAC</td><td>Calcite-filled fractures.</td></tr><tr class="alt"><td>12</td><td>40.5</td><td>45.3</td><td>GRD</td><td>PROP</td><td>1</td><td>–</td><td>–</td><td>–</td><td>FR</td><td>–</td><td>Fresh granodiorite to end of hole.</td></tr></tbody>
+  </table>
+
+  <div class="cols two">
+    <div class="tip"><b>Tip</b>Intervals <b>4</b> and <b>12</b> are almost the same as the one before. Tap <b>Copy previous interval</b>, then change only what differs: interval 4 (intensity 3, style VNL, 3%, weathering SW, new note); interval 12 (intensity 1, no structure, new note).</div>
+    <div class="tip"><b>Tip</b>Take a call in the middle of an interval? Close the form. Your half-typed interval is saved, and comes back when you open <b>Add interval</b> again.</div>
+  </div>
+
+  <div class="see"><b>You should see</b><ul>
+    <li>After the last interval the hole screen says <b>Core logged 45.3 of 45.3 m</b> and the progress bar is full.</li>
+    <li>The depth strip is solid blue: no amber gaps, no red overlaps. The Core log tile says <b>12 intervals</b>.</li>
+    <li>No amber warning row on the hole screen at all.</li>
+  </ul></div>
+  <p>Now go back to Part 3 and take the two interval photos (18–21 m and 27–28.2 m).</p>
+</section>
+<section class="wide">
+  <h2><span class="num">5</span>Sample the core</h2>
+  <p class="meta">About 75 minutes. Samples → <b>New sample</b>. Choose the hole chip <b>MB-DDH-001</b> and the type chip. The <b>Sample number</b> is filled in for you and should match the table.</p>
+
+  
+  <table class="data">
+    <thead><tr><th>#</th><th>Sample number</th><th>Type</th><th>Depth (m)</th><th>Also enter</th><th>Note (optional)</th><th>Done</th></tr></thead>
+    <tbody><tr class="group"><td colspan="7">A. Primary samples, in order (samples 1 to 20)</td></tr><tr class=""><td>1</td><td><b>MB-00001</b></td><td>Primary</td><td>14–16</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>2</td><td><b>MB-00002</b></td><td>Primary</td><td>16–18</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>3</td><td><b>MB-00003</b></td><td>Primary</td><td>18–19</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>4</td><td><b>MB-00004</b></td><td>Primary</td><td>19–20</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>5</td><td><b>MB-00005</b></td><td>Primary</td><td>20–21</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>6</td><td><b>MB-00006</b></td><td>Primary</td><td>21–22</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>7</td><td><b>MB-00007</b></td><td>Primary</td><td>22–23</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>8</td><td><b>MB-00008</b></td><td>Primary</td><td>23–24</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>9</td><td><b>MB-00009</b></td><td>Primary</td><td>24–25</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>10</td><td><b>MB-00010</b></td><td>Primary</td><td>25–26</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>11</td><td><b>MB-00011</b></td><td>Primary</td><td>26–27</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>12</td><td><b>MB-00012</b></td><td>Primary</td><td>27–28.2</td><td></td><td>Quartz vein, visible gold at 27.6 m</td><td><span class="cb"></span></td></tr><tr class=""><td>13</td><td><b>MB-00013</b></td><td>Primary</td><td>28.2–29.2</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>14</td><td><b>MB-00014</b></td><td>Primary</td><td>29.2–30.2</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>15</td><td><b>MB-00015</b></td><td>Primary</td><td>30.2–31.2</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>16</td><td><b>MB-00016</b></td><td>Primary</td><td>31.2–32.2</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>17</td><td><b>MB-00017</b></td><td>Primary</td><td>32.2–33</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>18</td><td><b>MB-00018</b></td><td>Primary</td><td>33–34</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>19</td><td><b>MB-00019</b></td><td>Primary</td><td>34–35</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="alt"><td>20</td><td><b>MB-00020</b></td><td>Primary</td><td>35–36</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class="group"><td colspan="7">B. Stop. Open the Samples register: three amber reminders appear. Insert the controls (samples 21 to 23)</td></tr><tr class=""><td>21</td><td><b>MB-00021</b></td><td><b>Standard</b></td><td>none</td><td>Reference material ID: <code>OREAS 45e</code></td><td>Use the certified standard your lab supplies</td><td><span class="cb"></span></td></tr><tr class="alt"><td>22</td><td><b>MB-00022</b></td><td><b>Blank</b></td><td>none</td><td></td><td>Barren silica sand</td><td><span class="cb"></span></td></tr><tr class=""><td>23</td><td><b>MB-00023</b></td><td><b>Duplicate</b></td><td>copied</td><td>Duplicate of: <code>MB-00012</code></td><td>Quarter core, same interval as MB-00012</td><td><span class="cb"></span></td></tr><tr class="group"><td colspan="7">C. Back to the primaries (samples 24 and 25)</td></tr><tr class="alt"><td>24</td><td><b>MB-00024</b></td><td>Primary</td><td>36–38</td><td></td><td>–</td><td><span class="cb"></span></td></tr><tr class=""><td>25</td><td><b>MB-00025</b></td><td>Primary</td><td>38–40</td><td></td><td>–</td><td><span class="cb"></span></td></tr></tbody>
+  </table>
+
+  <div class="cols two">
+    <div>
+      <div class="see"><b>You should see</b><ul>
+        <li>After sample 20 the register shows three amber cards: <b>A standard is due</b>, <b>A blank is due</b>, <b>A field duplicate is due</b>, each with "20 samples since the last one (target: every 20)". Before sample 20 none are shown.</li>
+        <li>Tap <b>Insert standard</b> (and the others) to jump to a new-sample form with the type already chosen. Once all three are saved the amber cards disappear.</li>
+      </ul></div>
+    </div>
+    <div>
+      <div class="see"><b>You should see</b><ul>
+        <li>The register lists <b>25 samples</b>. Filter <b>Type</b> = Standard shows one.</li>
+        <li>QC insertion rate: <b>Standards: 1 (1 per 22 samples, target 1 per 20)</b>, and the same for blanks and field duplicates.</li>
+        <li>The hole screen Samples tile says <b>25 samples</b>.</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="tip"><b>Tip</b>In real life the lab wants the standard hidden among the batch. This test only checks the reminder rule, so we insert them in one go after sample 20.</div>
+</section>
+<section class="page">
+  <h2><span class="num">6</span>Close out the hole</h2>
+  <p class="meta">About 5 minutes.</p>
+  <div class="step"><span class="cb"></span><div><b>6.1</b> On the hole screen tap the <b>Logged</b> status chip.</div></div>
+  <div class="step"><span class="cb"></span><div><b>6.2</b> Look at the whole hole screen, top to bottom.</div></div>
+  <div class="see"><b>You should see</b><ul>
+    <li>Pill: <b>Logged</b>. Core logged <b>45.3 of 45.3 m</b>, no warnings.</li>
+    <li>Tiles: <b>9 boxes</b>, <b>15 runs · 94.5% recovery</b>, <b>12 intervals</b>, <b>25 samples</b>.</li>
+    <li>Actual details: Started and Completed show the dates you picked, final depth <b>45.3</b>.</li>
+  </ul></div>
+  <div class="step"><span class="cb"></span><div><b>6.3</b> Go back to the home screen.</div></div>
+  <div class="see"><b>You should see</b><ul>
+    <li><b>Continue where you left off</b> shows <b>MB-DDH-001</b> in <b>Masbate Gold Pilot</b>, 100% logged.</li>
+    <li>Your project card shows <b>1 hole · Gold · 100% logged</b>.</li>
+  </ul></div>
+  <div class="step"><span class="cb"></span><div><b>6.4</b> Force-close the app (recent apps, swipe it away), then open it again. Everything is still there. This is the "battery died at the rig" test.</div></div>
+
+  <h2 style="margin-top:22px"><span class="num">7</span>Trace samples back to the core</h2>
+  <p class="meta">About 10 minutes. Samples → tap a sample. The screen shows where it has been, from the hole to the assay.</p>
+  
+  <table class="">
+    <thead><tr><th>Open sample</th><th>Chain you should see</th></tr></thead>
+    <tbody><tr class=""><td><b>MB-00012</b><br>the quartz vein</td><td>Hole MB-DDH-001, GPS or typed collar<br><b>Box 6 · 27–28.2 m</b>, 1 photo<br>Logged interval <b>QV · SIL</b><br>Sample created<br>Bagged (next step) → Dispatched → Assay result</td></tr><tr class=""><td><b>MB-00003</b><br>in the fault zone</td><td><b>Box 4 · 18–19 m</b>, 1 photo<br>Logged interval <b>BX · PHY</b></td></tr><tr class=""><td><b>MB-00025</b><br>crosses two intervals</td><td><b>Box 8 · 38–40 m</b>, 1 photo<br>Logged interval <b>GRD · PROP (+1 more)</b></td></tr><tr class=""><td><b>MB-00021</b><br>the standard</td><td>Starts at the hole (no core to trace)<br>Sample created: <b>Reference material OREAS 45e</b><br>Bagged → Dispatched → Assay result</td></tr></tbody>
+  </table>
+  <div class="see"><b>You should see</b><ul>
+    <li>Every green tick is real data. No amber "missing" warning on any sample in this hole.</li>
+    <li>The <b>Bagged</b> step is highlighted as next but cannot be tapped yet. Custody and dispatch come in a later update, so this is expected.</li>
+  </ul></div>
+</section>
+<section class="page">
+  <h2><span class="num">8</span>Export the data and check it</h2>
+  <p class="meta">About 15 minutes. Project screen → <b>Export</b>. Tap <b>Share</b> on each file and save it to the phone (Files or Downloads). If you are still in airplane mode, that is enough for now; switch airplane mode off afterwards and send the files to yourself (email, Drive, USB). Open them on a computer.</p>
+
+  
+  <table class="">
+    <thead><tr><th>File</th><th>Rows</th><th>Check in Excel</th></tr></thead>
+    <tbody><tr class=""><td><code>masbate-gold-pilot-collars.csv</code></td><td>1</td><td>HOLEID MB-DDH-001, LONGITUDE 123.5987, LATITUDE 12.3714, COORDINATE_SYSTEM WGS84, PLANNED_DEPTH 45, FINAL_DEPTH 45.3, STATUS logged</td></tr><tr class=""><td><code>masbate-gold-pilot-surveys.csv</code></td><td>1</td><td>DEPTH 0, AZIMUTH 90, DIP -60 (planned values: no downhole surveys yet)</td></tr><tr class=""><td><code>masbate-gold-pilot-log.csv</code></td><td>12</td><td>Depths run 0 to 45.3 with no gaps. Interval 7 has MINERAL AU, MINERAL_PERCENT 0.1, STRUCTURE_TYPE VEIN.</td></tr><tr class=""><td><code>masbate-gold-pilot-runs.csv</code></td><td>15</td><td>RECOVERY_PCT of run 1 is 60 and of run 7 is 90. Sum of RECOVERED_M is 42.81, sum of DRILLED_M is 45.3.</td></tr><tr class=""><td><code>masbate-gold-pilot-samples.csv</code></td><td>25</td><td>SAMPLE_ID MB-00001 to MB-00025. QC column marks the three controls. MB-00023 has PARENT_SAMPLE_ID MB-00012 and the same FROM and TO.</td></tr></tbody>
+  </table>
+  <div class="see"><b>You should see</b><ul>
+    <li>All five files open as clean tables: no odd characters, one header row, numbers as numbers.</li>
+    <li>HOLEID is <b>MB-DDH-001</b> on every row.</li>
+    <li>The Export screen shows the file names and row counts above <b>before</b> you share.</li>
+  </ul></div>
+  <div class="tip"><b>Tip</b>Core boxes and photos are not in the export yet. They are on the phone, and they show up in the sample trace.</div>
+</section>
+<section class="page">
+  <h2><span class="num">9</span>Try to break it</h2>
+  <p class="meta">About 20 minutes. Do these on the scratch hole <b>TEST-01</b> so the day’s data stays clean. Each one checks that the app catches a mistake a tired person makes in the field.</p>
+  
+  <table class="data">
+    <thead><tr><th></th><th>Do this</th><th>You should see</th><th>Where</th></tr></thead>
+    <tbody><tr class=""><td><span class="cb"></span></td><td><b>1.</b> Create a second hole with ID <code>MB-DDH-001</code> in this project.</td><td>“A hole named "MB-DDH-001" already exists in this project.” No hole is created.</td><td>Project</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>2.</b> Create a scratch hole <code>TEST-01</code>, planned depth <code>10</code>. Use it for everything below.</td><td>The hole is created. The rest of the day’s data is untouched.</td><td>Project</td></tr><tr class=""><td><span class="cb"></span></td><td><b>3.</b> On TEST-01 add box 1 from 0 to 5, then box 2 from 6 to 10.</td><td>Amber “Leaves a gap of 5–6 m next to this box.” The button now says <b>Save anyway</b>. Do not save it.</td><td>Boxes</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>4.</b> Add box 2 from 4 to 8.</td><td>Amber “Overlaps another box at 4–5 m.” Do not save it.</td><td>Boxes</td></tr><tr class=""><td><span class="cb"></span></td><td><b>5.</b> Add a run from 0 to 3 with Recovered length <code>3.4</code>.</td><td>Amber “Recovered 3.4 m is more than the 3 m drilled. Check the entry before saving.”</td><td>Runs</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>6.</b> Add a run from 0 to 3, recovered <code>2</code>, pieces ≥ 10 cm <code>2.5</code>.</td><td>Red “Pieces ≥ 10 cm can’t be longer than the recovered core.” You cannot save.</td><td>Runs</td></tr><tr class=""><td><span class="cb"></span></td><td><b>7.</b> Add an interval from 3 to 2.</td><td>Red “To depth must be greater than from depth.”</td><td>Log</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>8.</b> Add an interval 0 to 2 with Mineral content <code>150</code>.</td><td>Red “Mineral % must be between 0 and 100.”</td><td>Log</td></tr><tr class=""><td><span class="cb"></span></td><td><b>9.</b> Add a primary sample from 9 to 11.</td><td>Red “A sample must fall inside the hole’s depth (0–10 m).”</td><td>Samples</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>10.</b> Save a primary sample 0 to 2, then try 1 to 3.</td><td>Red “Overlaps a primary sample at 0–2 m.”</td><td>Samples</td></tr><tr class=""><td><span class="cb"></span></td><td><b>11.</b> Choose type Standard and leave Reference material ID empty.</td><td>Red “Enter the reference material ID.”</td><td>Samples</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>12.</b> Choose type Duplicate and pick nothing under “Duplicate of”.</td><td>Red “Choose the primary sample this duplicates.”</td><td>Samples</td></tr><tr class=""><td><span class="cb"></span></td><td><b>13.</b> Type the sample number <code>MB-00001</code> on TEST-01.</td><td>Red “MB-00001 is already used in this project.” Numbers are never reused.</td><td>Samples</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>14.</b> Open MB-00012, tap <b>Delete sample</b> and confirm.</td><td>Refused: “A field duplicate points at this sample. Delete the duplicate first.” Nothing is deleted.</td><td>Samples</td></tr><tr class=""><td><span class="cb"></span></td><td><b>15.</b> On the MB-DDH-001 hole screen, type <code>12x</code> as Actual final depth and Save.</td><td>Red “Final depth must be a number above 0.” Nothing is saved.</td><td>Hole</td></tr><tr class="alt"><td><span class="cb"></span></td><td><b>16.</b> Tap <b>Completed</b> on any hole with a Started date.</td><td>The calendar opens on today. Days before the Started date are greyed out and cannot be chosen.</td><td>Hole</td></tr></tbody>
+  </table>
+</section>
+<section class="page">
+  <h2><span class="num">10</span>Field conditions</h2>
+  <p class="meta">These are the things a desk test cannot show. Do them once during the day and tick when done.</p>
+  
+  <table class="">
+    <thead><tr><th></th><th>Check</th><th>What to note</th></tr></thead>
+    <tbody><tr class=""><td><span class="cb"></span></td><td><b>No signal all day.</b> Airplane mode was on from Part 1 to Part 9.</td><td>Did anything ask for the internet or fail because it was offline?</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Sunlight.</b> Take the phone outside and read the hole screen and the sample trace at full brightness.</td><td>Can you tell a ticked step from a next step from an amber problem at a glance?</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Gloves or dirty hands.</b> Enter three runs with gloves on, or with damp fingers.</td><td>Any button too small? Any mis-taps? Which ones?</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Interruption.</b> Start an interval, switch to another app for a minute, come back.</td><td>Was your half-typed interval still there?</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Battery.</b> Note the battery at the start and after Part 5.</td><td>Start: ____ %     After Part 5: ____ %</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Dark and light.</b> Switch the phone between dark and light mode once.</td><td>Is everything readable in both? Any text that vanishes?</td></tr><tr class=""><td><span class="cb"></span></td><td><b>Speed.</b> Does any screen feel slow (more than 2 seconds)?</td><td>Which screen, doing what?</td></tr></tbody>
+  </table>
+</section>
+<section class="page">
+  <h2>Appendix: the codes used today</h2>
+  <p>All of these are in the app’s starter code library. You can see and edit the library from Core log → <b>Code library</b>. These are a generic hard-rock set; tell us which codes your team really uses.</p>
+  <div class="codegrid">
+    <div><h4>Lithology</h4><div class="code"><code>OVB</code><span>Overburden / soil</span></div><div class="code"><code>AND</code><span>Andesite</span></div><div class="code"><code>BX</code><span>Breccia</span></div><div class="code"><code>DIO</code><span>Diorite</span></div><div class="code"><code>QV</code><span>Quartz vein</span></div><div class="code"><code>GRD</code><span>Granodiorite</span></div></div><div><h4>Alteration type</h4><div class="code"><code>ARG</code><span>Argillic</span></div><div class="code"><code>PHY</code><span>Phyllic (sericitic)</span></div><div class="code"><code>SIL</code><span>Silicic</span></div><div class="code"><code>PROP</code><span>Propylitic</span></div></div><div><h4>Alteration intensity</h4><div class="code"><code>1</code><span>Weak</span></div><div class="code"><code>2</code><span>Moderate</span></div><div class="code"><code>3</code><span>Strong</span></div><div class="code"><code>4</code><span>Pervasive / intense</span></div></div><div><h4>Mineralisation: mineral</h4><div class="code"><code>PY</code><span>Pyrite</span></div><div class="code"><code>AU</code><span>Visible gold</span></div></div><div><h4>Mineralisation: style</h4><div class="code"><code>DISS</code><span>Disseminated</span></div><div class="code"><code>VNL</code><span>Veinlets</span></div><div class="code"><code>STK</code><span>Stockwork</span></div><div class="code"><code>BXH</code><span>Breccia-hosted</span></div></div><div><h4>Weathering</h4><div class="code"><code>FR</code><span>Fresh</span></div><div class="code"><code>SW</code><span>Slightly weathered</span></div><div class="code"><code>MW</code><span>Moderately weathered</span></div><div class="code"><code>HW</code><span>Highly weathered</span></div><div class="code"><code>CW</code><span>Completely weathered</span></div></div><div><h4>Structure type</h4><div class="code"><code>FLT</code><span>Fault</span></div><div class="code"><code>FRAC</code><span>Fracture zone</span></div><div class="code"><code>VEIN</code><span>Vein</span></div></div>
+  </div>
+</section>
+<section class="page">
+  <h2>Sign-off sheet</h2>
+  <div class="form">
+    <div><span>Tester</span><i></i></div>
+    <div><span>Date</span><i></i></div>
+    <div><span>Phone model and Android version</span><i></i></div>
+    <div><span>App version</span><i></i></div>
+    <div><span>Started at</span><i></i></div>
+    <div><span>Finished at</span><i></i></div>
+  </div>
+  
+  <table class="">
+    <thead><tr><th>Part</th><th>What</th><th>Target (min)</th><th>Your time (min)</th><th>How smooth? 1 (painful) to 5 (effortless)</th><th>Step numbers that did not match</th></tr></thead>
+    <tbody><tr class=""><td>1</td><td>Set up project and hole</td><td>10</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class="alt"><td>2</td><td>Core reception (runs and boxes)</td><td>45</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class=""><td>3</td><td>Photograph the core</td><td>25</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class="alt"><td>4</td><td>Log the core</td><td>60</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class=""><td>5</td><td>Sample the core, with QC</td><td>75</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class="alt"><td>6</td><td>Close out the hole</td><td>5</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class=""><td>7</td><td>Trace samples</td><td>10</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class="alt"><td>8</td><td>Export and check</td><td>15</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class=""><td>9</td><td>Try to break it</td><td>20</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr><tr class="alt"><td>10</td><td>Field conditions</td><td>–</td><td></td><td><span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span> &nbsp; <span class="cb"></span></td><td></td></tr></tbody>
+  </table>
+  <div class="lines">
+    <h3>What confused you or slowed you down?</h3><i></i><i></i><i></i>
+    <h3>What did you expect the app to do that it did not?</h3><i></i><i></i><i></i>
+    <h3>What would you never trust the app with in the field, and why?</h3><i></i><i></i>
+  </div>
+  <p class="small">Send this sheet, with screenshots of anything that did not match, to the product owner.</p>
+</section>
+</body></html>

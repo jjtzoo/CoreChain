@@ -621,6 +621,15 @@ All seven stories (E8-1, E1-1, E1-2, E2-1 through E2-4) are coded, typechecked, 
 
 Adapted from `docs/discovery/day-1-to-day-30-pilot.md`.
 
+### The official test script: "A day in the field"
+
+Before any tester uses their own data, everyone runs the same scripted day so results are comparable: `docs/product/field-day-mockup/CoreChain-Field-Day-Guide.pdf` (regenerate with `node docs/product/field-day-mockup/build-guide.mjs`).
+
+- **The scenario:** one fictional hole, `MB-DDH-001` (45.3 m, Masbate Gold Pilot): 15 core runs, 9 core boxes, 11 photos, 12 logged intervals and 25 samples (22 primary, plus a standard, a blank and a field duplicate), then a CSV export. About 4 h 25 min of entry, with target times per part and a sign-off sheet for the tester's own times and ratings.
+- **Built to be trusted:** the data lives in `packages/domain/src/fixtures/mb-ddh-001.json` and `field-day.test.ts` runs every record through the app's own validation, QC-reminder, trace and export rules, so the guide cannot tell a tester to type something the app would refuse, and the figures it quotes (94.5% recovery, the QC reminders appearing after the 20th primary, five export files with 1, 1, 12, 15 and 25 rows) are checked by tests.
+- **Also covers:** 16 deliberate mistakes on a scratch hole with the exact message the app should give, and field-conditions checks (airplane mode all day, sunlight, gloves, interruption, battery, dark and light mode).
+- **Known gaps the script works around:** editing an existing entry (delete and re-add), core boxes and photos not in the export yet, and "Bagged" / "Dispatched" not yet tappable (custody and dispatch, E7).
+
 ### Testers
 
 - 2–5 field geologists, each working alone (no admin, no manager).
