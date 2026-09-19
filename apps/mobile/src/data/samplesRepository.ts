@@ -273,3 +273,13 @@ export async function dismissQcReminder(
   );
   return { outcome: 'dismissed' };
 }
+
+export async function getSample(id: string): Promise<FieldSample | null> {
+  const db = await getDatabase();
+  const { rows } = await db.execute(
+    'SELECT * FROM samples WHERE id = ? AND deleted_at IS NULL',
+    [id],
+  );
+  const row = (rows as unknown as SampleRow[])[0];
+  return row ? rowToSample(row) : null;
+}

@@ -1,7 +1,7 @@
 import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { MinTap, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type TextFieldProps = TextInputProps & {
@@ -40,15 +40,15 @@ export function TextField({
           {
             color: theme.text,
             backgroundColor: theme.backgroundElement,
-            borderColor: error ? '#d92d20' : 'transparent',
+            borderColor: error ? theme.danger : theme.border,
           },
           style,
         ]}
-        placeholderTextColor={theme.textSecondary}
+        placeholderTextColor={theme.muted}
         {...inputProps}
       />
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="danger">
           {error}
         </ThemedText>
       ) : null}
@@ -58,16 +58,14 @@ export function TextField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.one,
+    gap: Spacing.one + 2,
   },
   input: {
-    borderRadius: Spacing.two,
-    borderWidth: 1,
+    minHeight: MinTap,
+    borderRadius: Radius.control,
+    borderWidth: 1.5,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 16,
-  },
-  error: {
-    color: '#d92d20',
   },
 });

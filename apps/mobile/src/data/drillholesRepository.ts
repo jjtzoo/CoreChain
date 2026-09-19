@@ -241,3 +241,31 @@ export async function updateDrillholeStatus(
 
   return getDrillhole(id);
 }
+
+/**
+ * The hole worked on most recently: the latest change to the hole itself or to
+ * any of its core boxes, runs, log intervals, samples or photos. Drives the
+ * "Continue where you left off" card on the home screen.
+ */
+export async function getMostRecentDrillhole(): Promise<{
+  drillhole: FieldDrillhole;
+  projectName: string;
+} | null> {
+  const db = await getDatabase();
+  const latest = (table: string) =>
+    `COALESCE((SELECT MAX(updated_at) FROM ${table} WHERE drillhole_id = d.id AND deleted_at IS NULL), '')`;
+  const { rows } = await db.execute(
+    `SELECT d.*, p.name AS project_name,
+       MAX(d.updated_at, ${latest('core_boxes')}, ${latest('core_runs')},
+           ${latest('log_intervals')}, ${latest('samples')}, ${latest('photos')}) AS last_touched
+     FROM drillholes d
+     JOIN projects p ON p.id = d.project_id
+     WHERE d.deleted_at IS NULL AND p.deleted_at IS NULL
+     ORDER BY last_touched DESC
+     LIMIT 1`,
+  );
+  const row = (rows as unknown as (DrillholeRow & { project_name: string })[])[0];
+  return row
+    ? { drillhole: rowToDrillhole(row), projectName: row.project_name }
+    : null;
+}

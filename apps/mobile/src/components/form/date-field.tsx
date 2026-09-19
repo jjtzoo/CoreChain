@@ -3,7 +3,7 @@ import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { MinTap, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type DateFieldProps = {
@@ -72,7 +72,7 @@ export function DateField({
             styles.input,
             {
               backgroundColor: theme.backgroundElement,
-              borderColor: error ? '#d92d20' : 'transparent',
+              borderColor: error ? theme.danger : theme.border,
             },
           ]}>
           <ThemedText
@@ -94,7 +94,7 @@ export function DateField({
         ) : null}
       </View>
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="danger">
           {error}
         </ThemedText>
       ) : null}
@@ -104,7 +104,7 @@ export function DateField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.one,
+    gap: Spacing.one + 2,
   },
   row: {
     flexDirection: 'row',
@@ -113,12 +113,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
+    minHeight: MinTap,
+    justifyContent: 'center',
+    borderRadius: Radius.control,
+    borderWidth: 1.5,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-  },
-  error: {
-    color: '#d92d20',
   },
 });

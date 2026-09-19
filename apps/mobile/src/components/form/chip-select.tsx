@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Chip } from '@/components/ui/chip';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
 export type ChipSelectProps<T extends string> = {
   label: string;
@@ -24,61 +24,30 @@ export function ChipSelect<T extends string>({
   onChange,
   formatOption,
 }: ChipSelectProps<T>) {
-  const theme = useTheme();
-
   return (
     <View style={styles.container}>
       <ThemedText type="smallBold">{label}</ThemedText>
       <View style={styles.row}>
-        {options.map((option) => {
-          const selected = option === value;
-          return (
-            <Pressable
-              key={option}
-              onPress={() => onChange(option)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: selected
-                    ? SELECTED_COLOR
-                    : theme.backgroundElement,
-                },
-              ]}>
-              <ThemedText
-                type={selected ? 'smallBold' : 'small'}
-                style={selected ? styles.selectedLabel : undefined}>
-                {formatOption ? formatOption(option) : option}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
+        {options.map((option) => (
+          <Chip
+            key={option}
+            label={formatOption ? formatOption(option) : option}
+            selected={option === value}
+            onPress={() => onChange(option)}
+          />
+        ))}
       </View>
     </View>
   );
 }
 
-// A solid fill with a white bold label, so the selected option stays obvious
-// in direct sunlight — the neutral "selected" grey is only a few shades off the
-// unselected chip.
-const SELECTED_COLOR = '#208AEF';
-
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.one,
-  },
-  selectedLabel: {
-    color: '#ffffff',
+    gap: Spacing.two,
   },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
   },
 });

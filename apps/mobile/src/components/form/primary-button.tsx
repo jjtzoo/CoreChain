@@ -1,7 +1,9 @@
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { MinTap, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export type PrimaryButtonProps = {
   label: string;
@@ -9,16 +11,27 @@ export type PrimaryButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'secondary';
+  /** An icon shown before the label. */
+  icon?: IconName;
 };
 
+/**
+ * The app's button. Primary is a solid accent fill (the one main action on a
+ * screen); secondary is an outlined button for everything else. Both are big
+ * enough to hit with gloves on.
+ */
 export function PrimaryButton({
   label,
   onPress,
   disabled,
   loading,
   variant = 'primary',
+  icon,
 }: PrimaryButtonProps) {
+  const theme = useTheme();
   const isDisabled = disabled || loading;
+  const primary = variant === 'primary';
+  const labelColor = primary ? theme.onAccent : theme.accent;
 
   return (
     <Pressable
@@ -26,21 +39,25 @@ export function PrimaryButton({
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
-      style={[
+      style={({ pressed }) => [
         styles.button,
-        variant === 'primary' ? styles.primary : styles.secondary,
+        primary
+          ? { backgroundColor: theme.accent }
+          : { borderWidth: 1.5, borderColor: theme.accent },
+        pressed && styles.pressed,
         isDisabled && styles.disabled,
       ]}>
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : undefined} />
+        <ActivityIndicator color={labelColor} />
       ) : (
-        <ThemedText
-          type="smallBold"
-          style={
-            variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel
-          }>
-          {label}
-        </ThemedText>
+        <View style={styles.content}>
+          {icon ? (
+            <Icon name={icon} size={22} themeColor={primary ? 'onAccent' : 'accent'} />
+          ) : null}
+          <ThemedText type="smallBold" style={[styles.label, { color: labelColor }]}>
+            {label}
+          </ThemedText>
+        </View>
       )}
     </Pressable>
   );
@@ -48,26 +65,22 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
+    minHeight: MinTap,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.control,
   },
-  primary: {
-    backgroundColor: '#208AEF',
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
-  primaryLabel: {
-    color: '#ffffff',
+  label: {
+    fontSize: 16,
   },
-  // Outlined, so a secondary action still reads as a button and not as text.
-  secondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: '#208AEF',
-  },
-  secondaryLabel: {
-    color: '#208AEF',
+  pressed: {
+    opacity: 0.85,
   },
   disabled: {
     opacity: 0.5,

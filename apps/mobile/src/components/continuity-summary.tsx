@@ -3,8 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-
-export const WARNING_COLOR = '#b54708';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Lists the gaps and overlaps between a hole's depth ranges (boxes, runs, and
@@ -15,6 +14,7 @@ export function ContinuitySummary({
 }: {
   ranges: readonly DepthRange[];
 }) {
+  const theme = useTheme();
   if (ranges.length < 2) {
     return null;
   }
@@ -34,7 +34,7 @@ export function ContinuitySummary({
         <ThemedText
           key={`gap-${gap.fromM}-${gap.toM}`}
           type="small"
-          style={styles.warning}>
+          style={{ color: theme.warning }}>
           Gap: {gap.fromM}–{gap.toM} m
         </ThemedText>
       ))}
@@ -42,7 +42,7 @@ export function ContinuitySummary({
         <ThemedText
           key={`overlap-${overlap.fromM}-${overlap.toM}`}
           type="small"
-          style={styles.warning}>
+          style={{ color: theme.warning }}>
           Overlap: {overlap.fromM}–{overlap.toM} m
         </ThemedText>
       ))}
@@ -53,8 +53,5 @@ export function ContinuitySummary({
 const styles = StyleSheet.create({
   list: {
     gap: Spacing.one,
-  },
-  warning: {
-    color: WARNING_COLOR,
   },
 });

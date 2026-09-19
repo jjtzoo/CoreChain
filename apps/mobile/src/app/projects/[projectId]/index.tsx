@@ -5,23 +5,32 @@ import {
   type FieldDrillhole,
   type Project,
 } from '@corechain/domain';
-import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Card } from '@/components/ui/card';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { StatusPill } from '@/components/ui/status-pill';
+import { Radius, Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
+import { useTheme } from '@/hooks/use-theme';
+import { statusLabel, statusTone } from '@/utils/status';
+
+/** Only show the search box once there are enough holes to need it. */
+const SEARCH_FROM_HOLES = 5;
 
 export default function ProjectDetailScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
+  const theme = useTheme();
 
   const [project, setProject] = useState<Project | null>(null);
   const [drillholes, setDrillholes] = useState<FieldDrillhole[]>([]);
@@ -50,77 +59,119 @@ export default function ProjectDetailScreen() {
     return null;
   }
 
+  const shortcuts: { icon: IconName; label: string; path: string }[] = [
+    { icon: 'flask-outline', label: 'Samples', path: 'samples' },
+    { icon: 'file-export-outline', label: 'Export', path: 'export' },
+    { icon: 'cog-outline', label: 'Settings', path: 'settings' },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <View style={styles.headerText}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.title}>
           <ThemedText type="subtitle">{project.name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {project.coordinateSystem}
+            {project.commodity ? ` · ${project.commodity}` : ''}
+            {project.location ? ` · ${project.location}` : ''}
           </ThemedText>
         </View>
-        <View style={styles.headerLinks}>
-          <Pressable onPress={() => router.push(`/projects/${projectId}/samples`)}>
-            <ThemedText type="link">Samples</ThemedText>
-          </Pressable>
-          <Pressable onPress={() => router.push(`/projects/${projectId}/export`)}>
-            <ThemedText type="link">Export</ThemedText>
-          </Pressable>
-          <Pressable onPress={() => router.push(`/projects/${projectId}/settings`)}>
-            <ThemedText type="link">Settings</ThemedText>
-          </Pressable>
+
+        <View style={styles.shortcuts}>
+          {shortcuts.map((shortcut) => (
+            <Pressable
+              key={shortcut.path}
+              onPress={() => router.push(`/projects/${projectId}/${shortcut.path}`)}
+              accessibilityRole="button"
+              accessibilityLabel={shortcut.label}
+              style={({ pressed }) => [
+                styles.shortcut,
+                {
+                  backgroundColor: pressed
+                    ? theme.backgroundSelected
+                    : theme.backgroundElement,
+                  borderColor: theme.border,
+                },
+              ]}>
+              <Icon name={shortcut.icon} size={24} themeColor="accent" />
+              <ThemedText type="small">{shortcut.label}</ThemedText>
+            </Pressable>
+          ))}
         </View>
-      </View>
 
-      <TextField
-        label="Search holes"
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search by hole ID"
-      />
+        <PrimaryButton
+          label="New drillhole"
+          icon="plus"
+          onPress={() => router.push(`/projects/${projectId}/drillholes/new`)}
+        />
 
-      <PrimaryButton
-        label="New drillhole"
-        onPress={() => router.push(`/projects/${projectId}/drillholes/new`)}
-      />
+        <View style={styles.section}>
+          <ThemedText type="caption" themeColor="textSecondary">
+            DRILLHOLES · {drillholes.length}
+          </ThemedText>
 
-      {drillholes.length === 0 ? (
-        <ThemedView type="backgroundElement" style={styles.emptyState}>
-          <ThemedText type="default">No drillholes yet.</ThemedText>
-        </ThemedView>
-      ) : (
-        <FlatList
-          data={visibleDrillholes}
-          keyExtractor={(d) => d.id}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <ThemedView type="backgroundElement" style={styles.emptyState}>
-              <ThemedText type="default">
+          {drillholes.length >= SEARCH_FROM_HOLES ? (
+            <TextField
+              label="Search holes"
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search by hole ID"
+            />
+          ) : null}
+
+          {drillholes.length === 0 ? (
+            <Card style={styles.empty}>
+              <Icon name="target" size={32} themeColor="accent" />
+              <ThemedText type="heading">Add your first hole</ThemedText>
+              <ThemedText type="default" themeColor="textSecondary">
+                Record the collar, then log core box by box. Everything is
+                saved on this phone.
+              </ThemedText>
+            </Card>
+          ) : visibleDrillholes.length === 0 ? (
+            <Card>
+              <ThemedText type="default" themeColor="textSecondary">
                 No holes match &ldquo;{query.trim()}&rdquo;.
               </ThemedText>
-            </ThemedView>
-          }
-          renderItem={({ item }) => {
-            const progress = loggingProgress(loggedMetres.get(item.id) ?? 0, item);
-            return (
-              <Link
-                href={`/projects/${projectId}/drillholes/${item.id}`}
-                asChild>
-                <Pressable>
-                  <ThemedView type="backgroundElement" style={styles.holeCard}>
-                    <ThemedText type="default">{item.holeId}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {item.status} ·{' '}
-                      {item.actualFinalDepthM ?? item.plannedDepthM}m ·{' '}
-                      {Math.round(progress * 100)}% logged
-                    </ThemedText>
-                  </ThemedView>
-                </Pressable>
-              </Link>
-            );
-          }}
-        />
-      )}
+            </Card>
+          ) : (
+            visibleDrillholes.map((hole) => {
+              const progress = loggingProgress(loggedMetres.get(hole.id) ?? 0, hole);
+              return (
+                <Card
+                  key={hole.id}
+                  onPress={() =>
+                    router.push(`/projects/${projectId}/drillholes/${hole.id}`)
+                  }
+                  accessibilityLabel={`Open hole ${hole.holeId}`}
+                  style={styles.holeCard}>
+                  <View style={styles.holeTop}>
+                    <View style={styles.holeTitle}>
+                      <ThemedText type="heading">{hole.holeId}</ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {hole.actualFinalDepthM ?? hole.plannedDepthM} m
+                        {hole.actualFinalDepthM == null ? ' planned' : ' final'}
+                        {' · '}
+                        {Math.round(progress * 100)}% logged
+                      </ThemedText>
+                    </View>
+                    <StatusPill
+                      label={statusLabel(hole.status)}
+                      tone={statusTone(hole.status)}
+                    />
+                  </View>
+                  <ProgressBar
+                    value={progress}
+                    label={`${hole.holeId} logging progress`}
+                  />
+                </Card>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -128,33 +179,46 @@ export default function ProjectDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
+  },
+  content: {
+    padding: Spacing.three,
     gap: Spacing.three,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingTop: Spacing.three,
-  },
-  headerText: {
+  title: {
     gap: Spacing.half,
+    paddingTop: Spacing.two,
   },
-  headerLinks: {
-    alignItems: 'flex-end',
+  shortcuts: {
+    flexDirection: 'row',
     gap: Spacing.two,
   },
-  list: {
-    gap: Spacing.two,
-    paddingBottom: Spacing.four,
+  shortcut: {
+    flex: 1,
+    alignItems: 'center',
+    gap: Spacing.one + 2,
+    paddingVertical: Spacing.three,
+    borderWidth: 1,
+    borderRadius: Radius.card,
+  },
+  section: {
+    gap: Spacing.two + 2,
+    paddingTop: Spacing.two,
   },
   holeCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
+    gap: Spacing.three,
+  },
+  holeTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  holeTitle: {
+    flex: 1,
     gap: Spacing.half,
   },
-  emptyState: {
-    padding: Spacing.four,
-    borderRadius: Spacing.two,
+  empty: {
+    gap: Spacing.two,
+    paddingVertical: Spacing.four,
   },
 });

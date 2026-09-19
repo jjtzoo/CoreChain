@@ -5,19 +5,9 @@ import {
 } from '@corechain/domain';
 import { StyleSheet, View } from 'react-native';
 
-import { WARNING_COLOR } from '@/components/continuity-summary';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-
-const LOGGED_COLOR = '#2e9e6b';
-const OVERLAP_COLOR = '#d92d20';
-
-const SEGMENT_COLORS: Record<StripSegment['kind'], string> = {
-  logged: LOGGED_COLOR,
-  gap: WARNING_COLOR,
-  overlap: OVERLAP_COLOR,
-};
 
 /**
  * E4-4: a bar of the hole from 0 m to its final (or planned) depth, showing
@@ -31,6 +21,11 @@ export function ContinuityStrip({
   holeDepthM: number;
 }) {
   const theme = useTheme();
+  const segmentColors: Record<StripSegment['kind'], string> = {
+    logged: theme.accent,
+    gap: theme.warning,
+    overlap: theme.danger,
+  };
   const deepestM = ranges.reduce((deepest, r) => Math.max(deepest, r.toM), 0);
   const scaleM = Math.max(holeDepthM, deepestM);
 
@@ -45,7 +40,7 @@ export function ContinuityStrip({
   return (
     <View style={styles.container}>
       <View
-        style={[styles.bar, { backgroundColor: theme.backgroundElement }]}
+        style={[styles.bar, { backgroundColor: theme.backgroundSelected }]}
         accessibilityLabel="Continuity strip of the logged hole">
         {segments.map((segment) => (
           <View
@@ -55,7 +50,7 @@ export function ContinuityStrip({
               {
                 left: `${(Math.max(0, segment.fromM) / scaleM) * 100}%`,
                 width: `${((segment.toM - segment.fromM) / scaleM) * 100}%`,
-                backgroundColor: SEGMENT_COLORS[segment.kind],
+                backgroundColor: segmentColors[segment.kind],
               },
             ]}
           />
@@ -70,10 +65,10 @@ export function ContinuityStrip({
         </ThemedText>
       </View>
       <View style={styles.legend}>
-        <LegendItem color={LOGGED_COLOR} label="Logged" />
-        {hasGap ? <LegendItem color={WARNING_COLOR} label="Gap" /> : null}
+        <LegendItem color={theme.accent} label="Logged" />
+        {hasGap ? <LegendItem color={theme.warning} label="Gap" /> : null}
         {hasOverlap ? (
-          <LegendItem color={OVERLAP_COLOR} label="Overlap" />
+          <LegendItem color={theme.danger} label="Overlap" />
         ) : null}
       </View>
     </View>
@@ -96,8 +91,8 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   bar: {
-    height: 20,
-    borderRadius: Spacing.one,
+    height: 22,
+    borderRadius: Spacing.two,
     overflow: 'hidden',
   },
   segment: {

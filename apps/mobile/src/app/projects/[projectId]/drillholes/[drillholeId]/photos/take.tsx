@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { listBoxes } from '@/data/coreRepository';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { listIntervals } from '@/data/intervalsRepository';
@@ -44,6 +45,7 @@ export default function TakePhotoScreen() {
       subjectId: string;
     }>();
   const router = useRouter();
+  const theme = useTheme();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -156,7 +158,7 @@ export default function TakePhotoScreen() {
       </View>
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="danger" style={styles.error}>
           {error}
         </ThemedText>
       ) : null}
@@ -170,8 +172,12 @@ export default function TakePhotoScreen() {
             disabled={!ready || !context}
             accessibilityRole="button"
             accessibilityLabel="Take photo"
-            style={[styles.shutter, (!ready || !context) && styles.disabled]}>
-            <View style={styles.shutterInner} />
+            style={[
+              styles.shutter,
+              { borderColor: theme.accent },
+              (!ready || !context) && styles.disabled,
+            ]}>
+            <View style={[styles.shutterInner, { backgroundColor: theme.accent }]} />
           </Pressable>
         )}
       </View>
@@ -219,7 +225,6 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: 38,
     borderWidth: 4,
-    borderColor: '#208AEF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -227,13 +232,11 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#208AEF',
   },
   disabled: {
     opacity: 0.4,
   },
   error: {
-    color: '#d92d20',
     paddingHorizontal: Spacing.three,
   },
 });

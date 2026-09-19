@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ContinuitySummary } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { deleteBox, listBoxes } from '@/data/coreRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
@@ -59,18 +59,15 @@ export default function CoreBoxesScreen() {
         <ContinuitySummary ranges={boxes ?? []} />
 
         {boxes && boxes.length === 0 ? (
-          <ThemedView type="backgroundElement" style={styles.card}>
+          <Card style={styles.card}>
             <ThemedText type="default">No core boxes yet.</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Add each box with its from/to depth so core is traceable to depth.
             </ThemedText>
-          </ThemedView>
+          </Card>
         ) : (
           (boxes ?? []).map((box) => (
-            <ThemedView
-              key={box.id}
-              type="backgroundElement"
-              style={styles.card}>
+            <Card key={box.id} style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <ThemedText type="default">Box {box.boxNumber}</ThemedText>
@@ -102,7 +99,7 @@ export default function CoreBoxesScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-            </ThemedView>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -120,7 +117,6 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
     gap: Spacing.one,
   },
   row: {

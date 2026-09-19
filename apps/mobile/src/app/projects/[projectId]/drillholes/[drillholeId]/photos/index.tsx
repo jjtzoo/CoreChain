@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { deletePhotoFile, photoFile } from '@/data/photoFiles';
 import { deletePhotoRecord, listPhotos } from '@/data/photosRepository';
@@ -72,15 +72,12 @@ export default function PhotosScreen() {
         />
 
         {photos && photos.length === 0 ? (
-          <ThemedView type="backgroundElement" style={styles.card}>
+          <Card style={styles.card}>
             <ThemedText type="default">No photos yet.</ThemedText>
-          </ThemedView>
+          </Card>
         ) : (
           (photos ?? []).map((photo) => (
-            <ThemedView
-              key={photo.id}
-              type="backgroundElement"
-              style={styles.card}>
+            <Card key={photo.id} style={styles.card}>
               <Image
                 source={{ uri: photoFile(photo.fileName).uri }}
                 style={styles.image}
@@ -106,7 +103,7 @@ export default function PhotosScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-            </ThemedView>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -124,13 +121,11 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
     gap: Spacing.two,
   },
   image: {
     width: '100%',
     height: 220,
-    borderRadius: Spacing.two,
   },
   row: {
     flexDirection: 'row',

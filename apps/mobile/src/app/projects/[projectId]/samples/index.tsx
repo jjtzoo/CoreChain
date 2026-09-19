@@ -14,23 +14,25 @@ import {
 } from '@corechain/domain';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChipSelect } from '@/components/form/chip-select';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { CONTROL_LABELS, QcReminders } from '@/components/qc-reminders';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Icon } from '@/components/ui/icon';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { getProject } from '@/data/projectsRepository';
 import {
-  deleteSample,
   dismissQcReminder,
   listQcEvents,
   listSamples,
 } from '@/data/samplesRepository';
+import { sampleStatusTone } from '@/utils/status';
 
 const ALL = 'all';
 
@@ -54,14 +56,13 @@ function describeSample(
     const parent = samples.find((s) => s.id === sample.parentSampleId);
     parts.push(`duplicate of ${parent?.sampleNumber ?? '?'}`);
   }
-  parts.push(sample.status);
   return parts.join(' · ');
 }
 
 /**
  * E6-3: the sample register — filter by hole, type and status, see the QC
  * insertion rate achieved against the target, and act on due QC reminders
- * (E6-2).
+ * (E6-2). Tap a sample to see where it has been.
  */
 export default function SampleRegisterScreen() {
   const { projectId, drillholeId } = useLocalSearchParams<{
@@ -122,31 +123,6 @@ export default function SampleRegisterScreen() {
     reload();
   }
 
-  function confirmDelete(sample: FieldSample) {
-    Alert.alert(
-      `Delete ${sample.sampleNumber}?`,
-      'The sample is removed, but its number stays reserved so it is never reused.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await deleteSample(sample.id);
-            if (result.outcome === 'has-duplicates') {
-              Alert.alert(
-                'Has a duplicate',
-                'A field duplicate points at this sample. Delete the duplicate first.',
-              );
-              return;
-            }
-            reload();
-          },
-        },
-      ],
-    );
-  }
-
   if (!project) {
     return null;
   }
@@ -154,7 +130,7 @@ export default function SampleRegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <PrimaryButton label="New sample" onPress={() => openNew()} />
+        <PrimaryButton label="New sample" icon="plus" onPress={() => openNew()} />
 
         <QcReminders
           reminders={reminders}
@@ -162,7 +138,7 @@ export default function SampleRegisterScreen() {
           onDismiss={handleDismiss}
         />
 
-        <View style={styles.summary}>
+        <Card style={styles.summary}>
           <ThemedText type="smallBold">QC insertion rate</ThemedText>
           {achievement.map((a) => (
             <ThemedText
@@ -176,48 +152,65 @@ export default function SampleRegisterScreen() {
               {a.targetEveryN > 0 ? `, target 1 per ${a.targetEveryN})` : ')'}
             </ThemedText>
           ))}
+        </Card>
+
+        <View style={styles.filters}>
+          {holes.length > 1 ? (
+            <FilterRow
+              label="Hole"
+              options={[ALL, ...holes.map((h) => h.id)]}
+              value={holeFilter}
+              onChange={setHoleFilter}
+              format={(id) => (id === ALL ? 'All holes' : (holeName.get(id) ?? id))}
+            />
+          ) : null}
+          <FilterRow
+            label="Type"
+            options={[ALL, ...SAMPLE_TYPES]}
+            value={typeFilter}
+            onChange={setTypeFilter}
+            format={(t) => (t === ALL ? 'All types' : capitalise(t))}
+          />
+          <FilterRow
+            label="Status"
+            options={[ALL, ...SAMPLE_STATUSES]}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            format={(s) => (s === ALL ? 'All statuses' : capitalise(s))}
+          />
         </View>
 
-        <ChipSelect
-          label="Hole"
-          options={[ALL, ...holes.map((h) => h.id)]}
-          value={holeFilter}
-          onChange={setHoleFilter}
-          formatOption={(id) => (id === ALL ? 'All holes' : (holeName.get(id) ?? id))}
-        />
-        <ChipSelect
-          label="Type"
-          options={[ALL, ...SAMPLE_TYPES]}
-          value={typeFilter}
-          onChange={setTypeFilter}
-          formatOption={(t) => (t === ALL ? 'All types' : capitalise(t))}
-        />
-        <ChipSelect
-          label="Status"
-          options={[ALL, ...SAMPLE_STATUSES]}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          formatOption={(s) => (s === ALL ? 'All statuses' : capitalise(s))}
-        />
-
         {visible.length === 0 ? (
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="default">
-              {samples.length === 0 ? 'No samples yet.' : 'No samples match.'}
+          <Card style={styles.empty}>
+            <Icon name="flask-empty-outline" size={32} themeColor="accent" />
+            <ThemedText type="heading">
+              {samples.length === 0 ? 'No samples yet' : 'No samples match'}
             </ThemedText>
-          </ThemedView>
+            <ThemedText type="default" themeColor="textSecondary">
+              {samples.length === 0
+                ? 'Add a sample from a logged interval and it shows up here, with its full history.'
+                : 'Try a different filter.'}
+            </ThemedText>
+          </Card>
         ) : (
           visible.map((sample) => (
-            <ThemedView
+            <Card
               key={sample.id}
-              type="backgroundElement"
-              style={styles.card}>
+              onPress={() =>
+                router.push(`/projects/${projectId}/samples/${sample.id}`)
+              }
+              accessibilityLabel={`Open sample ${sample.sampleNumber}`}>
               <View style={styles.row}>
                 <View style={styles.rowText}>
-                  <ThemedText type="default">
-                    {sample.sampleNumber} · {sample.type}
-                    {sample.type !== 'primary' ? ' (QC)' : ''}
-                  </ThemedText>
+                  <View style={styles.numberRow}>
+                    <ThemedText type="heading">{sample.sampleNumber}</ThemedText>
+                    {sample.type !== 'primary' ? (
+                      <StatusPill
+                        label={`${capitalise(sample.type)} · QC`}
+                        tone="warning"
+                      />
+                    ) : null}
+                  </View>
                   <ThemedText type="small" themeColor="textSecondary">
                     {describeSample(
                       sample,
@@ -226,21 +219,53 @@ export default function SampleRegisterScreen() {
                     )}
                   </ThemedText>
                 </View>
-                <Pressable
-                  onPress={() => confirmDelete(sample)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Delete sample ${sample.sampleNumber}`}
-                  hitSlop={Spacing.two}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Delete
-                  </ThemedText>
-                </Pressable>
+                <StatusPill
+                  label={capitalise(sample.status)}
+                  tone={sampleStatusTone(sample.status)}
+                />
+                <Icon name="chevron-right" size={24} themeColor="muted" />
               </View>
-            </ThemedView>
+            </Card>
           ))
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** A labelled, sideways-scrolling row of filter chips. */
+function FilterRow({
+  label,
+  options,
+  value,
+  onChange,
+  format,
+}: {
+  label: string;
+  options: readonly string[];
+  value: string;
+  onChange: (value: string) => void;
+  format: (option: string) => string;
+}) {
+  return (
+    <View style={styles.filterRow}>
+      <ThemedText type="caption" themeColor="textSecondary">
+        {label.toUpperCase()}
+      </ThemedText>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}>
+        {options.map((option) => (
+          <Chip
+            key={option}
+            label={format(option)}
+            selected={option === value}
+            onPress={() => onChange(option)}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -251,23 +276,38 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
+    paddingBottom: Spacing.five,
   },
   summary: {
     gap: Spacing.one,
   },
-  card: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.one,
+  filters: {
+    gap: Spacing.two + 2,
+  },
+  filterRow: {
+    gap: Spacing.one + 2,
+  },
+  chips: {
+    gap: Spacing.two,
+    paddingRight: Spacing.three,
+  },
+  empty: {
+    gap: Spacing.two,
+    paddingVertical: Spacing.four,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.two + 2,
   },
   rowText: {
     flex: 1,
-    gap: Spacing.half,
+    gap: Spacing.one,
+  },
+  numberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
 });

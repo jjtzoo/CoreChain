@@ -2,11 +2,11 @@ import type { ControlType, QcReminder } from '@corechain/domain';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { WARNING_COLOR } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export const CONTROL_LABELS: Record<ControlType, string> = {
   standard: 'standard',
@@ -29,6 +29,7 @@ export function QcReminders({
   onInsert?: (controlType: ControlType) => void;
   onDismiss?: (controlType: ControlType, reason: string) => Promise<void>;
 }) {
+  const theme = useTheme();
   const [dismissing, setDismissing] = useState<ControlType | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +52,13 @@ export function QcReminders({
   return (
     <View style={styles.list}>
       {reminders.map((reminder) => (
-        <View key={reminder.controlType} style={styles.box}>
-          <ThemedText type="smallBold" style={styles.text}>
+        <View
+          key={reminder.controlType}
+          style={[styles.box, { backgroundColor: theme.warningSoft }]}>
+          <ThemedText type="smallBold" themeColor="warning">
             A {CONTROL_LABELS[reminder.controlType]} is due
           </ThemedText>
-          <ThemedText type="small" style={styles.text}>
+          <ThemedText type="small" themeColor="warning">
             {reminder.sinceLast} samples since the last one (target: every{' '}
             {reminder.everyN}).
           </ThemedText>
@@ -113,11 +116,6 @@ const styles = StyleSheet.create({
   box: {
     gap: Spacing.two,
     padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1.5,
-    borderColor: WARNING_COLOR,
-  },
-  text: {
-    color: WARNING_COLOR,
+    borderRadius: Radius.card,
   },
 });

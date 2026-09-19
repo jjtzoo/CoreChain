@@ -20,7 +20,7 @@ import { ChipSelect } from '@/components/form/chip-select';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import {
   addCode,
@@ -124,10 +124,7 @@ export default function CodeLibraryScreen() {
                 {CODE_CATEGORY_LABELS[cat]}
               </ThemedText>
               {inCategory.map((code) => (
-                <ThemedView
-                  key={code.id}
-                  type="backgroundElement"
-                  style={[styles.row, code.hidden && styles.hiddenRow]}>
+                <Card key={code.id} style={[styles.row, code.hidden && styles.hiddenRow]}>
                   <ThemedText type="smallBold" style={styles.codeLabel}>
                     {code.code}
                   </ThemedText>
@@ -159,7 +156,7 @@ export default function CodeLibraryScreen() {
                       Delete
                     </ThemedText>
                   </Pressable>
-                </ThemedView>
+                </Card>
               ))}
             </View>
           );
@@ -186,7 +183,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
   },
   hiddenRow: {
     opacity: 0.5,

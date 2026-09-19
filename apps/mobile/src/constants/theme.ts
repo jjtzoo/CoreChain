@@ -8,19 +8,43 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
+  // Light is tuned for bright outdoor light: near-black text on white cards,
+  // strong (not pastel) status colours, and clear card borders.
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#0E1116',
+    background: '#F4F6F8',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#E6EAF0',
+    textSecondary: '#525A67',
+    muted: '#7A828E',
+    border: '#DCE1E8',
+    accent: '#1660E8',
+    accentSoft: '#E6EFFD',
+    onAccent: '#FFFFFF',
+    success: '#0E7A55',
+    successSoft: '#DFF3EA',
+    warning: '#A84300',
+    warningSoft: '#FDEBD6',
+    danger: '#C1271D',
+    dangerSoft: '#FCE8E6',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F2F4F7',
+    background: '#0A0C0F',
+    backgroundElement: '#15181D',
+    backgroundSelected: '#232830',
+    textSecondary: '#A6ADB8',
+    muted: '#7C8491',
+    border: '#262B33',
+    accent: '#6AA5FF',
+    accentSoft: '#13284A',
+    onAccent: '#04122E',
+    success: '#4FD1A0',
+    successSoft: '#0E2E24',
+    warning: '#F2A65A',
+    warningSoft: '#3A2410',
+    danger: '#FF7B70',
+    dangerSoft: '#3A1512',
   },
 } as const;
 
@@ -60,5 +84,15 @@ export const Spacing = {
   five: 32,
   six: 64,
 } as const;
+
+/** Corner radii: controls, cards, and pills. */
+export const Radius = {
+  control: 14,
+  card: 18,
+  pill: 999,
+} as const;
+
+/** The smallest a tap target should be, so gloved hands can hit it. */
+export const MinTap = 52;
 
 export const MaxContentWidth = 800;

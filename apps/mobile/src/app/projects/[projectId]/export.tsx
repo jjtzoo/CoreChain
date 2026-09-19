@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { loadExportTables, shareTable } from '@/data/exportRepository';
 
@@ -52,16 +52,13 @@ export default function ExportScreen() {
         </ThemedText>
 
         {error ? (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="danger">
             {error}
           </ThemedText>
         ) : null}
 
         {(tables ?? []).map((table) => (
-          <ThemedView
-            key={table.name}
-            type="backgroundElement"
-            style={styles.card}>
+          <Card key={table.name} style={styles.card}>
             <View style={styles.cardText}>
               <ThemedText type="default">{table.label}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -75,7 +72,7 @@ export default function ExportScreen() {
               loading={sharing === table.name}
               onPress={() => handleShare(table)}
             />
-          </ThemedView>
+          </Card>
         ))}
 
         <ThemedText type="small" themeColor="textSecondary">
@@ -96,13 +93,9 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
     gap: Spacing.two,
   },
   cardText: {
     gap: Spacing.half,
-  },
-  error: {
-    color: '#d92d20',
   },
 });

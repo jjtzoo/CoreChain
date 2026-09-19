@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ContinuitySummary } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { deleteRun, listRuns } from '@/data/coreRepository';
 
@@ -76,19 +76,16 @@ export default function CoreRunsScreen() {
         <ContinuitySummary ranges={runs ?? []} />
 
         {runs && runs.length === 0 ? (
-          <ThemedView type="backgroundElement" style={styles.card}>
+          <Card style={styles.card}>
             <ThemedText type="default">No runs yet.</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Enter each run&apos;s from/to depth and recovered length —
               recovery % is worked out for you.
             </ThemedText>
-          </ThemedView>
+          </Card>
         ) : (
           (runs ?? []).map((run) => (
-            <ThemedView
-              key={run.id}
-              type="backgroundElement"
-              style={styles.card}>
+            <Card key={run.id} style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <ThemedText type="default">
@@ -108,7 +105,7 @@ export default function CoreRunsScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-            </ThemedView>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -126,7 +123,6 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
     gap: Spacing.one,
   },
   row: {

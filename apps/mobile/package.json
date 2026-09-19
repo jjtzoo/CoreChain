@@ -9,6 +9,7 @@
   "dependencies": {
     "@corechain/domain": "*",
     "@expo/ui": "~57.0.19",
+    "@expo/vector-icons": "^15.0.2",
     "@op-engineering/op-sqlite": "^18.2.4",
     "@powersync/react-native": "^2.2.1",
     "@react-native-community/datetimepicker": "9.1.0",

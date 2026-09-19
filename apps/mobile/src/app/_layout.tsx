@@ -1,21 +1,51 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+/** Navigation colours taken from the app's own tokens, so headers match the screens. */
+function navigationTheme(scheme: 'light' | 'dark') {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const colors = Colors[scheme];
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: colors.accent,
+      background: colors.background,
+      card: colors.background,
+      text: colors.text,
+      border: colors.border,
+    },
+  };
+}
 
 // A drill-down stack (projects -> a project's drillholes -> one drillhole),
 // not a tab bar — the field workflow is a sequence of screens, not parallel
 // sections. See docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 1.
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  // The icon font must be ready before the first screen draws, or icons show as blanks.
+  const [iconsLoaded, iconsError] = useFonts(MaterialCommunityIcons.font);
+  if (!iconsLoaded && !iconsError) {
+    return null;
+  }
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}>
       <AnimatedSplashOverlay />
-      <Stack>
-        <Stack.Screen name="index" options={{ title: 'Projects' }} />
+      <Stack
+        screenOptions={{
+          headerShadowVisible: false,
+          headerTitleStyle: { fontWeight: '700' },
+          headerBackButtonDisplayMode: 'minimal',
+        }}>
+        <Stack.Screen name="index" options={{ title: 'CoreChain' }} />
         <Stack.Screen
           name="projects/new"
           options={{ title: 'New project', presentation: 'modal' }}
@@ -31,6 +61,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="projects/[projectId]/samples/index"
           options={{ title: 'Samples' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/samples/[sampleId]"
+          options={{ title: 'Sample' }}
         />
         <Stack.Screen
           name="projects/[projectId]/samples/new"

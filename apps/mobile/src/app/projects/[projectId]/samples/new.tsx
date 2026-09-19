@@ -185,7 +185,7 @@ export default function NewSampleScreen() {
           formatOption={(id) => holeName.get(id) ?? id}
         />
         {errors.hole ? (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="danger">
             {errors.hole}
           </ThemedText>
         ) : null}
@@ -273,7 +273,7 @@ export default function NewSampleScreen() {
               </ThemedText>
             )}
             {errors.parentSampleId ? (
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="small" themeColor="danger">
                 {errors.parentSampleId}
               </ThemedText>
             ) : null}
@@ -305,8 +305,5 @@ const styles = StyleSheet.create({
   form: {
     padding: Spacing.three,
     gap: Spacing.three,
-  },
-  error: {
-    color: '#d92d20',
   },
 });

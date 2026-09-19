@@ -174,7 +174,7 @@ export default function NewDrillholeScreen() {
           loading={locatingGps}
         />
         {errors.collar ? (
-          <ThemedText type="small" style={styles.errorText}>
+          <ThemedText type="small" themeColor="danger">
             {errors.collar}
           </ThemedText>
         ) : null}
@@ -216,8 +216,5 @@ const styles = StyleSheet.create({
   form: {
     padding: Spacing.three,
     gap: Spacing.three,
-  },
-  errorText: {
-    color: '#d92d20',
   },
 });

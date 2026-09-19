@@ -8,7 +8,7 @@ import { ContinuityStrip } from '@/components/continuity-strip';
 import { ContinuitySummary } from '@/components/continuity-summary';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { deleteInterval, listIntervals } from '@/data/intervalsRepository';
@@ -93,19 +93,16 @@ export default function LogScreen() {
         <ContinuitySummary ranges={intervals ?? []} />
 
         {intervals && intervals.length === 0 ? (
-          <ThemedView type="backgroundElement" style={styles.card}>
+          <Card style={styles.card}>
             <ThemedText type="default">Nothing logged yet.</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Add an interval with its from/to depth and codes. Each new one
               starts where the last ended.
             </ThemedText>
-          </ThemedView>
+          </Card>
         ) : (
           (intervals ?? []).map((interval) => (
-            <ThemedView
-              key={interval.id}
-              type="backgroundElement"
-              style={styles.card}>
+            <Card key={interval.id} style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <ThemedText type="default">
@@ -149,7 +146,7 @@ export default function LogScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-            </ThemedView>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -167,7 +164,6 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
     gap: Spacing.one,
   },
   row: {
