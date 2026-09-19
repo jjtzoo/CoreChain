@@ -1,16 +1,17 @@
 :root {
-  --canvas: #f2f5f1;
-  --surface: #fbfdf9;
-  --surface-muted: #e8eee8;
-  --ink: #15231f;
-  --text: #33423d;
-  --muted: #68756f;
-  --line: #d4ddd5;
-  --line-strong: #b8c7bd;
-  --forest: #176147;
-  --forest-dark: #103f30;
-  --forest-soft: #dcebe2;
+  --canvas: #eeeae1;
+  --surface: #faf8f3;
+  --surface-muted: #e3ddcf;
+  --ink: #182321;
+  --text: #3a4642;
+  --muted: #6b736e;
+  --line: #d6cfc0;
+  --line-strong: #bdb5a3;
+  --forest: #182321;
+  --forest-dark: #0f1615;
+  --forest-soft: #e3ddcf;
   --warning-bg: #fff8e5;
+  --brand-copper: #a66a43;
   --warning-line: #e4c983;
   --warning-ink: #745a12;
   --radius-panel: 12px;
@@ -82,9 +83,14 @@ h3 {
 
 .landing-brand,
 .workspace-brand {
-  font-size: 1rem;
-  font-weight: 760;
-  letter-spacing: -0.035em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 34px;
 }
 
 .header-action,
@@ -120,7 +126,7 @@ h3 {
 .primary-action {
   width: fit-content;
   padding: 10px 16px;
-  color: #f8fcf8;
+  color: #eeeae1;
   background: var(--forest);
   border: 1px solid var(--forest);
   border-radius: var(--radius-control);
@@ -348,7 +354,7 @@ h3 {
   gap: 42px;
   min-height: 100dvh;
   padding: 28px 18px 20px;
-  background: #edf2ed;
+  background: #e5dfd1;
   border-right: 1px solid var(--line);
 }
 
@@ -383,12 +389,12 @@ h3 {
 }
 
 .workspace-nav-item.is-active {
-  color: #f8fcf8;
+  color: #eeeae1;
   background: var(--forest);
 }
 
 .workspace-nav-item.is-disabled {
-  color: #93a099;
+  color: #a8ada6;
   cursor: not-allowed;
 }
 
@@ -577,7 +583,7 @@ h3 {
   top: 12px;
   left: 12px;
   padding: 9px 12px;
-  color: #f8fcf8;
+  color: #eeeae1;
   background: var(--forest-dark);
   border-radius: var(--radius-control);
   transform: translateY(-160%);
@@ -763,7 +769,7 @@ h3 {
 }
 
 .register-table tbody tr:hover {
-  background: #f4f8f4;
+  background: #f3efe6;
 }
 
 .register-table td > strong,
@@ -835,7 +841,7 @@ h3 {
 }
 
 .row-action:hover {
-  color: #f8fcf8;
+  color: #eeeae1;
   background: var(--forest);
   border-color: var(--forest);
 }
@@ -1501,7 +1507,7 @@ h3 {
 }
 
 .assay-table tbody tr:hover {
-  background: #f4f8f4;
+  background: #f3efe6;
 }
 
 .assay-table tbody th > strong,
@@ -1713,7 +1719,7 @@ h3 {
     justify-content: space-between;
     min-height: 64px;
     padding: 0 24px;
-    background: #edf2ed;
+    background: #e5dfd1;
     border-bottom: 1px solid var(--line);
   }
 

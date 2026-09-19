@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight, Database, FileCheck2, Route } from "lucide-react";
 import { ProjectSnapshot } from "@/components/corechain/project-snapshot";
 
@@ -7,7 +8,7 @@ export default function Home() {
     <main className="landing-shell">
       <header className="landing-header">
         <Link className="landing-brand" href="/" aria-label="CoreChain home">
-          CoreChain
+          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
         </Link>
         <Link className="header-action" href="/projects/alberta-drillhole-demo">
           Open demo workspace

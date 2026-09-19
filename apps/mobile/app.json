@@ -4,34 +4,35 @@
     "slug": "corechain-field",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/corechain/icon.png",
     "scheme": "corechain-field",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "package": "ph.corechain.field",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#182321",
+        "foregroundImage": "./assets/images/corechain/android-adaptive-foreground.png",
+        "backgroundImage": "./assets/images/corechain/android-adaptive-background.png",
+        "monochromeImage": "./assets/images/corechain/android-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/corechain/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#EEEAE1",
+          "image": "./assets/images/corechain/splash-icon.png",
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#182321",
+            "image": "./assets/images/corechain/splash-icon-dark.png"
+          }
         }
       ],
       "expo-secure-store",
@@ -55,6 +56,7 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "primaryColor": "#182321"
   }
 }

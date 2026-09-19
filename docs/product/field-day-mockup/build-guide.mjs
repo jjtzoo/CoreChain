@@ -317,7 +317,7 @@ const part4 = `
 
   ${should(`<ul>
     <li>After the last interval the hole screen says <b>Core logged ${hole.finalDepthM} of ${hole.finalDepthM} m</b> and the progress bar is full.</li>
-    <li>The depth strip is solid blue: no amber gaps, no red overlaps. The Core log tile says <b>${intervals.length} intervals</b>.</li>
+    <li>The depth strip is solid dark: no amber gaps, no red overlaps. The Core log tile says <b>${intervals.length} intervals</b>.</li>
     <li>No amber warning row on the hole screen at all.</li>
   </ul>`)}
   <p>Now go back to Part 3 and take the two interval photos (18–21 m and 27–28.2 m).</p>

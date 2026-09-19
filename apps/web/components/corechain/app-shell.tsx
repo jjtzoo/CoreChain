@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Route } from "next";
 import {
   Database,
@@ -40,7 +41,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       </a>
       <header className="workspace-mobile-header">
         <Link className="workspace-brand" href="/" aria-label="CoreChain home">
-          CoreChain
+          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
         </Link>
         <span className="workspace-mobile-label">Demo workspace</span>
       </header>
@@ -52,8 +53,8 @@ export function AppShell({ activeItem, children }: AppShellProps) {
             href="/"
             aria-label="CoreChain home"
           >
-            CoreChain
-          </Link>
+          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
+        </Link>
           <p className="workspace-brand-note">Exploration workflow workspace</p>
         </div>
 

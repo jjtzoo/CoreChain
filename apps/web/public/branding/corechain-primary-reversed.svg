@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 420" role="img" aria-labelledby="title desc">
+  <title id="title">CoreChain reversed horizontal logo</title>
+  <desc id="desc">Light CoreChain logo for dark backgrounds.</desc>
+  <g transform="translate(0 5) scale(.8)">
+    <g fill="#EEEAE1">
+      <path d="M176 72h280v88H190c-57 0-86 36-86 96s29 96 86 96h266v88H176C74 440 32 366 32 256S74 72 176 72Z"/>
+      <path d="M176 192h104v128H176c-39 0-56-25-56-64s17-64 56-64Z"/>
+      <path d="M304 192h88c40 0 56 25 56 64s-16 64-56 64h-88V192Z"/>
+    </g>
+    <path d="M140 235c50 2 82 13 121 28 42 16 70 9 105 25 25 11 47 13 66 13" fill="none" stroke="#A66A43" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="410" y="286" fill="#EEEAE1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="222" font-weight="650" letter-spacing="-8">CoreChain</text>
+</svg>

@@ -7,44 +7,58 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/**
+ * The CoreChain brand palette (assets/brand/README.md): graphite, warm
+ * limestone and muted copper. The UI is graphite-on-limestone; copper is the
+ * brand accent. Status colours (success, warning, danger) are the only other
+ * hues, and each is tuned to sit on the warm background.
+ */
+export const Brand = {
+  graphite: '#182321',
+  limestone: '#EEEAE1',
+  copper: '#A66A43',
+} as const;
+
 export const Colors = {
-  // Light is tuned for bright outdoor light: near-black text on white cards,
-  // strong (not pastel) status colours, and clear card borders.
+  // Light is tuned for bright outdoor light: graphite text on limestone, white-ish
+  // cards with clear borders, and strong (not pastel) status colours.
   light: {
-    text: '#0E1116',
-    background: '#F4F6F8',
-    backgroundElement: '#FFFFFF',
-    backgroundSelected: '#E6EAF0',
-    textSecondary: '#525A67',
-    muted: '#7A828E',
-    border: '#DCE1E8',
-    accent: '#1660E8',
-    accentSoft: '#E6EFFD',
-    onAccent: '#FFFFFF',
-    success: '#0E7A55',
-    successSoft: '#DFF3EA',
-    warning: '#A84300',
-    warningSoft: '#FDEBD6',
-    danger: '#C1271D',
-    dangerSoft: '#FCE8E6',
+    text: '#182321',
+    background: '#EEEAE1',
+    backgroundElement: '#FAF8F3',
+    backgroundSelected: '#E2DCCE',
+    textSecondary: '#49554F',
+    muted: '#7A827C',
+    border: '#D6CFC0',
+    accent: '#182321',
+    accentSoft: '#E3DDCF',
+    onAccent: '#EEEAE1',
+    brand: '#A66A43',
+    success: '#1F7A55',
+    successSoft: '#D9E9DE',
+    warning: '#9A5B00',
+    warningSoft: '#F3E3C2',
+    danger: '#B3261E',
+    dangerSoft: '#F4DCD6',
   },
   dark: {
-    text: '#F2F4F7',
-    background: '#0A0C0F',
-    backgroundElement: '#15181D',
-    backgroundSelected: '#232830',
-    textSecondary: '#A6ADB8',
-    muted: '#7C8491',
-    border: '#262B33',
-    accent: '#6AA5FF',
-    accentSoft: '#13284A',
-    onAccent: '#04122E',
-    success: '#4FD1A0',
-    successSoft: '#0E2E24',
-    warning: '#F2A65A',
-    warningSoft: '#3A2410',
-    danger: '#FF7B70',
-    dangerSoft: '#3A1512',
+    text: '#EEEAE1',
+    background: '#0F1615',
+    backgroundElement: '#182321',
+    backgroundSelected: '#243431',
+    textSecondary: '#A8B0A9',
+    muted: '#7E8983',
+    border: '#2A3A37',
+    accent: '#EEEAE1',
+    accentSoft: '#243431',
+    onAccent: '#182321',
+    brand: '#C98559',
+    success: '#5FCB9B',
+    successSoft: '#12301F',
+    warning: '#E6A94C',
+    warningSoft: '#3A2A0E',
+    danger: '#FF8378',
+    dangerSoft: '#3A1815',
   },
 } as const;
 

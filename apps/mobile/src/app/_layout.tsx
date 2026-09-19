@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { BrandLockup } from '@/components/brand-lockup';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -48,7 +49,10 @@ export default function RootLayout() {
           headerTitleStyle: { fontWeight: '700' },
           headerBackButtonDisplayMode: 'minimal',
         }}>
-        <Stack.Screen name="index" options={{ title: 'CoreChain' }} />
+        <Stack.Screen
+          name="index"
+          options={{ title: 'CoreChain', headerTitle: () => <BrandLockup height={28} /> }}
+        />
         <Stack.Screen
           name="projects/new"
           options={{ title: 'New project', presentation: 'modal' }}

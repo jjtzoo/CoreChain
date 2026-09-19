@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { BrandSymbol } from '@/components/brand-lockup';
 import { Icon } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { StatusPill } from '@/components/ui/status-pill';
@@ -176,7 +177,7 @@ export default function HomeScreen() {
 
           {summaries && summaries.length === 0 ? (
             <Card style={styles.empty}>
-              <Icon name="pickaxe" size={32} themeColor="accent" />
+              <BrandSymbol size={72} />
               <ThemedText type="heading">Start your first project</ThemedText>
               <ThemedText type="default" themeColor="textSecondary">
                 A project holds your drillholes, core logs and samples. It

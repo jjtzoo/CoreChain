@@ -13,7 +13,6 @@ export type ThemedTextProps = TextProps & {
     | 'heading'
     | 'subtitle'
     | 'link'
-    | 'linkPrimary'
     | 'code';
   themeColor?: ThemeColor;
 };
@@ -33,7 +32,6 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'heading' && styles.heading,
         type === 'subtitle' && styles.subtitle,
         type === 'link' && styles.link,
-        type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
         style,
       ]}
@@ -81,11 +79,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 14,
-  },
-  linkPrimary: {
-    lineHeight: 30,
-    fontSize: 14,
-    color: '#1660E8',
   },
   code: {
     fontFamily: Fonts.mono,
