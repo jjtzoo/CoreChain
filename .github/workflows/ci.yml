@@ -27,7 +27,7 @@ jobs:
       - name: Lint (apps/web, apps/mobile)
         run: npm run lint
 
-      - name: Test (apps/web)
+      - name: Test (apps/web, packages/domain)
         run: npm test
 
       - name: Build (apps/web)
