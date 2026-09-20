@@ -106,6 +106,7 @@ Project → Drillhole → Core boxes & runs (recovery, RQD) → Interval logging
 | D10 | **The whole field chain is in the MVP**; assay and QA/QC stay on the web                                                                                         | The geologist does all the field steps personally, so a partial chain wouldn't test the real day.                                                                                                                                                                                     |
 | D11 | **Encrypted local database** (SQLCipher via op-sqlite, PowerSync's built-in storage adapter)                                                                     | Exploration data is commercially sensitive, and phones get lost in the field. Package compatibility and the toolchain (prebuild → real Gradle project) are confirmed by the Sprint 0 spike; on-device read/write is confirmed in Sprint 1's E8-1 instead, once a device is available. |
 | D12 | **2-week sprints**, each ending in a demo build on a real Android device                                                                                         | Standard cadence, and it proves every increment on real hardware.                                                                                                                                                                                                                     |
+| D13 | **Pilot accounts are created by the owner**; open sign-up stays off during the field test | Testers get a ready account (their own email and a first password) instead of registering. That keeps strangers out of the cloud database while the product is unproven, and each tester still has their own separate workspace, so their data and sample-number blocks stay theirs. Self-serve sign-up (D9) is switched on before any public release. |
 
 ---
 
@@ -237,6 +238,7 @@ As a field geologist, I want to create an account with my email and password, so
 - Sign-up creates a personal workspace with me as its owner.
 - Projects created before sign-up (offline alpha) are attached to the account on first sign-in.
 - Clear error messages for a wrong password, no connection, or an email already in use.
+- **Pilot (D13):** the owner creates each tester's account; the app has a sign-in screen and no "create account" screen until self-serve is switched on. One account per tester, never shared, so data stays separate and attributable.
 
 **E1-4 — Stay signed in offline (3)** _(Sprint 4)_
 As a field geologist, I want to keep working for weeks without signal after signing in once, so that the app never locks me out at the rig.
