@@ -1,0 +1,7 @@
+"hole_id","latitude","longitude","azimuth_deg","dip_deg","final_depth_m","drilled_on","contractor","drill_type","diameter"
+"CDL-001","17.0452","120.851","0","-90","302.5","2025-03-04","Synthetic Drilling Co.","Diamond","HQ"
+"CDL-002","17.0461","120.851","180","-60","251.0","2025-03-19","Synthetic Drilling Co.","Diamond","HQ"
+"CDL-003","17.0452","120.8519","270","-60","275.4","2025-04-02","Synthetic Drilling Co.","Diamond","HQ"
+"CDL-004","17.0443","120.851","0","-60","230.8","2025-04-15","Synthetic Drilling Co.","Diamond","NQ"
+"CDL-005","17.0452","120.8492","90","-55","198.2","2025-04-28","Synthetic Drilling Co.","Diamond","NQ"
+"CDL-006","17.046","120.8526","225","-60","160.0","2025-05-09","Synthetic Drilling Co.","Diamond","NQ"

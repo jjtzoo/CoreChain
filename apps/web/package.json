@@ -19,7 +19,8 @@
     "postinstall": "prisma generate",
     "auth:check-token": "tsx scripts/check-token.ts",
     "sync:report": "tsx --env-file=.env scripts/sync-report.ts",
-    "sample:seed": "tsx --env-file=.env scripts/seed-sample-project.ts"
+    "sample:seed": "tsx --env-file=.env scripts/seed-sample-project.ts",
+    "sample:cordillera": "tsx --env-file=.env scripts/seed-cordillera-project.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.5",
