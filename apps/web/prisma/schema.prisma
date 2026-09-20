@@ -483,3 +483,19 @@ model Jwks {
 
   @@map("jwks")
 }
+
+// A pilot access request from the landing page. The admin sees new requests on
+// the Users page and turns one into an account with a click. Not synced to
+// phones, and not readable by the PowerSync role.
+model AccessRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  company   String
+  email     String
+  // new -> accepted (an account was created for that email) or dismissed
+  status    String   @default("new")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@map("access_requests")
+}

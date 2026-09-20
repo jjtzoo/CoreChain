@@ -12,6 +12,7 @@ import {
   createUserAction,
   resetPasswordAction,
   setRoleAction,
+  dismissRequestAction,
   setSwitchedOffAction,
   suggestPasswordAction,
 } from "./actions";
@@ -24,6 +25,14 @@ export type UserRow = {
   switchedOff: boolean;
   createdAt: string;
   lastActiveAt: string | null;
+};
+
+export type RequestRow = {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  createdAt: string;
 };
 
 type Credentials = {
@@ -99,13 +108,17 @@ function CredentialsCard({
 
 function AddUserForm({
   initialSuggestion,
+  initialName = "",
+  initialEmail = "",
   onCreated,
 }: {
   initialSuggestion: string;
+  initialName?: string;
+  initialEmail?: string;
   onCreated: (credentials: Credentials) => void;
 }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [role, setRole] = useState<UserRole>("geologist");
   const [password, setPassword] = useState(initialSuggestion);
   const [error, setError] = useState<string | null>(null);
@@ -353,16 +366,93 @@ function UserItem({
   );
 }
 
+function RequestsCard({
+  requests,
+  onUse,
+}: {
+  requests: RequestRow[];
+  onUse: (request: RequestRow) => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const dismiss = (id: string) => {
+    setError(null);
+    startTransition(async () => {
+      const result = await dismissRequestAction(id);
+      if (!result.ok) setError(result.error);
+    });
+  };
+
+  return (
+    <section className="admin-card" aria-labelledby="requests-title">
+      <div className="admin-card-head">
+        <h2 id="requests-title">Access requests</h2>
+        <span className="admin-count">{requests.length}</span>
+      </div>
+      <p className="admin-hint">
+        People who asked for pilot access on the landing page. Create their
+        account, or dismiss the request.
+      </p>
+      <ul className="admin-users">
+        {requests.map((request) => (
+          <li className="admin-user" key={request.id}>
+            <div className="admin-user-who">
+              <span className="admin-user-name">{request.name}</span>
+              <span className="admin-user-email">{request.email}</span>
+              <span className="admin-user-email">{request.company}</span>
+            </div>
+            <div className="admin-status">
+              <span className="admin-meta-label">Asked</span>
+              <span>{formatDay(request.createdAt)}</span>
+            </div>
+            <div className="admin-user-actions">
+              <button
+                type="button"
+                className="admin-button"
+                onClick={() => onUse(request)}
+              >
+                Create account
+              </button>
+              <button
+                type="button"
+                className="admin-button"
+                onClick={() => dismiss(request.id)}
+                disabled={pending}
+              >
+                Dismiss
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error ? (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export function UsersWorkspace({
   users,
+  requests,
   currentUserId,
   initialSuggestion,
 }: {
   users: UserRow[];
+  requests: RequestRow[];
   currentUserId: string;
   initialSuggestion: string;
 }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+  // Choosing a request fills the add form; the key makes the form start afresh.
+  const [prefill, setPrefill] = useState<{
+    name: string;
+    email: string;
+    nonce: number;
+  } | null>(null);
 
   return (
     <div className="admin-columns">
@@ -371,6 +461,19 @@ export function UsersWorkspace({
           <CredentialsCard
             credentials={credentials}
             onDismiss={() => setCredentials(null)}
+          />
+        ) : null}
+
+        {requests.length > 0 ? (
+          <RequestsCard
+            requests={requests}
+            onUse={(request) =>
+              setPrefill({
+                name: request.name,
+                email: request.email,
+                nonce: Date.now(),
+              })
+            }
           />
         ) : null}
 
@@ -393,8 +496,14 @@ export function UsersWorkspace({
       </div>
 
       <AddUserForm
+        key={prefill?.nonce ?? 0}
         initialSuggestion={initialSuggestion}
-        onCreated={setCredentials}
+        initialName={prefill?.name}
+        initialEmail={prefill?.email}
+        onCreated={(created) => {
+          setPrefill(null);
+          setCredentials(created);
+        }}
       />
     </div>
   );

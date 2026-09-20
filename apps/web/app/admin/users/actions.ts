@@ -10,6 +10,7 @@ import { randomInt } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
 // Every action starts with requireAdmin(): the buttons only exist for admins,
@@ -72,6 +73,11 @@ export async function createUserAction(input: {
   } catch (error) {
     return { ok: false, error: describe(error) };
   }
+  // The person asked for access on the landing page: that request is now handled.
+  await prisma.accessRequest.updateMany({
+    where: { email, status: "new" },
+    data: { status: "accepted" },
+  });
   revalidatePath("/admin/users");
   return { ok: true, email, password: input.password };
 }
@@ -141,6 +147,20 @@ export async function setSwitchedOffAction(
     }
   } catch (error) {
     return { ok: false, error: describe(error) };
+  }
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+export async function dismissRequestAction(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  try {
+    await prisma.accessRequest.update({
+      where: { id },
+      data: { status: "dismissed" },
+    });
+  } catch {
+    return { ok: false, error: "That request could not be found." };
   }
   revalidatePath("/admin/users");
   return { ok: true };

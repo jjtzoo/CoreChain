@@ -7,7 +7,7 @@ import { UsersWorkspace, type UserRow } from "./users-workspace";
 export default async function UsersPage() {
   const session = await requireAdmin();
 
-  const [users, activity] = await Promise.all([
+  const [users, activity, requestRows] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -20,6 +20,10 @@ export default async function UsersPage() {
       },
     }),
     prisma.session.groupBy({ by: ["userId"], _max: { updatedAt: true } }),
+    prisma.accessRequest.findMany({
+      where: { status: "new" },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
   const lastActive = new Map(
     activity.map((row) => [row.userId, row._max.updatedAt]),
@@ -50,6 +54,13 @@ export default async function UsersPage() {
       <UsersWorkspace
         users={rows}
         currentUserId={session.user.id}
+        requests={requestRows.map((request) => ({
+          id: request.id,
+          name: request.name,
+          company: request.company,
+          email: request.email,
+          createdAt: request.createdAt.toISOString(),
+        }))}
         initialSuggestion={suggestPassphrase(randomInt)}
       />
     </>
