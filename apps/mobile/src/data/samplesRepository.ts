@@ -203,11 +203,14 @@ export async function createSample(
 }
 
 export type DeleteSampleResult =
-  { outcome: 'deleted' } | { outcome: 'has-duplicates' };
+  | { outcome: 'deleted' }
+  | { outcome: 'has-duplicates' }
+  | { outcome: 'has-custody' };
 
 /**
  * Deletes a sample (soft delete; its number stays reserved). A primary sample
- * that a field duplicate points at can't be deleted until the duplicate is.
+ * that a field duplicate points at can't be deleted until the duplicate is, and
+ * one with a custody record can't be deleted at all.
  */
 export async function deleteSample(id: string): Promise<DeleteSampleResult> {
   const db = await getDatabase();
@@ -218,6 +221,15 @@ export async function deleteSample(id: string): Promise<DeleteSampleResult> {
   );
   if (Number((rows as unknown as { n: number }[])[0]?.n ?? 0) > 0) {
     return { outcome: 'has-duplicates' };
+  }
+
+  // Custody steps are never erased, so a sample they belong to stays.
+  const custody = await db.execute(
+    'SELECT COUNT(*) AS n FROM custody_events WHERE sample_id = ?',
+    [id],
+  );
+  if (Number((custody.rows as unknown as { n: number }[])[0]?.n ?? 0) > 0) {
+    return { outcome: 'has-custody' };
   }
 
   const timestamp = nowIso();

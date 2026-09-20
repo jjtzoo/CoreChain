@@ -769,6 +769,15 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Verified on the test phone:** after the wipe and a fresh sign-in the Alberta sample project came back from the server, and the server's counts were unchanged (one project, six holes, 27 intervals, 15 samples), so nothing was duplicated.
 - **Found and fixed:** after that sign-in Home kept showing "Start your first project" until the app was restarted, because screens loaded their lists once, on opening. The sync layer now counts each completed sync and every list screen reloads when it changes (`useFocusReload`). Verified on the test phone with a second wipe and sign-in: the project appeared on Home by itself, with no restart.
 
+### S5: custody and dispatch built (E7-1, E7-2, E7-3, 2026-09-20)
+
+- **Custody record (E7-1).** Each sample has a chain of custody: bagged, sealed, handed over (to whom, where, when, by whom). Steps are only ever added. A mistake is corrected with a new "correction" step that says who found it and why; the wrong step stays on the record marked "Voided". Only the latest step can be corrected, so a correction never leaves a seal with no bagging under it. A sample's status (created, bagged, dispatched) is worked out from the steps that still count. Steps can be recorded on many samples at once from the register's new "Select samples" mode; any that cannot take the step (already bagged, not bagged yet) are skipped and listed, never half-recorded. A sample with a custody record cannot be deleted.
+- **Lab dispatch (E7-2).** A dispatch groups bagged samples for one laboratory (DSP-001, DSP-002 ...), with a preparation request and note. While open, samples can be added and taken out, and a sample can be in only one open dispatch. Handing it over asks first, then writes a "dispatched" step on every sample in it and closes the dispatch. All of it is one transaction.
+- **Dispatch sheet (E7-3).** A CSV with the dispatch, laboratory, request, handover date and who handed over, a count by type, then one line per sample (ID, type, hole, from, to, QC note such as the reference material or "Duplicate of ..."), shared through the Android share sheet. A PDF version is not built.
+- **Rules are tested** in `packages/domain/src/custody.ts` (32 tests). Server tables `custody_events` (append-only), `dispatches` and `dispatch_samples` have upload rules with tests, and an additive database change in `apps/web/prisma/migrations/20260920120000_custody`.
+- **Not yet on the live server or the phone.** The database change has not been applied, and the updated PowerSync streams have not been deployed (both are the owner's step; see the list below). Nothing has been tried on the phone yet: the app builds, type-checks and lints.
+- **Order matters.** Apply the database change first, then deploy the streams, then install the app. A phone that sends custody records before the server has the tables would have them refused, and refused changes are not retried.
+
 ---
 
 ## 8. Field-test plan

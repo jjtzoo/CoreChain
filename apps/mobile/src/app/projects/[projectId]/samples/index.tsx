@@ -12,9 +12,9 @@ import {
   type SampleStatus,
   type SampleType,
 } from '@corechain/domain';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -25,6 +25,7 @@ import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { getProject } from '@/data/projectsRepository';
 import {
@@ -71,6 +72,7 @@ export default function SampleRegisterScreen() {
     drillholeId?: string;
   }>();
   const router = useRouter();
+  const theme = useTheme();
 
   const [project, setProject] = useState<Project | null>(null);
   const [holes, setHoles] = useState<FieldDrillhole[]>([]);
@@ -79,6 +81,9 @@ export default function SampleRegisterScreen() {
   const [holeFilter, setHoleFilter] = useState<string>(drillholeId ?? ALL);
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
+  // Selection mode: pick several samples, then act on them together (E7-1).
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
@@ -113,6 +118,29 @@ export default function SampleRegisterScreen() {
     [project, samples],
   );
 
+  function toggleSelected(id: string) {
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function stopSelecting() {
+    setSelecting(false);
+    setSelected(new Set());
+  }
+
+  function actOnSelected(path: string) {
+    const ids = visible.filter((s) => selected.has(s.id)).map((s) => s.id);
+    if (ids.length === 0) return;
+    router.push(
+      `/projects/${projectId}/${path}${path.includes('?') ? '&' : '?'}sampleIds=${ids.join(',')}` as Href,
+    );
+    stopSelecting();
+  }
+
   function openNew(extra = '') {
     const hole = holeFilter === ALL ? '' : `drillholeId=${holeFilter}`;
     const query = [hole, extra].filter(Boolean).join('&');
@@ -138,6 +166,14 @@ export default function SampleRegisterScreen() {
           icon="plus"
           onPress={() => openNew()}
         />
+        {samples.length > 0 ? (
+          <PrimaryButton
+            label={selecting ? 'Done selecting' : 'Select samples'}
+            icon={selecting ? 'check' : 'checkbox-multiple-marked-outline'}
+            variant="secondary"
+            onPress={() => (selecting ? stopSelecting() : setSelecting(true))}
+          />
+        ) : null}
 
         <QcReminders
           reminders={reminders}
@@ -207,11 +243,28 @@ export default function SampleRegisterScreen() {
             <Card
               key={sample.id}
               onPress={() =>
-                router.push(`/projects/${projectId}/samples/${sample.id}`)
+                selecting
+                  ? toggleSelected(sample.id)
+                  : router.push(`/projects/${projectId}/samples/${sample.id}`)
               }
-              accessibilityLabel={`Open sample ${sample.sampleNumber}`}
+              accessibilityLabel={
+                selecting
+                  ? `${selected.has(sample.id) ? 'Deselect' : 'Select'} sample ${sample.sampleNumber}`
+                  : `Open sample ${sample.sampleNumber}`
+              }
             >
               <View style={styles.row}>
+                {selecting ? (
+                  <Icon
+                    name={
+                      selected.has(sample.id)
+                        ? 'checkbox-marked'
+                        : 'checkbox-blank-outline'
+                    }
+                    size={26}
+                    themeColor={selected.has(sample.id) ? 'accent' : 'muted'}
+                  />
+                ) : null}
                 <View style={styles.rowText}>
                   <View style={styles.numberRow}>
                     <ThemedText type="heading">
@@ -236,12 +289,67 @@ export default function SampleRegisterScreen() {
                   label={capitalise(sample.status)}
                   tone={sampleStatusTone(sample.status)}
                 />
-                <Icon name="chevron-right" size={24} themeColor="muted" />
+                {selecting ? null : (
+                  <Icon name="chevron-right" size={24} themeColor="muted" />
+                )}
               </View>
             </Card>
           ))
         )}
       </ScrollView>
+      {selecting ? (
+        <View
+          style={[
+            styles.bulkBar,
+            { backgroundColor: theme.background, borderTopColor: theme.border },
+          ]}
+        >
+          <View style={styles.bulkTop}>
+            <ThemedText type="smallBold">{selected.size} selected</ThemedText>
+            <Pressable
+              onPress={() => setSelected(new Set(visible.map((s) => s.id)))}
+              accessibilityRole="button"
+              hitSlop={Spacing.two}
+            >
+              <ThemedText type="smallBold" themeColor="accent">
+                Select all shown
+              </ThemedText>
+            </Pressable>
+          </View>
+          <View style={styles.bulkRow}>
+            <View style={styles.bulkButton}>
+              <PrimaryButton
+                label="Bag"
+                disabled={selected.size === 0}
+                onPress={() => actOnSelected('custody/record?type=bagged')}
+              />
+            </View>
+            <View style={styles.bulkButton}>
+              <PrimaryButton
+                label="Seal"
+                variant="secondary"
+                disabled={selected.size === 0}
+                onPress={() => actOnSelected('custody/record?type=sealed')}
+              />
+            </View>
+            <View style={styles.bulkButton}>
+              <PrimaryButton
+                label="Hand over"
+                variant="secondary"
+                disabled={selected.size === 0}
+                onPress={() => actOnSelected('custody/record?type=handed_over')}
+              />
+            </View>
+          </View>
+          <PrimaryButton
+            label="Put in a lab dispatch"
+            icon="truck-delivery-outline"
+            variant="secondary"
+            disabled={selected.size === 0}
+            onPress={() => actOnSelected('dispatches/new')}
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -317,6 +425,25 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: Spacing.one,
+  },
+  bulkBar: {
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two + 4,
+    paddingBottom: Spacing.two,
+    borderTopWidth: 1,
+  },
+  bulkTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bulkRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  bulkButton: {
+    flex: 1,
   },
   numberRow: {
     flexDirection: 'row',

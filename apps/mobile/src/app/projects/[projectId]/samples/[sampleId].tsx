@@ -1,15 +1,24 @@
 import {
   buildSampleTrace,
+  CUSTODY_LABELS,
+  canCorrectEvent,
+  canRecordEvent,
+  custodyTimeline,
+  effectiveEvents,
   type FieldCoreBox,
   type FieldDrillhole,
+  type FieldCustodyEvent,
   type FieldSample,
   type LogInterval,
+  type RecordableEventType,
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CustodyTimeline } from '@/components/custody-timeline';
+import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
@@ -17,6 +26,7 @@ import { StatusPill } from '@/components/ui/status-pill';
 import { TraceChain } from '@/components/ui/trace-chain';
 import { Spacing } from '@/constants/theme';
 import { listBoxes } from '@/data/coreRepository';
+import { listCustodyEvents } from '@/data/custodyRepository';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { listIntervals } from '@/data/intervalsRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
@@ -46,6 +56,7 @@ export default function SampleTraceScreen() {
   );
   const [intervals, setIntervals] = useState<LogInterval[]>([]);
   const [parent, setParent] = useState<FieldSample | null>(null);
+  const [events, setEvents] = useState<FieldCustodyEvent[]>([]);
 
   const load = useCallback(() => {
     (async () => {
@@ -54,6 +65,7 @@ export default function SampleTraceScreen() {
       if (!loaded) {
         return;
       }
+      setEvents(await listCustodyEvents(loaded.id));
       const [
         loadedHole,
         loadedBoxes,
@@ -110,6 +122,13 @@ export default function SampleTraceScreen() {
           style: 'destructive',
           onPress: async () => {
             const result = await deleteSample(sample.id);
+            if (result.outcome === 'has-custody') {
+              Alert.alert(
+                'Has a custody record',
+                'This sample has been bagged or handed over. Correct its custody steps first, so the record is never left without its sample.',
+              );
+              return;
+            }
             if (result.outcome === 'has-duplicates') {
               Alert.alert(
                 'Has a duplicate',
@@ -129,6 +148,23 @@ export default function SampleTraceScreen() {
   }
 
   const missing = steps.filter((s) => s.state === 'missing');
+  const custodyLines = custodyTimeline(events);
+  const counting = effectiveEvents(events);
+  const lastStep = counting[counting.length - 1];
+  const correctable =
+    lastStep && canCorrectEvent(events, lastStep.id).ok ? lastStep : null;
+  const nextSteps = (
+    ['bagged', 'sealed', 'handed_over'] as RecordableEventType[]
+  ).filter((type) => canRecordEvent(type, events).ok);
+  const STEP_LABELS: Record<RecordableEventType, string> = {
+    bagged: 'Bag it',
+    sealed: 'Seal it',
+    handed_over: 'Hand it over',
+  };
+  const recordStep = (type: RecordableEventType) =>
+    router.push(
+      `/projects/${projectId}/custody/record?type=${type}&sampleIds=${sample.id}` as Href,
+    );
   const goToHole = (path: string) =>
     router.push(`/projects/${projectId}/drillholes/${hole.id}${path}` as Href);
 
@@ -171,6 +207,35 @@ export default function SampleTraceScreen() {
         <Card style={styles.chainCard}>
           <ThemedText type="heading">Where this sample has been</ThemedText>
           <TraceChain steps={steps} />
+        </Card>
+
+        <Card style={styles.chainCard}>
+          <ThemedText type="heading">Chain of custody</ThemedText>
+          <CustodyTimeline lines={custodyLines} />
+          {nextSteps.map((type, index) => (
+            <PrimaryButton
+              key={type}
+              label={STEP_LABELS[type]}
+              variant={index === 0 ? 'primary' : 'secondary'}
+              onPress={() => recordStep(type)}
+            />
+          ))}
+          {correctable ? (
+            <Pressable
+              onPress={() =>
+                router.push(
+                  `/projects/${projectId}/custody/correct?eventId=${correctable.id}&label=${encodeURIComponent(CUSTODY_LABELS[correctable.type])}` as Href,
+                )
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Correct the last step: ${CUSTODY_LABELS[correctable.type]}`}
+              style={styles.correct}
+            >
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Correct the last step
+              </ThemedText>
+            </Pressable>
+          ) : null}
         </Card>
 
         {sample.note ? (
@@ -224,6 +289,11 @@ const styles = StyleSheet.create({
   },
   noteCard: {
     gap: Spacing.one,
+  },
+  correct: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
   },
   delete: {
     alignItems: 'center',

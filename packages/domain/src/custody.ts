@@ -196,6 +196,37 @@ export function canRecordEvent(
   return { ok: true };
 }
 
+/**
+ * Whether an event can be corrected. Only the latest step that still counts,
+ * so a correction never leaves a later step (a seal) with nothing under it
+ * (the bagging); correct the later steps first. A dispatch's own event is
+ * corrected from the dispatch, not from here.
+ */
+export function canCorrectEvent(
+  events: readonly FieldCustodyEvent[],
+  eventId: string,
+): Eligibility {
+  const counting = effectiveEvents(events);
+  const target = counting.find((event) => event.id === eventId);
+  if (!target) {
+    return { ok: false, reason: "This has already been corrected." };
+  }
+  if (target.type === "dispatched") {
+    return {
+      ok: false,
+      reason: "This came from a dispatch. Correct it from the dispatch.",
+    };
+  }
+  if (counting[counting.length - 1]?.id !== eventId) {
+    return {
+      ok: false,
+      reason:
+        "Only the latest step can be corrected. Correct the later ones first.",
+    };
+  }
+  return { ok: true };
+}
+
 /** Splits selected samples into those that can take the event and those that cannot, with why. */
 export function splitByEligibility<T extends { id: string }>(
   type: RecordableEventType,

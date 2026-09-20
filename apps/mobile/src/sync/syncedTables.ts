@@ -14,6 +14,9 @@ export const SYNCED_TABLES = [
   'samples',
   'qc_dismissals',
   'photos',
+  'dispatches',
+  'dispatch_samples',
+  'custody_events',
 ] as const;
 
 /** Columns set once when a row is created. The server refuses a change to them. */

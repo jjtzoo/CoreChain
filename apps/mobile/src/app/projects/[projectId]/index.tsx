@@ -69,6 +69,11 @@ export default function ProjectDetailScreen() {
 
   const shortcuts: { icon: IconName; label: string; path: string }[] = [
     { icon: 'flask-outline', label: 'Samples', path: 'samples' },
+    {
+      icon: 'truck-delivery-outline',
+      label: 'Dispatches',
+      path: 'dispatches',
+    },
     { icon: 'file-export-outline', label: 'Export', path: 'export' },
     { icon: 'cog-outline', label: 'Settings', path: 'settings' },
   ];

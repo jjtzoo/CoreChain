@@ -42,9 +42,14 @@ function OpeningData({ failed }: { failed: boolean }) {
         justifyContent: 'center',
         gap: Spacing.three,
         padding: Spacing.five,
-      }}>
+      }}
+    >
       {failed ? null : <ActivityIndicator />}
-      <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+      <ThemedText
+        type="small"
+        themeColor="textSecondary"
+        style={{ textAlign: 'center' }}
+      >
         {failed
           ? 'Your data could not be opened. Close the app and open it again. If this keeps happening, contact your CoreChain administrator.'
           : 'Opening your data…'}
@@ -118,6 +123,30 @@ function AppStack() {
         <Stack.Screen
           name="projects/[projectId]/samples/new"
           options={{ title: 'New sample', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/custody/record"
+          options={{ title: 'Custody', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/custody/correct"
+          options={{ title: 'Correct a step', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/dispatches/index"
+          options={{ title: 'Lab dispatches' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/dispatches/[dispatchId]"
+          options={{ title: 'Dispatch' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/dispatches/new"
+          options={{ title: 'New dispatch', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/dispatches/handover"
+          options={{ title: 'Hand over', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/export"

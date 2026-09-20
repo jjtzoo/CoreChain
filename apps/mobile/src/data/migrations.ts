@@ -63,9 +63,7 @@ export const MIGRATIONS: readonly Migration[] = [
           deleted_at TEXT
         )`,
       ],
-      [
-        'CREATE INDEX idx_drillholes_project_id ON drillholes (project_id)',
-      ],
+      ['CREATE INDEX idx_drillholes_project_id ON drillholes (project_id)'],
       [
         `CREATE TABLE drillhole_status_history (
           id TEXT PRIMARY KEY NOT NULL,
@@ -209,7 +207,9 @@ export const MIGRATIONS: readonly Migration[] = [
           created_at TEXT NOT NULL
         )`,
       ],
-      ['CREATE INDEX idx_qc_dismissals_project_id ON qc_dismissals (project_id)'],
+      [
+        'CREATE INDEX idx_qc_dismissals_project_id ON qc_dismissals (project_id)',
+      ],
     ],
   },
   {
@@ -313,6 +313,70 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
       [
         'CREATE INDEX idx_sample_blocks_project_id ON sample_blocks (project_id)',
+      ],
+    ],
+  },
+  {
+    // Sprint 5, E7: chain of custody and lab dispatches. Synced. A custody
+    // event is only ever added; a mistake is corrected by a new event.
+    version: 10,
+    commands: [
+      [
+        `CREATE TABLE dispatches (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          dispatch_number TEXT NOT NULL,
+          laboratory TEXT NOT NULL,
+          preparation_request TEXT,
+          handover_at TEXT,
+          status TEXT NOT NULL,
+          note TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      ['CREATE INDEX idx_dispatches_project_id ON dispatches (project_id)'],
+      [
+        `CREATE TABLE dispatch_samples (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          dispatch_id TEXT NOT NULL REFERENCES dispatches (id),
+          sample_id TEXT NOT NULL REFERENCES samples (id),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          deleted_at TEXT
+        )`,
+      ],
+      [
+        'CREATE INDEX idx_dispatch_samples_dispatch_id ON dispatch_samples (dispatch_id)',
+      ],
+      [
+        'CREATE INDEX idx_dispatch_samples_sample_id ON dispatch_samples (sample_id)',
+      ],
+      [
+        `CREATE TABLE custody_events (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL REFERENCES projects (id),
+          sample_id TEXT NOT NULL REFERENCES samples (id),
+          event_type TEXT NOT NULL,
+          occurred_at TEXT NOT NULL,
+          handled_by TEXT NOT NULL,
+          location TEXT,
+          recipient TEXT,
+          note TEXT,
+          dispatch_id TEXT,
+          corrects_event_id TEXT,
+          created_at TEXT NOT NULL
+        )`,
+      ],
+      [
+        'CREATE INDEX idx_custody_events_sample_id ON custody_events (sample_id)',
+      ],
+      [
+        'CREATE INDEX idx_custody_events_project_id ON custody_events (project_id)',
       ],
     ],
   },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canCorrectEvent,
   canJoinDispatch,
   canRecordEvent,
   custodyTimeline,
@@ -205,6 +206,45 @@ describe("canRecordEvent", () => {
       note: "x",
     });
     expect(canRecordEvent("bagged", [mistake, fix])).toEqual({ ok: true });
+  });
+});
+
+describe("canCorrectEvent", () => {
+  const bagged = event("bagged", "2026-09-20T09:00:00Z");
+  const sealed = event("sealed", "2026-09-20T09:10:00Z");
+
+  it("allows correcting the latest step", () => {
+    expect(canCorrectEvent([bagged, sealed], sealed.id)).toEqual({ ok: true });
+  });
+
+  it("refuses an earlier step while a later one still stands", () => {
+    expect(canCorrectEvent([bagged, sealed], bagged.id)).toMatchObject({
+      ok: false,
+    });
+  });
+
+  it("allows the earlier step once the later one is corrected", () => {
+    const fix = event("correction", "2026-09-20T09:20:00Z", {
+      correctsEventId: sealed.id,
+      note: "x",
+    });
+    expect(canCorrectEvent([bagged, sealed, fix], bagged.id)).toEqual({
+      ok: true,
+    });
+  });
+
+  it("refuses something already corrected, and a dispatch's own event", () => {
+    const fix = event("correction", "2026-09-20T09:20:00Z", {
+      correctsEventId: sealed.id,
+      note: "x",
+    });
+    expect(canCorrectEvent([bagged, sealed, fix], sealed.id)).toMatchObject({
+      ok: false,
+    });
+    const dispatched = event("dispatched", "2026-09-20T10:00:00Z");
+    expect(canCorrectEvent([bagged, dispatched], dispatched.id)).toMatchObject({
+      ok: false,
+    });
   });
 });
 
