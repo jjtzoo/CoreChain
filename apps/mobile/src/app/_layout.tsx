@@ -3,13 +3,15 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { SessionProvider, useSession } from '@/auth/session-context';
 import { AccountButton } from '@/components/account-button';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { BrandLockup } from '@/components/brand-lockup';
-import { Colors } from '@/constants/theme';
+import { ThemedText } from '@/components/themed-text';
+import { Colors, Spacing } from '@/constants/theme';
+import { SyncProvider, useSync } from '@/sync/sync-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +32,27 @@ function navigationTheme(scheme: 'light' | 'dark') {
   };
 }
 
+/** Shown for a moment while the phone's database opens, or if it cannot. */
+function OpeningData({ failed }: { failed: boolean }) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.three,
+        padding: Spacing.five,
+      }}>
+      {failed ? null : <ActivityIndicator />}
+      <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+        {failed
+          ? 'Your data could not be opened. Close the app and open it again. If this keeps happening, contact your CoreChain administrator.'
+          : 'Opening your data…'}
+      </ThemedText>
+    </View>
+  );
+}
+
 /**
  * Signed-in screens and the sign-in screen are two groups: only one is
  * reachable at a time, and the router moves between them by itself when the
@@ -39,10 +62,14 @@ function navigationTheme(scheme: 'light' | 'dark') {
  */
 function AppStack() {
   const { phase } = useSession();
+  const { preparation } = useSync();
   if (phase === 'loading') {
     return null;
   }
   const signedIn = phase === 'signed-in';
+  if (signedIn && preparation !== 'ready') {
+    return <OpeningData failed={preparation === 'failed'} />;
+  }
   return (
     <Stack
       screenOptions={{
@@ -163,7 +190,9 @@ export default function RootLayout() {
       {/* Dark icons on the light theme, light icons on the dark one. */}
       <StatusBar style="auto" />
       <SessionProvider>
-        <AppStack />
+        <SyncProvider>
+          <AppStack />
+        </SyncProvider>
       </SessionProvider>
     </ThemeProvider>
   );

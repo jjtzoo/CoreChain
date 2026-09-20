@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { syncTone } from '@/components/sync-status';
+import { useSync } from '@/sync/sync-context';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
@@ -20,13 +22,15 @@ function formatDate(iso: string): string {
 }
 
 /**
- * The signed-in person, how healthy their sign-in is, and sign out. Sign-out
- * keeps everything on the phone for now: there is no upload yet, so wiping
- * could destroy work. "Sign out and wipe this device" arrives with sync (E1-5).
+ * The signed-in person, how healthy their sign-in is, whether their work has
+ * reached the server, and sign out. Sign-out keeps everything on the phone:
+ * a phone handed to a different account is cleared at that account's sign-in
+ * (once nothing is left unsent), and "Sign out and wipe this device" is E1-5.
  */
 export default function AccountScreen() {
   const router = useRouter();
   const { user, health, signOut } = useSession();
+  const { summary } = useSync();
 
   const confirmSignOut = () => {
     Alert.alert(
@@ -84,6 +88,22 @@ export default function AccountScreen() {
             </View>
           </Card>
         )}
+
+        {summary ? (
+          <Card style={styles.status}>
+            <Icon
+              name={syncTone(summary).icon}
+              size={24}
+              themeColor={syncTone(summary).color}
+            />
+            <View style={styles.personText}>
+              <ThemedText type="smallBold">{summary.title}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {summary.detail}
+              </ThemedText>
+            </View>
+          </Card>
+        ) : null}
 
         <PrimaryButton
           label="Send feedback"

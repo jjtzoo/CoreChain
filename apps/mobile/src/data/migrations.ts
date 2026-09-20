@@ -2,8 +2,8 @@ import type { SQLBatchTuple } from '@op-engineering/op-sqlite';
 
 // Local SQLite schema for the offline-first field workflow (E8-1). Every
 // table carries the sync-ready columns decisions D6-D8 call for
-// (id, created_at, updated_at, version, deleted_at) even though sync itself
-// isn't wired up until Sprint 4/5 — see docs/product/corechain-mobile-mvp-scrum-plan.md.
+// (id, created_at, updated_at, version, deleted_at); sync (Sprint 4) uses these
+// tables as they are — see docs/product/corechain-mobile-mvp-scrum-plan.md.
 //
 // Migrations are a flat, ordered list of executeBatch command arrays applied
 // once each, tracked by user_version (SQLite's built-in schema version
@@ -262,6 +262,25 @@ export const MIGRATIONS: readonly Migration[] = [
           device TEXT,
           created_at TEXT NOT NULL,
           sent_at TEXT
+        )`,
+      ],
+    ],
+  },
+  {
+    // Sprint 4, E8-3: changes the server could not accept, kept so the person
+    // can be told. Local only, never synced.
+    version: 7,
+    commands: [
+      [
+        `CREATE TABLE sync_issues (
+          id TEXT PRIMARY KEY NOT NULL,
+          table_name TEXT NOT NULL,
+          record_id TEXT,
+          status TEXT NOT NULL,
+          reason TEXT,
+          detail TEXT,
+          created_at TEXT NOT NULL,
+          resolved_at TEXT
         )`,
       ],
     ],

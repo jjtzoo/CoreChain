@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
+import { SyncStatusLine } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
@@ -111,12 +112,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hello}>
           <ThemedText type="subtitle">{greeting(new Date())}</ThemedText>
-          <View style={styles.offlineRow}>
-            <Icon name="cellphone-check" size={18} themeColor="success" />
-            <ThemedText type="small" themeColor="textSecondary">
-              Saved on this phone. Works without signal.
-            </ThemedText>
-          </View>
+          <SyncStatusLine onPress={() => router.push('/account')} />
         </View>
 
         {sessionNote ? (
@@ -250,11 +246,6 @@ const styles = StyleSheet.create({
   hello: {
     gap: Spacing.one,
     paddingTop: Spacing.two,
-  },
-  offlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
   },
   section: {
     gap: Spacing.two + 2,
