@@ -13,6 +13,7 @@ import {
 import { getDatabase } from './database';
 import { getDrillhole } from './drillholesRepository';
 import { newId, nowIso } from './ids';
+import { blockStatus } from './sampleBlocksRepository';
 import { getProject } from './projectsRepository';
 
 // E6: samples (primary and QC), the next device sample number, and QC-reminder
@@ -82,16 +83,24 @@ export async function listHoleSamples(
 }
 
 /**
- * The next device-issued sample number, from the project's counter (E1-2).
- * Sprint 4's device-issued blocks (E6-4) replace this source.
+ * The next sample number for this phone (E6-4). Once the server has reserved a
+ * run of numbers for the phone, the next one comes from that run, so two phones
+ * on one project never suggest the same number. Until it has, and only until
+ * then, the project's own counter is used (E1-2). If the run is used up there
+ * is no suggestion: the counter could land in another phone's numbers.
  */
 export async function suggestNextSampleNumber(
   projectId: string,
 ): Promise<string | null> {
   const project = await getProject(projectId);
-  return project
-    ? formatSampleNumber(project.samplePrefix, project.nextSampleNumber)
-    : null;
+  if (!project) return null;
+  const blocks = await blockStatus(projectId);
+  if (blocks.hasBlocks) {
+    return blocks.next === null
+      ? null
+      : formatSampleNumber(project.samplePrefix, blocks.next);
+  }
+  return formatSampleNumber(project.samplePrefix, project.nextSampleNumber);
 }
 
 async function allSampleNumbers(projectId: string): Promise<string[]> {
@@ -148,6 +157,7 @@ export async function createSample(
   const db = await getDatabase();
   const id = newId();
   const timestamp = nowIso();
+  const holdsBlocks = (await blockStatus(projectId)).hasBlocks;
 
   await db.transaction(async (tx) => {
     await tx.execute(
@@ -171,7 +181,9 @@ export async function createSample(
         timestamp,
       ],
     );
-    if (options.usedSuggestedNumber) {
+    // The counter only moves while numbers come from it; a reserved run is
+    // worked through by the samples themselves.
+    if (options.usedSuggestedNumber && !holdsBlocks) {
       await tx.execute(
         `UPDATE projects
          SET next_sample_number = next_sample_number + 1,
@@ -191,8 +203,7 @@ export async function createSample(
 }
 
 export type DeleteSampleResult =
-  | { outcome: 'deleted' }
-  | { outcome: 'has-duplicates' };
+  { outcome: 'deleted' } | { outcome: 'has-duplicates' };
 
 /**
  * Deletes a sample (soft delete; its number stays reserved). A primary sample
@@ -236,25 +247,30 @@ export async function listQcEvents(projectId: string): Promise<QcEvent[]> {
   ]);
 
   const events: { at: string; event: QcEvent }[] = [
-    ...(samples.rows as unknown as { sample_type: SampleType; created_at: string }[]).map(
-      (r) => ({
-        at: r.created_at,
-        event: { kind: 'sample', type: r.sample_type } as QcEvent,
-      }),
-    ),
-    ...(dismissals.rows as unknown as { control_type: ControlType; created_at: string }[]).map(
-      (r) => ({
-        at: r.created_at,
-        event: { kind: 'dismissal', controlType: r.control_type } as QcEvent,
-      }),
-    ),
+    ...(
+      samples.rows as unknown as {
+        sample_type: SampleType;
+        created_at: string;
+      }[]
+    ).map((r) => ({
+      at: r.created_at,
+      event: { kind: 'sample', type: r.sample_type } as QcEvent,
+    })),
+    ...(
+      dismissals.rows as unknown as {
+        control_type: ControlType;
+        created_at: string;
+      }[]
+    ).map((r) => ({
+      at: r.created_at,
+      event: { kind: 'dismissal', controlType: r.control_type } as QcEvent,
+    })),
   ];
   return events.sort((a, b) => a.at.localeCompare(b.at)).map((e) => e.event);
 }
 
 export type DismissResult =
-  | { outcome: 'dismissed' }
-  | { outcome: 'reason-required' };
+  { outcome: 'dismissed' } | { outcome: 'reason-required' };
 
 /** E6-2: a reminder can be dismissed, but only with a reason. */
 export async function dismissQcReminder(

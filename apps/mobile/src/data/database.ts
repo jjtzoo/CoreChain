@@ -210,6 +210,7 @@ export async function wipeSyncedData(): Promise<void> {
     }
     await tx.execute('DELETE FROM log_drafts');
     await tx.execute('DELETE FROM sync_issues');
+    await tx.execute('DELETE FROM sample_blocks');
   });
   await sync.disconnectAndClear();
   await installChangeCapture(sync, schema);

@@ -93,3 +93,25 @@ export function needsMoreNumbers(
 ): boolean {
   return left < threshold;
 }
+
+/**
+ * The number at the end of a sample number ("CC-00042" gives 42), or null if
+ * there is none. Used to work out which numbers of a block are already taken,
+ * including tags a geologist typed by hand.
+ */
+export function trailingNumber(sampleNumber: string): number | null {
+  const digits = sampleNumber.trim().match(/(\d+)$/)?.[1];
+  if (!digits) return null;
+  const value = Number(digits);
+  return Number.isSafeInteger(value) ? value : null;
+}
+
+/** Every number already taken, from the project's sample numbers. */
+export function usedNumbers(sampleNumbers: readonly string[]): Set<number> {
+  const used = new Set<number>();
+  for (const sampleNumber of sampleNumbers) {
+    const n = trailingNumber(sampleNumber);
+    if (n !== null) used.add(n);
+  }
+  return used;
+}

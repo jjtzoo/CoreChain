@@ -297,4 +297,23 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // Sprint 4, E6-4: the runs of sample numbers the server reserved for this
+    // phone. Local only, never synced.
+    version: 9,
+    commands: [
+      [
+        `CREATE TABLE sample_blocks (
+          id TEXT PRIMARY KEY NOT NULL,
+          project_id TEXT NOT NULL,
+          start_number INTEGER NOT NULL,
+          size INTEGER NOT NULL,
+          issued_at TEXT NOT NULL
+        )`,
+      ],
+      [
+        'CREATE INDEX idx_sample_blocks_project_id ON sample_blocks (project_id)',
+      ],
+    ],
+  },
 ];

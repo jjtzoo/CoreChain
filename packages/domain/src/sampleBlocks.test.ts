@@ -6,6 +6,8 @@ import {
   nextBlockRange,
   nextNumberFromBlocks,
   numbersLeft,
+  trailingNumber,
+  usedNumbers,
 } from "./sampleBlocks";
 
 describe("nextBlockRange", () => {
@@ -90,5 +92,25 @@ describe("using a device's blocks", () => {
     expect(needsMoreNumbers(19)).toBe(true);
     expect(needsMoreNumbers(20)).toBe(false);
     expect(needsMoreNumbers(6, 5)).toBe(false);
+  });
+});
+
+describe("trailingNumber and usedNumbers", () => {
+  it("reads the number at the end of a sample number", () => {
+    expect(trailingNumber("CC-00042")).toBe(42);
+    expect(trailingNumber(" SYN-7 ")).toBe(7);
+    expect(trailingNumber("A12B")).toBeNull();
+    expect(trailingNumber("no number")).toBeNull();
+  });
+
+  it("collects what is taken, ignoring tags with no number", () => {
+    expect(usedNumbers(["CC-00001", "CC-00003", "blank"])).toEqual(
+      new Set([1, 3]),
+    );
+  });
+
+  it("lets a block skip numbers a geologist typed by hand", () => {
+    const used = usedNumbers(["CC-00101", "CC-00102", "PRE-103"]);
+    expect(nextNumberFromBlocks([{ start: 101, size: 100 }], used)).toBe(104);
   });
 });

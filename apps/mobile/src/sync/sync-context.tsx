@@ -18,6 +18,7 @@ import {
 import { CoreChainConnector } from './connector';
 import { countOpenIssues } from './issues';
 import { getDataOwner, setDataOwner } from './owner';
+import { topUpSampleBlocks } from './sampleBlocks';
 
 // Keeps this phone and the server in step (E8). It only ever runs while someone
 // is signed in with a session that may sync; the geologist's own work never
@@ -116,6 +117,17 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         ]);
         if (cancelled) return;
         const status = sync.currentStatus;
+        // Everything sent and the first download done: the server knows the
+        // projects as they are, so it can hand out sample numbers for them.
+        if (
+          canSync &&
+          status.connected &&
+          status.hasSynced &&
+          stats.count === 0
+        ) {
+          const cookieNow = cookieRef.current;
+          if (cookieNow) void topUpSampleBlocks(cookieNow);
+        }
         setSummary(
           syncSummary(
             {

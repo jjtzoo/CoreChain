@@ -22,9 +22,11 @@ import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { QcReminders } from '@/components/qc-reminders';
 import { ThemedText } from '@/components/themed-text';
+import { AlertRow } from '@/components/ui/alert-row';
 import { Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { getProject } from '@/data/projectsRepository';
+import { blockStatus, type BlockStatus } from '@/data/sampleBlocksRepository';
 import {
   createSample,
   listHoleSamples,
@@ -75,8 +77,11 @@ export default function NewSampleScreen() {
   const [events, setEvents] = useState<QcEvent[]>([]);
   const [holeSamples, setHoleSamples] = useState<FieldSample[]>([]);
   const [suggested, setSuggested] = useState('');
+  const [numbers, setNumbers] = useState<BlockStatus | null>(null);
 
-  const [holeId, setHoleId] = useState<string | null>(params.drillholeId ?? null);
+  const [holeId, setHoleId] = useState<string | null>(
+    params.drillholeId ?? null,
+  );
   const [type, setType] = useState<SampleType>(
     isSampleType(params.type) ? params.type : 'primary',
   );
@@ -107,6 +112,7 @@ export default function NewSampleScreen() {
 
   useEffect(() => {
     getProject(projectId).then(setProject);
+    blockStatus(projectId).then(setNumbers);
     listQcEvents(projectId).then(setEvents);
     suggestNextSampleNumber(projectId).then((next) => {
       setSuggested(next ?? '');
@@ -199,9 +205,25 @@ export default function NewSampleScreen() {
         contentContainerStyle={styles.form}
         footer={
           <StickyActions>
-            <PrimaryButton label="Save sample" onPress={handleSave} loading={saving} />
+            <PrimaryButton
+              label="Save sample"
+              onPress={handleSave}
+              loading={saving}
+            />
           </StickyActions>
-        }>
+        }
+      >
+        {numbers?.hasBlocks && numbers.low ? (
+          <AlertRow
+            tone="warning"
+            message={
+              numbers.left === 0
+                ? 'No sample numbers left on this phone. Connect to the internet to get more, or type a pre-printed tag.'
+                : `Only ${numbers.left} sample numbers left on this phone. Connect to the internet to get more.`
+            }
+          />
+        ) : null}
+
         <QcReminders reminders={reminders} />
 
         <FormSection title="Which sample">
@@ -256,7 +278,8 @@ export default function NewSampleScreen() {
               fromM !== '' && !fromEdited
                 ? 'Starts where your last sample ended.'
                 : undefined
-            }>
+            }
+          >
             <FormRow>
               <TextField
                 label="From depth (m)"

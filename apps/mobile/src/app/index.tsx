@@ -7,7 +7,7 @@ import {
 } from '@corechain/domain';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
@@ -89,7 +89,9 @@ export default function HomeScreen() {
 
       const latest = await getMostRecentDrillhole();
       if (latest) {
-        const ranges = await listIntervalRangesByProject(latest.drillhole.projectId);
+        const ranges = await listIntervalRangesByProject(
+          latest.drillhole.projectId,
+        );
         setRecent({
           ...latest,
           progress: loggingProgress(
@@ -142,10 +144,13 @@ export default function HomeScreen() {
                 )
               }
               accessibilityLabel={`Continue with hole ${recent.drillhole.holeId}`}
-              style={styles.recentCard}>
+              style={styles.recentCard}
+            >
               <View style={styles.recentTop}>
                 <View style={styles.recentTitle}>
-                  <ThemedText type="heading">{recent.drillhole.holeId}</ThemedText>
+                  <ThemedText type="heading">
+                    {recent.drillhole.holeId}
+                  </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {recent.projectName}
                   </ThemedText>
@@ -168,10 +173,12 @@ export default function HomeScreen() {
                 </ThemedText>
               </View>
               <View
-                style={[styles.continueRow, { backgroundColor: theme.accent }]}>
+                style={[styles.continueRow, { backgroundColor: theme.accent }]}
+              >
                 <ThemedText
                   type="smallBold"
-                  style={[styles.continueLabel, { color: theme.onAccent }]}>
+                  style={[styles.continueLabel, { color: theme.onAccent }]}
+                >
                   Continue
                 </ThemedText>
                 <Icon name="arrow-right" size={20} themeColor="onAccent" />
@@ -190,8 +197,8 @@ export default function HomeScreen() {
               <BrandSymbol size={72} />
               <ThemedText type="heading">Start your first project</ThemedText>
               <ThemedText type="default" themeColor="textSecondary">
-                A project holds your drillholes, core logs and samples. It
-                takes a minute to set up.
+                A project holds your drillholes, core logs and samples. It takes
+                a minute to set up.
               </ThemedText>
             </Card>
           ) : (
@@ -200,7 +207,8 @@ export default function HomeScreen() {
                 key={project.id}
                 onPress={() => router.push(`/projects/${project.id}`)}
                 accessibilityLabel={`Open project ${project.name}`}
-                style={styles.projectCard}>
+                style={styles.projectCard}
+              >
                 <View style={styles.projectTop}>
                   <View style={styles.recentTitle}>
                     <ThemedText type="smallBold" style={styles.projectName}>
@@ -226,10 +234,29 @@ export default function HomeScreen() {
           <PrimaryButton
             label="New project"
             icon="plus"
-            variant={summaries && summaries.length === 0 ? 'primary' : 'secondary'}
+            variant={
+              summaries && summaries.length === 0 ? 'primary' : 'secondary'
+            }
             onPress={() => router.push('/projects/new')}
           />
         </View>
+
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: '/feedback', params: { from: 'Home' } })
+          }
+          accessibilityRole="button"
+          style={styles.feedbackLink}
+        >
+          <Icon
+            name="message-text-outline"
+            size={18}
+            themeColor="textSecondary"
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            Something not right, or an idea? Send feedback
+          </ThemedText>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -246,6 +273,13 @@ const styles = StyleSheet.create({
   hello: {
     gap: Spacing.one,
     paddingTop: Spacing.two,
+  },
+  feedbackLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
   },
   section: {
     gap: Spacing.two + 2,
