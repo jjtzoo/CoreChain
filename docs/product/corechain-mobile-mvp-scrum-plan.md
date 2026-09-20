@@ -107,6 +107,8 @@ Project → Drillhole → Core boxes & runs (recovery, RQD) → Interval logging
 | D11 | **Encrypted local database** (SQLCipher via op-sqlite, PowerSync's built-in storage adapter)                                                                     | Exploration data is commercially sensitive, and phones get lost in the field. Package compatibility and the toolchain (prebuild → real Gradle project) are confirmed by the Sprint 0 spike; on-device read/write is confirmed in Sprint 1's E8-1 instead, once a device is available. |
 | D12 | **2-week sprints**, each ending in a demo build on a real Android device                                                                                         | Standard cadence, and it proves every increment on real hardware.                                                                                                                                                                                                                     |
 | D13 | **Pilot accounts are created by the owner**; open sign-up stays off during the field test | Testers get a ready account (their own email and a first password) instead of registering. That keeps strangers out of the cloud database while the product is unproven, and each tester still has their own separate workspace, so their data and sample-number blocks stay theirs. Self-serve sign-up (D9) is switched on before any public release. |
+| D14 | **The phone keeps its own tables and syncs into them with PowerSync raw tables** | Proven on the phone in the Sprint 4 spike: PowerSync opened the app's own encrypted database, downloaded a project into the existing tables, and the app showed it without any screen change. The fallback of moving the repositories onto PowerSync-managed tables is not needed. |
+| D15 | **Five tiers: field geologist, QA/QC, laboratory, resident / project manager, admin** | These are the people who touch a hole's evidence, in the order the chain runs (the operations document says QA/QC starts in the field and continues through sampling, custody and the lab, so it is not one sign-off role). Admin is not a mining role: it looks after accounts. Only admin has extra rights today; the other tiers are stored and used to choose what each person sees and which guide they get. QA/QC is expected to be scoped to a stage (core and logging, sampling and custody, laboratory and assays); the scope is added with the QA/QC screens, after the field test. |
 
 ---
 
@@ -432,8 +434,13 @@ As a field geologist, I want to export collars, surveys (planned azimuth/dip), l
 
 ### E10 — Test support
 
-**E10-1 — First-run onboarding (3)**
-As a new tester, I want a short walkthrough to my first project and hole, so that I can start without training.
+**E10-1 — First-run guide for the field geologist (8)**
+As a new field geologist, I want a short guided walkthrough on my phone, so that I can start without training.
+
+- Walks through a project, a hole, a box and run, an interval, a photo, a sample and the export, on a **practice project** the person can delete.
+- Works with no signal, uses the real screens with short hints (no video), and can be replayed from the Account screen.
+- The app picks the guide from the person's tier. Written after the friendly-geologist alpha, so it explains what a real person got stuck on. The field-day PDF stays linked.
+- Guides for the other tiers (QA/QC, laboratory, resident / project manager) ship with their own screens after the field test: a guide for a screen that doesn't exist yet would be wrong.
 
 **E10-2 — In-app feedback (2)**
 As a tester, I want to send feedback with a screenshot from any screen, so that problems are reported in context.
@@ -445,6 +452,11 @@ As the Product Owner, I want crash reports with the app version and device, so t
 
 **E10-4 — Field-test release (3)**
 As the Product Owner, I want signed builds on Google Play internal testing, so that testers install and update easily.
+
+**E10-5 — Admin first-run checklist (2)**
+As the admin, I want a short checklist on the Users page, so that I can set up my first testers without help.
+
+- Steps: add a user, choose their tier, send them the login. It disappears once done and can be shown again.
 
 ### Later backlog (not in the MVP)
 
@@ -490,7 +502,7 @@ Sprints last 2 weeks (Sprint 0 is 1 week). Capacity starts at ~20 points per spr
 | **S3** Sample it — **internal alpha** | A full field day works offline end to end                       | E5-1, E5-2, E6-1, E6-2, E6-3, E9-1                                                                                                                                                  | 25           | Installable APK: log, photograph, sample with QC inserts and export CSV — shown to one friendly geologist          |
 | **S4** Accounts and backup            | Sign up, and data reaches the cloud                             | Backend: Postgres + Prisma schema, Better Auth, PowerSync service; E1-3, E1-4, E6-4, E8-2                                                                                           | 16 + backend | Sign up, and alpha projects attach to the account; a second device downloads them                                  |
 | **S5** Safe sync and custody          | Offline work always syncs safely; the custody chain is complete | E8-3, E8-4, E8-5, E5-3, E1-5, E7-1, E7-2, E7-3                                                                                                                                      | 32           | Two devices edit the same record offline, and the conflict is resolved; a dispatch is created and its sheet shared |
-| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4 + fixes from alpha feedback                                                                                                                              | 10 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
+| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4, E10-5 + fixes from alpha feedback                                                                                                                              | 17 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
 
 S2 and S5 are over capacity by design. At S2 planning, split E4-3 and move E4-5 or E4-2 to S3 if velocity is under 30. At S5 planning, E7-3 is the first story to slip to S6.
 

@@ -13,7 +13,8 @@ import { POWERSYNC_AUDIENCE, POWERSYNC_TOKEN_LIFETIME } from "./powersync";
 // admin screen create users through the admin plugin; the only thing that
 // turns sign-up on is the environment variable below, set by the seed script.
 //
-// Roles (packages/domain/src/roles.ts): admin, project_manager, geologist.
+// Roles (packages/domain/src/roles.ts): geologist, qaqc, laboratory,
+// project_manager, admin.
 // Only admin may create users or change tiers. The other two tiers carry no
 // extra server rights yet.
 const ac = createAccessControl(defaultStatements);
@@ -39,6 +40,8 @@ export const auth = betterAuth({
         admin: ac.newRole({ ...adminAc.statements }),
         project_manager: ac.newRole({}),
         geologist: ac.newRole({}),
+        qaqc: ac.newRole({}),
+        laboratory: ac.newRole({}),
       },
       defaultRole: DEFAULT_ROLE,
       adminRoles: ["admin"],

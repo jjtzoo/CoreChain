@@ -2,6 +2,7 @@
 
 import {
   ROLE_LABELS,
+  ROLE_SUMMARIES,
   USER_ROLES,
   toUserRole,
   type UserRole,
@@ -175,6 +176,7 @@ function AddUserForm({
             </option>
           ))}
         </select>
+        <span className="admin-hint">{ROLE_SUMMARIES[role]}</span>
       </label>
 
       <label className="field">
