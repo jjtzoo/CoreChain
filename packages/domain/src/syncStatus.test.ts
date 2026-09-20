@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatAgo, syncSummary, type SyncFacts } from "./syncStatus";
+import {
+  describeSyncIssue,
+  formatAgo,
+  syncSummary,
+  type SyncFacts,
+} from "./syncStatus";
 
 const NOW = new Date("2026-09-20T10:00:00.000Z");
 
@@ -80,5 +85,20 @@ describe("syncSummary", () => {
 
   it("says plainly when the sign-in has run out", () => {
     expect(syncSummary({ ...settled, canSync: false }, NOW).tone).toBe("off");
+  });
+});
+
+describe("describeSyncIssue", () => {
+  it("explains what the server refused, in plain words", () => {
+    expect(describeSyncIssue("rejected", "hard-delete-not-allowed")).toContain(
+      "never deleted",
+    );
+    expect(describeSyncIssue("rejected", "duplicate-sample-number")).toContain(
+      "sample number",
+    );
+    expect(describeSyncIssue("conflict", "newer-version-on-server")).toContain(
+      "kept",
+    );
+    expect(describeSyncIssue("rejected", null)).toContain("could not accept");
   });
 });

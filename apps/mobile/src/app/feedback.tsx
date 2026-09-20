@@ -15,6 +15,7 @@ import * as Device from 'expo-device';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
 import { ChipSelect } from '@/components/form/chip-select';
@@ -93,100 +94,109 @@ export default function FeedbackScreen() {
   };
 
   return (
-    <FormScrollView
-      contentContainerStyle={styles.content}
-      footer={
-        <StickyActions>
-          <PrimaryButton label="Send feedback" onPress={send} loading={busy} />
-        </StickyActions>
-      }
-    >
-      {done ? (
-        <AlertRow tone="info" message={done} />
-      ) : (
-        <ThemedText type="small" themeColor="textSecondary">
-          Tell us what worked, what got in your way, or what you wish the app
-          did. It goes to the team that builds CoreChain.
-        </ThemedText>
-      )}
-
-      <FormSection>
-        <ChipSelect
-          label="What is this about?"
-          options={FEEDBACK_CATEGORIES}
-          value={category}
-          onChange={(value) => {
-            setCategory(value);
-            setErrors((previous) => ({ ...previous, category: undefined }));
-          }}
-          formatOption={(option) => FEEDBACK_CATEGORY_LABELS[option]}
-        />
-        {errors.category ? (
-          <ThemedText type="small" themeColor="danger">
-            {errors.category}
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <FormScrollView
+        contentContainerStyle={styles.content}
+        footer={
+          <StickyActions>
+            <PrimaryButton
+              label="Send feedback"
+              onPress={send}
+              loading={busy}
+            />
+          </StickyActions>
+        }
+      >
+        {done ? (
+          <AlertRow tone="info" message={done} />
+        ) : (
+          <ThemedText type="small" themeColor="textSecondary">
+            Tell us what worked, what got in your way, or what you wish the app
+            did. It goes to the team that builds CoreChain.
           </ThemedText>
+        )}
+
+        <FormSection>
+          <ChipSelect
+            label="What is this about?"
+            options={FEEDBACK_CATEGORIES}
+            value={category}
+            onChange={(value) => {
+              setCategory(value);
+              setErrors((previous) => ({ ...previous, category: undefined }));
+            }}
+            formatOption={(option) => FEEDBACK_CATEGORY_LABELS[option]}
+          />
+          {errors.category ? (
+            <ThemedText type="small" themeColor="danger">
+              {errors.category}
+            </ThemedText>
+          ) : null}
+
+          <TextField
+            label="Your message"
+            value={message}
+            onChangeText={setMessage}
+            error={errors.message}
+            multiline
+            textAlignVertical="top"
+            maxLength={FEEDBACK_MAX_LENGTH}
+            placeholder="What happened, and where?"
+            style={styles.message}
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            We add the app version, your phone and the screen you came from.
+          </ThemedText>
+        </FormSection>
+
+        {mine.length > 0 ? (
+          <View style={styles.history}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              YOUR RECENT MESSAGES
+            </ThemedText>
+            {mine.map((item) => (
+              <Card key={item.id} style={styles.item}>
+                <View style={styles.itemHead}>
+                  <ThemedText type="smallBold">
+                    {isFeedbackCategory(item.category)
+                      ? FEEDBACK_CATEGORY_LABELS[item.category]
+                      : item.category}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {isFeedbackStatus(item.status)
+                      ? FEEDBACK_STATUS_LABELS[item.status]
+                      : item.status}
+                  </ThemedText>
+                </View>
+                <ThemedText type="small" numberOfLines={3}>
+                  {item.message}
+                </ThemedText>
+                {item.note ? (
+                  <ThemedText type="small" themeColor="accent">
+                    {item.note}
+                  </ThemedText>
+                ) : null}
+              </Card>
+            ))}
+          </View>
         ) : null}
 
-        <TextField
-          label="Your message"
-          value={message}
-          onChangeText={setMessage}
-          error={errors.message}
-          multiline
-          textAlignVertical="top"
-          maxLength={FEEDBACK_MAX_LENGTH}
-          placeholder="What happened, and where?"
-          style={styles.message}
-        />
-        <ThemedText type="small" themeColor="textSecondary">
-          We add the app version, your phone and the screen you came from.
-        </ThemedText>
-      </FormSection>
-
-      {mine.length > 0 ? (
-        <View style={styles.history}>
-          <ThemedText type="caption" themeColor="textSecondary">
-            YOUR RECENT MESSAGES
-          </ThemedText>
-          {mine.map((item) => (
-            <Card key={item.id} style={styles.item}>
-              <View style={styles.itemHead}>
-                <ThemedText type="smallBold">
-                  {isFeedbackCategory(item.category)
-                    ? FEEDBACK_CATEGORY_LABELS[item.category]
-                    : item.category}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {isFeedbackStatus(item.status)
-                    ? FEEDBACK_STATUS_LABELS[item.status]
-                    : item.status}
-                </ThemedText>
-              </View>
-              <ThemedText type="small" numberOfLines={3}>
-                {item.message}
-              </ThemedText>
-              {item.note ? (
-                <ThemedText type="small" themeColor="accent">
-                  {item.note}
-                </ThemedText>
-              ) : null}
-            </Card>
-          ))}
-        </View>
-      ) : null}
-
-      {done ? (
-        <PrimaryButton
-          label="Back"
-          variant="secondary"
-          onPress={() => router.back()}
-        />
-      ) : null}
-    </FormScrollView>
+        {done ? (
+          <PrimaryButton
+            label="Back"
+            variant="secondary"
+            onPress={() => router.back()}
+          />
+        ) : null}
+      </FormScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   content: {
     padding: Spacing.four,
     gap: Spacing.four,

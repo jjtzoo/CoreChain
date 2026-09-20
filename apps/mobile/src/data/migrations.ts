@@ -285,4 +285,16 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // Removals the phone queued after the server took records away were refused
+    // by design and are not real problems: clear those alerts.
+    version: 8,
+    commands: [
+      [
+        `UPDATE sync_issues
+         SET resolved_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE reason = 'hard-delete-not-allowed' AND resolved_at IS NULL`,
+      ],
+    ],
+  },
 ];

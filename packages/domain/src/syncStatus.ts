@@ -106,3 +106,26 @@ export function syncSummary(facts: SyncFacts, now: Date): SyncSummary {
   }
   return { tone: "ok", title: "Up to date", detail: last };
 }
+
+/** What the server said about a change it did not accept, in plain words. */
+export function describeSyncIssue(
+  status: string,
+  reason: string | null,
+): string {
+  if (status === "conflict")
+    return "Changed elsewhere at the same time. The other version was kept and yours is saved for review.";
+  switch (reason) {
+    case "hard-delete-not-allowed":
+      return "A removal was not accepted. Records are never deleted, only marked as removed.";
+    case "parent-not-found":
+      return "Belongs to a project or hole the server does not have.";
+    case "duplicate-sample-number":
+      return "That sample number is already used in this project.";
+    case "not-found":
+      return "The record it changes is not on the server.";
+    case "not-allowed":
+      return "The server does not allow this change.";
+    default:
+      return "The server could not accept this change.";
+  }
+}

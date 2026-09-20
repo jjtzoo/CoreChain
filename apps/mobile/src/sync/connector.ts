@@ -62,7 +62,14 @@ export class CoreChainConnector implements PowerSyncBackendConnector {
     for (;;) {
       const batch = await database.getCrudBatch(UPLOAD_BATCH);
       if (!batch) return;
-      const results = await this.send(batch.crud.map(toWireOperation));
+      // The app never deletes a record, it marks it removed (an edit). A
+      // removal in the queue is the phone tidying up after the server took a
+      // record away, which is not the geologist's doing and must not be sent
+      // back.
+      const ops = batch.crud
+        .filter((entry) => entry.op !== 'DELETE')
+        .map(toWireOperation);
+      const results = ops.length > 0 ? await this.send(ops) : [];
       // Every change is answered, so the queue always moves on. One the server
       // cannot take is kept on the phone and reported, never retried forever.
       for (const result of results) {

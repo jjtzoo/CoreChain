@@ -1,11 +1,18 @@
-import { ROLE_LABELS, sessionMessage, toUserRole } from '@corechain/domain';
-import { useRouter } from 'expo-router';
+import {
+  ROLE_LABELS,
+  describeSyncIssue,
+  sessionMessage,
+  toUserRole,
+} from '@corechain/domain';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { syncTone } from '@/components/sync-status';
+import { listOpenIssues, type SyncIssue } from '@/sync/issues';
 import { useSync } from '@/sync/sync-context';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
@@ -31,6 +38,26 @@ export default function AccountScreen() {
   const router = useRouter();
   const { user, health, signOut } = useSession();
   const { summary } = useSync();
+  const [issues, setIssues] = useState<SyncIssue[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      listOpenIssues()
+        .then(setIssues)
+        .catch(() => {});
+    }, []),
+  );
+  // The same kind of refusal, counted once.
+  const issueGroups = [
+    ...issues
+      .reduce((groups, issue) => {
+        const key = `${issue.tableName}|${issue.status}|${issue.reason ?? ''}`;
+        const group = groups.get(key);
+        if (group) group.count += 1;
+        else groups.set(key, { issue, count: 1 });
+        return groups;
+      }, new Map<string, { issue: SyncIssue; count: number }>())
+      .values(),
+  ];
 
   const confirmSignOut = () => {
     Alert.alert(
@@ -105,6 +132,24 @@ export default function AccountScreen() {
           </Card>
         ) : null}
 
+        {issueGroups.length > 0 ? (
+          <Card style={styles.issues}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              CHANGES THE SERVER DID NOT ACCEPT
+            </ThemedText>
+            {issueGroups.map(({ issue, count }) => (
+              <View key={issue.id} style={styles.personText}>
+                <ThemedText type="smallBold">
+                  {count} × {issue.tableName.replace(/_/g, ' ')}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {describeSyncIssue(issue.status, issue.reason)}
+                </ThemedText>
+              </View>
+            ))}
+          </Card>
+        ) : null}
+
         <PrimaryButton
           label="Send feedback"
           icon="message-text-outline"
@@ -153,5 +198,8 @@ const styles = StyleSheet.create({
   },
   signOut: {
     gap: Spacing.two,
+  },
+  issues: {
+    gap: Spacing.three,
   },
 });
