@@ -402,9 +402,10 @@ As a field geologist, I want to generate a dispatch sheet (PDF or CSV) and share
 As a field geologist, I want the handover to a courier or laboratory to carry a sign-off tied to my account, so that the record shows who took responsibility for the samples.
 
 - Bagging and sealing stay one tap plus a form; no signature is asked for them.
-- Handover and dispatch show a confirmation statement ("I confirm these samples were handed over as listed") and record it against the signed-in account, with the time.
-- The "Handled by" name is taken from the signed-in account instead of being free text.
-- Optional: the person receiving draws their signature on the screen.
+- Traceability is the account, not a drawn signature. The server already stamps the signed-in account on every custody record it receives, and the phone cannot set or change it.
+- "Handled by" stays as the person who physically did the step (it defaults to the account holder, and can differ when a helper bagged the samples). "Recorded by" is the account, and is shown on each step and as a column on the dispatch sheet.
+- Handover and dispatch show a confirmation statement ("I confirm these samples were handed over as listed") and record it against the account, with the time.
+- Later, only if a laboratory or auditor asks for it: the person receiving draws their signature on the screen.
 - To validate before building: ask the friendly geologist and the resident manager whether a signed handover is what their laboratories and auditors expect, and whether the receiver's signature is wanted.
 
 ### E8 — Offline and sync
