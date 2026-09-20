@@ -17,7 +17,8 @@
     "db:studio": "prisma studio",
     "accounts:create": "tsx --env-file=.env scripts/create-accounts.ts",
     "postinstall": "prisma generate",
-    "auth:check-token": "tsx scripts/check-token.ts"
+    "auth:check-token": "tsx scripts/check-token.ts",
+    "sync:report": "tsx --env-file=.env scripts/sync-report.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.5",

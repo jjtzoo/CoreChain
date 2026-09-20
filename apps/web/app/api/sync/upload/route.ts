@@ -7,6 +7,9 @@ import { applyUpload } from "@/lib/sync/upload";
 // server has a different newer version; the change is kept for review) or
 // rejected (with the reason). The phone marks rejected and conflicting records
 // "needs attention" and carries on: one refused change never blocks the queue.
+// A large batch of offline work can take a while to apply.
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const user = await apiUser(request);
   if (!user) return signInRequired();
