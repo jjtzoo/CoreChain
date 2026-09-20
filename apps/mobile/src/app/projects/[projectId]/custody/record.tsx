@@ -14,6 +14,10 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
+import {
+  SuccessDialog,
+  type SuccessMessage,
+} from '@/components/ui/success-dialog';
 import { Spacing } from '@/constants/theme';
 import { recordCustodyEvent } from '@/data/custodyRepository';
 
@@ -74,6 +78,7 @@ export default function RecordCustodyScreen() {
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<CustodyError[]>([]);
   const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState<SuccessMessage | null>(null);
 
   const errorFor = (field: string) =>
     errors.find((error) => error.field === field)?.message;
@@ -106,11 +111,24 @@ export default function RecordCustodyScreen() {
         );
         return;
       }
-      Alert.alert(
-        DONE_TITLES[eventType],
-        `${result.recorded} ${result.recorded === 1 ? 'sample' : 'samples'} · ${describeMoment(occurredAt)} · ${handledBy.trim()}`,
-        [{ text: 'OK', onPress: () => router.back() }],
-      );
+      const details = [
+        { label: 'Date and time', value: describeMoment(occurredAt) },
+        {
+          label: eventType === 'handed_over' ? 'Handed over by' : 'Handled by',
+          value: handledBy.trim(),
+        },
+        ...(recipient.trim()
+          ? [{ label: 'Received by', value: recipient.trim() }]
+          : []),
+        ...(location.trim()
+          ? [{ label: 'Location', value: location.trim() }]
+          : []),
+      ];
+      setDone({
+        title: DONE_TITLES[eventType],
+        summary: `${result.recorded} ${result.recorded === 1 ? 'sample' : 'samples'}`,
+        details,
+      });
     } finally {
       setSaving(false);
     }
@@ -182,6 +200,7 @@ export default function RecordCustodyScreen() {
           multiline
         />
       </FormScrollView>
+      <SuccessDialog message={done} onDone={() => router.back()} />
     </SafeAreaView>
   );
 }

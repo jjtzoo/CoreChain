@@ -5,12 +5,19 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
-import { DateTimeField } from '@/components/form/date-time-field';
+import {
+  DateTimeField,
+  describeMoment,
+} from '@/components/form/date-time-field';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
+import {
+  SuccessDialog,
+  type SuccessMessage,
+} from '@/components/ui/success-dialog';
 import { Spacing } from '@/constants/theme';
 import {
   getDispatch,
@@ -37,6 +44,7 @@ export default function HandOverScreen() {
   const [recipient, setRecipient] = useState('');
   const [errors, setErrors] = useState<CustodyError[]>([]);
   const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState<SuccessMessage | null>(null);
 
   const load = useCallback(() => {
     (async () => {
@@ -81,13 +89,16 @@ export default function HandOverScreen() {
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert(
-          `${number} handed over`,
-          `${count} ${count === 1 ? 'sample is' : 'samples are'} now recorded as dispatched to ${
-            recipient.trim() || laboratory
-          }.`,
-          [{ text: 'OK', onPress: () => router.back() }],
-        );
+        setDone({
+          title: `${number} handed over`,
+          summary: `${count} ${count === 1 ? 'sample' : 'samples'} dispatched`,
+          details: [
+            { label: 'Laboratory', value: laboratory },
+            { label: 'Received by', value: recipient.trim() || laboratory },
+            { label: 'Date and time', value: describeMoment(occurredAt) },
+            { label: 'Handed over by', value: handledBy.trim() },
+          ],
+        });
       }
     } finally {
       setSaving(false);
@@ -141,6 +152,7 @@ export default function HandOverScreen() {
           placeholder={`Courier or person. If blank: ${laboratory}`}
         />
       </FormScrollView>
+      <SuccessDialog message={done} onDone={() => router.back()} />
     </SafeAreaView>
   );
 }

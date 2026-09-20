@@ -10,6 +10,10 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
+import {
+  SuccessDialog,
+  type SuccessMessage,
+} from '@/components/ui/success-dialog';
 import { Spacing } from '@/constants/theme';
 import { correctCustodyEvent } from '@/data/custodyRepository';
 
@@ -30,6 +34,7 @@ export default function CorrectCustodyScreen() {
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<CustodyError[]>([]);
   const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState<SuccessMessage | null>(null);
 
   const errorFor = (field: string) =>
     errors.find((error) => error.field === field)?.message;
@@ -45,11 +50,15 @@ export default function CorrectCustodyScreen() {
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert(
-          'Correction recorded',
-          'The step is now marked Voided. It stays in the custody record.',
-          [{ text: 'OK', onPress: () => router.back() }],
-        );
+        setDone({
+          title: 'Correction recorded',
+          summary:
+            'The step is now marked Voided and stays in the custody record.',
+          details: [
+            { label: 'Corrected by', value: handledBy.trim() },
+            { label: 'What was wrong', value: note.trim() },
+          ],
+        });
       }
     } finally {
       setSaving(false);
@@ -95,6 +104,7 @@ export default function CorrectCustodyScreen() {
           error={errorFor('handledBy')}
         />
       </FormScrollView>
+      <SuccessDialog message={done} onDone={() => router.back()} />
     </SafeAreaView>
   );
 }
