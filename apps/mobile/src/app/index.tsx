@@ -5,7 +5,7 @@ import {
   type FieldDrillhole,
   type Project,
 } from '@corechain/domain';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,6 +29,7 @@ import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { listProjects } from '@/data/projectsRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 type ProjectSummary = {
   project: Project;
@@ -107,7 +108,7 @@ export default function HomeScreen() {
     });
   }, []);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   return (
     <SafeAreaView style={styles.safeArea}>

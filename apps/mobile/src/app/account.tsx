@@ -3,8 +3,9 @@ import {
   describeSyncIssue,
   sessionMessage,
   toUserRole,
+  wipeWarning,
 } from '@corechain/domain';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +14,9 @@ import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { syncTone } from '@/components/sync-status';
 import { listOpenIssues, type SyncIssue } from '@/sync/issues';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 import { useSync } from '@/sync/sync-context';
+import { phoneHoldings, wipeDevice } from '@/sync/wipe';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
@@ -30,22 +33,23 @@ function formatDate(iso: string): string {
 
 /**
  * The signed-in person, how healthy their sign-in is, whether their work has
- * reached the server, and sign out. Sign-out keeps everything on the phone:
- * a phone handed to a different account is cleared at that account's sign-in
- * (once nothing is left unsent), and "Sign out and wipe this device" is E1-5.
+ * reached the server, and sign out. Plain sign-out keeps everything on the
+ * phone; a phone handed to a different account is cleared at that account's
+ * sign-in (once nothing is left unsent). "Sign out and remove my data" (E1-5)
+ * is for a shared or lost phone, and says first what would be lost.
  */
 export default function AccountScreen() {
   const router = useRouter();
   const { user, health, signOut } = useSession();
   const { summary } = useSync();
   const [issues, setIssues] = useState<SyncIssue[]>([]);
-  useFocusEffect(
-    useCallback(() => {
-      listOpenIssues()
-        .then(setIssues)
-        .catch(() => {});
-    }, []),
-  );
+  const [removing, setRemoving] = useState(false);
+  const loadIssues = useCallback(() => {
+    listOpenIssues()
+      .then(setIssues)
+      .catch(() => {});
+  }, []);
+  useFocusReload(loadIssues);
   // The same kind of refusal, counted once.
   const issueGroups = [
     ...issues
@@ -74,6 +78,40 @@ export default function AccountScreen() {
         },
       ],
     );
+  };
+
+  const removeData = async () => {
+    setRemoving(true);
+    try {
+      const warning = wipeWarning(await phoneHoldings());
+      setRemoving(false);
+      Alert.alert(warning.title, warning.message, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: warning.confirmLabel,
+          style: 'destructive',
+          onPress: () => {
+            setRemoving(true);
+            wipeDevice()
+              .then(() => signOut())
+              .then(() => router.dismissAll())
+              .catch(() => {
+                setRemoving(false);
+                Alert.alert(
+                  'Could not remove your data',
+                  'Nothing was signed out. Try again, or restart the app first.',
+                );
+              });
+          },
+        },
+      ]);
+    } catch {
+      setRemoving(false);
+      Alert.alert(
+        'Could not check your data',
+        'Nothing was removed. Try again in a moment.',
+      );
+    }
   };
 
   if (!user || !health) {
@@ -167,6 +205,20 @@ export default function AccountScreen() {
           />
           <ThemedText type="small" themeColor="textSecondary">
             Everything you have logged stays on this phone.
+          </ThemedText>
+        </View>
+
+        <View style={styles.signOut}>
+          <PrimaryButton
+            label="Sign out and remove my data"
+            icon="trash-can-outline"
+            variant="danger"
+            loading={removing}
+            onPress={() => void removeData()}
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            For a shared or lost phone. It tells you first if anything is only
+            on this phone.
           </ThemedText>
         </View>
       </ScrollView>

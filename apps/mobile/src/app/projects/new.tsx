@@ -67,7 +67,8 @@ export default function NewProjectScreen() {
               disabled={name.trim().length === 0}
             />
           </StickyActions>
-        }>
+        }
+      >
         <FormSection title="Your project">
           <TextField
             label="Project name"
@@ -86,7 +87,10 @@ export default function NewProjectScreen() {
           />
         </FormSection>
 
-        <FormSection title="About it" hint="Optional. You can fill these in later.">
+        <FormSection
+          title="About it"
+          hint="Optional. You can fill these in later."
+        >
           <TextField
             label="Commodity"
             optional

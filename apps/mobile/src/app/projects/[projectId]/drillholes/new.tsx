@@ -50,7 +50,8 @@ export default function NewDrillholeScreen() {
       if (status !== 'granted') {
         setErrors((prev) => ({
           ...prev,
-          collar: 'Location permission was not granted. Enter the collar manually instead.',
+          collar:
+            'Location permission was not granted. Enter the collar manually instead.',
         }));
         return;
       }
@@ -127,10 +128,13 @@ export default function NewDrillholeScreen() {
               label="Create drillhole"
               onPress={handleCreate}
               loading={saving}
-              disabled={holeId.trim().length === 0 || plannedDepthM.trim().length === 0}
+              disabled={
+                holeId.trim().length === 0 || plannedDepthM.trim().length === 0
+              }
             />
           </StickyActions>
-        }>
+        }
+      >
         <FormSection title="The hole">
           <TextField
             label="Hole ID"
@@ -174,7 +178,8 @@ export default function NewDrillholeScreen() {
         <FormSection title="Collar location">
           {collar ? (
             <ThemedText type="small" themeColor="textSecondary">
-              GPS fix: {collar.latitude.toFixed(6)}, {collar.longitude.toFixed(6)}
+              GPS fix: {collar.latitude.toFixed(6)},{' '}
+              {collar.longitude.toFixed(6)}
               {collar.accuracyM != null
                 ? ` (±${Math.round(collar.accuracyM)}m)`
                 : ''}

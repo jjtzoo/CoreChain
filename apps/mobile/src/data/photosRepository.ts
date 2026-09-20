@@ -68,6 +68,15 @@ export async function listPhotos(
   return (rows as unknown as PhotoRow[]).map(rowToPhoto);
 }
 
+/** File names of every photo that has not been removed. */
+export async function listPhotoFileNames(): Promise<string[]> {
+  const db = await getDatabase();
+  const { rows } = await db.execute(
+    'SELECT file_name FROM photos WHERE deleted_at IS NULL',
+  );
+  return (rows as unknown as { file_name: string }[]).map((r) => r.file_name);
+}
+
 /** Photo counts per subject id for one hole and subject type. */
 export async function countPhotosBySubject(
   drillholeId: string,

@@ -4,7 +4,7 @@ import {
   rqdPercent,
   type FieldCoreRun,
 } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { Card } from '@/components/ui/card';
 import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { deleteRun, listRuns } from '@/data/coreRepository';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 function describeRun(run: FieldCoreRun): string {
   const drilled = drilledLengthM(run);
@@ -45,7 +46,7 @@ export default function CoreRunsScreen() {
     listRuns(drillholeId).then(setRuns);
   }, [drillholeId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   function confirmDelete(run: FieldCoreRun) {
     Alert.alert(

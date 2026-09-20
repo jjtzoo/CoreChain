@@ -1,8 +1,4 @@
-import {
-  COMPRESSION_STEPS,
-  fitWithin,
-  photoMaxBytes,
-} from '@corechain/domain';
+import { COMPRESSION_STEPS, fitWithin, photoMaxBytes } from '@corechain/domain';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
@@ -21,6 +17,14 @@ export function photosDirectory(): Directory {
 
 export function photoFile(fileName: string): File {
   return new File(photosDirectory(), fileName);
+}
+
+/** Removes every photo file from this phone (a wipe). */
+export function deleteAllPhotoFiles(): void {
+  const directory = new Directory(Paths.document, PHOTO_DIRECTORY);
+  if (directory.exists) {
+    directory.delete();
+  }
 }
 
 export type CompressedPhoto = {

@@ -10,15 +10,12 @@ import {
 import { Alert } from 'react-native';
 
 import { useSession } from '@/auth/session-context';
-import {
-  getSyncDatabase,
-  queueAllLocalRowsForUpload,
-  wipeSyncedData,
-} from '@/data/database';
+import { getSyncDatabase, queueAllLocalRowsForUpload } from '@/data/database';
 import { CoreChainConnector } from './connector';
 import { countOpenIssues } from './issues';
 import { getDataOwner, setDataOwner } from './owner';
 import { topUpSampleBlocks } from './sampleBlocks';
+import { wipeDevice } from './wipe';
 
 // Keeps this phone and the server in step (E8). It only ever runs while someone
 // is signed in with a session that may sync; the geologist's own work never
@@ -31,6 +28,11 @@ type SyncContextValue = {
   /** The local database is open and belongs to the signed-in account. */
   preparation: Preparation;
   summary: SyncSummary | null;
+  /**
+   * Goes up each time a sync completes. Screens that list records reload when
+   * it changes, so downloaded work appears without leaving the screen.
+   */
+  dataVersion: number;
 };
 
 const SyncContext = createContext<SyncContextValue | null>(null);
@@ -45,6 +47,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [preparedFor, setPreparedFor] = useState<string | null>(null);
   const [failedFor, setFailedFor] = useState<string | null>(null);
   const [liveSummary, setSummary] = useState<SyncSummary | null>(null);
+  const [dataVersion, setDataVersion] = useState(0);
 
   const userId = user?.id ?? null;
   const canSync = health?.canSync ?? false;
@@ -82,7 +85,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           await signOut();
           return;
         }
-        await wipeSyncedData();
+        await wipeDevice();
       } else if (!owner) {
         // First sign-in on a phone that already holds work from before sync:
         // that work is now this account's, and goes up with the next upload.
@@ -106,6 +109,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     let stopListening = () => {};
     let timer: ReturnType<typeof setInterval> | undefined;
+    let lastSyncStamp = 0;
 
     (async () => {
       const sync = await getSyncDatabase();
@@ -117,6 +121,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         ]);
         if (cancelled) return;
         const status = sync.currentStatus;
+        const syncStamp = status.lastSyncedAt?.getTime() ?? 0;
+        if (syncStamp !== lastSyncStamp) {
+          lastSyncStamp = syncStamp;
+          if (syncStamp) setDataVersion((version) => version + 1);
+        }
         // Everything sent and the first download done: the server knows the
         // projects as they are, so it can hand out sample numbers for them.
         if (
@@ -172,7 +181,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [preparation, userId, canSync]);
 
   return (
-    <SyncContext.Provider value={{ preparation, summary }}>
+    <SyncContext.Provider value={{ preparation, summary, dataVersion }}>
       {children}
     </SyncContext.Provider>
   );

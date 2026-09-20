@@ -4,15 +4,9 @@ import {
   type CodeCategory,
   type LibraryCode,
 } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,6 +24,7 @@ import {
   setCodeHidden,
 } from '@/data/codesRepository';
 import { useTheme } from '@/hooks/use-theme';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /**
  * E4-2: edit the project's code library. Add a code, rename its description,
@@ -50,7 +45,7 @@ export default function CodeLibraryScreen() {
     listCodes(projectId).then(setCodes);
   }, [projectId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   async function handleAdd() {
     setErrors({});
@@ -90,7 +85,8 @@ export default function CodeLibraryScreen() {
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <ThemedText type="smallBold">Add a code</ThemedText>
         <ChipSelect
           label="Category"
@@ -124,7 +120,10 @@ export default function CodeLibraryScreen() {
                 {CODE_CATEGORY_LABELS[cat]}
               </ThemedText>
               {inCategory.map((code) => (
-                <Card key={code.id} style={[styles.row, code.hidden && styles.hiddenRow]}>
+                <Card
+                  key={code.id}
+                  style={[styles.row, code.hidden && styles.hiddenRow]}
+                >
                   <ThemedText type="smallBold" style={styles.codeLabel}>
                     {code.code}
                   </ThemedText>
@@ -140,9 +139,12 @@ export default function CodeLibraryScreen() {
                     accessibilityLabel={`Description for ${code.code}`}
                   />
                   <Pressable
-                    onPress={() => setCodeHidden(code.id, !code.hidden).then(reload)}
+                    onPress={() =>
+                      setCodeHidden(code.id, !code.hidden).then(reload)
+                    }
                     accessibilityRole="button"
-                    hitSlop={Spacing.two}>
+                    hitSlop={Spacing.two}
+                  >
                     <ThemedText type="small" themeColor="textSecondary">
                       {code.hidden ? 'Show' : 'Hide'}
                     </ThemedText>
@@ -151,7 +153,8 @@ export default function CodeLibraryScreen() {
                     onPress={() => handleDelete(code)}
                     accessibilityRole="button"
                     accessibilityLabel={`Delete ${code.code}`}
-                    hitSlop={Spacing.two}>
+                    hitSlop={Spacing.two}
+                  >
                     <ThemedText type="small" themeColor="textSecondary">
                       Delete
                     </ThemedText>

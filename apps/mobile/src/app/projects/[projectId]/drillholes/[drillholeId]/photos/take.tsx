@@ -58,7 +58,9 @@ export default function TakePhotoScreen() {
   useEffect(() => {
     Promise.all([
       getDrillhole(drillholeId),
-      subjectType === 'box' ? listBoxes(drillholeId) : listIntervals(drillholeId),
+      subjectType === 'box'
+        ? listBoxes(drillholeId)
+        : listIntervals(drillholeId),
       getProject(projectId),
     ]).then(([hole, subjects, project]) => {
       const subject = subjects.find((s) => s.id === subjectId);
@@ -130,8 +132,8 @@ export default function TakePhotoScreen() {
             CoreChain Field needs the camera to photograph core.
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Photos stay on this device, filed against the box or interval
-            you’re photographing.
+            Photos stay on this device, filed against the box or interval you’re
+            photographing.
           </ThemedText>
           <PrimaryButton label="Allow camera" onPress={requestPermission} />
         </View>
@@ -176,8 +178,11 @@ export default function TakePhotoScreen() {
               styles.shutter,
               { borderColor: theme.accent },
               (!ready || !context) && styles.disabled,
-            ]}>
-            <View style={[styles.shutterInner, { backgroundColor: theme.accent }]} />
+            ]}
+          >
+            <View
+              style={[styles.shutterInner, { backgroundColor: theme.accent }]}
+            />
           </Pressable>
         )}
       </View>

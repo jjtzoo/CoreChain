@@ -16,3 +16,12 @@ export async function getDataOwner(): Promise<string | null> {
 export async function setDataOwner(userId: string): Promise<void> {
   await SecureStore.setItemAsync(KEY, userId);
 }
+
+/** The phone holds nobody's records any more (after a wipe). */
+export async function clearDataOwner(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(KEY);
+  } catch {
+    // Nothing stored: the phone already has no owner.
+  }
+}

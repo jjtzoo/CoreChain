@@ -5,12 +5,7 @@ import {
   type FieldSample,
   type LogInterval,
 } from '@corechain/domain';
-import {
-  useFocusEffect,
-  useLocalSearchParams,
-  useRouter,
-  type Href,
-} from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,8 +20,13 @@ import { listBoxes } from '@/data/coreRepository';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { listIntervals } from '@/data/intervalsRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
-import { deleteSample, getSample, listHoleSamples } from '@/data/samplesRepository';
+import {
+  deleteSample,
+  getSample,
+  listHoleSamples,
+} from '@/data/samplesRepository';
 import { sampleStatusTone, statusLabel } from '@/utils/status';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /**
  * Where one sample has been, from the hole it came from to its assay: the
@@ -41,7 +41,9 @@ export default function SampleTraceScreen() {
 
   const [sample, setSample] = useState<FieldSample | null>(null);
   const [hole, setHole] = useState<FieldDrillhole | null>(null);
-  const [boxes, setBoxes] = useState<(FieldCoreBox & { photoCount: number })[]>([]);
+  const [boxes, setBoxes] = useState<(FieldCoreBox & { photoCount: number })[]>(
+    [],
+  );
   const [intervals, setIntervals] = useState<LogInterval[]>([]);
   const [parent, setParent] = useState<FieldSample | null>(null);
 
@@ -52,22 +54,34 @@ export default function SampleTraceScreen() {
       if (!loaded) {
         return;
       }
-      const [loadedHole, loadedBoxes, loadedIntervals, photoCounts, holeSamples] =
-        await Promise.all([
-          getDrillhole(loaded.drillholeId),
-          listBoxes(loaded.drillholeId),
-          listIntervals(loaded.drillholeId),
-          countPhotosBySubject(loaded.drillholeId, 'box'),
-          listHoleSamples(loaded.drillholeId),
-        ]);
+      const [
+        loadedHole,
+        loadedBoxes,
+        loadedIntervals,
+        photoCounts,
+        holeSamples,
+      ] = await Promise.all([
+        getDrillhole(loaded.drillholeId),
+        listBoxes(loaded.drillholeId),
+        listIntervals(loaded.drillholeId),
+        countPhotosBySubject(loaded.drillholeId, 'box'),
+        listHoleSamples(loaded.drillholeId),
+      ]);
       setHole(loadedHole);
-      setBoxes(loadedBoxes.map((b) => ({ ...b, photoCount: photoCounts.get(b.id) ?? 0 })));
+      setBoxes(
+        loadedBoxes.map((b) => ({
+          ...b,
+          photoCount: photoCounts.get(b.id) ?? 0,
+        })),
+      );
       setIntervals(loadedIntervals);
-      setParent(holeSamples.find((s) => s.id === loaded.parentSampleId) ?? null);
+      setParent(
+        holeSamples.find((s) => s.id === loaded.parentSampleId) ?? null,
+      );
     })();
   }, [sampleId]);
 
-  useFocusEffect(load);
+  useFocusReload(load);
 
   const steps = useMemo(
     () =>
@@ -148,7 +162,9 @@ export default function SampleTraceScreen() {
             key={step.key}
             message={step.detail ?? `${step.title} is missing`}
             actionLabel={step.key === 'box' ? 'Add box' : 'Log it'}
-            onPress={() => goToHole(step.key === 'box' ? '/boxes/new' : '/log/new')}
+            onPress={() =>
+              goToHole(step.key === 'box' ? '/boxes/new' : '/log/new')
+            }
           />
         ))}
 
@@ -170,7 +186,8 @@ export default function SampleTraceScreen() {
           onPress={confirmDelete}
           accessibilityRole="button"
           accessibilityLabel={`Delete sample ${sample.sampleNumber}`}
-          style={styles.delete}>
+          style={styles.delete}
+        >
           <ThemedText type="smallBold" themeColor="danger">
             Delete sample
           </ThemedText>

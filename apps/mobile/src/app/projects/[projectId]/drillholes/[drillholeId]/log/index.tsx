@@ -1,5 +1,5 @@
 import type { FieldDrillhole, LogInterval } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { Spacing } from '@/constants/theme';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { deleteInterval, listIntervals } from '@/data/intervalsRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 function describeInterval(interval: LogInterval): string {
   const parts: string[] = [];
@@ -46,7 +47,9 @@ export default function LogScreen() {
   const router = useRouter();
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [intervals, setIntervals] = useState<LogInterval[] | null>(null);
-  const [photoCounts, setPhotoCounts] = useState<Map<string, number>>(new Map());
+  const [photoCounts, setPhotoCounts] = useState<Map<string, number>>(
+    new Map(),
+  );
 
   const reload = useCallback(() => {
     getDrillhole(drillholeId).then(setDrillhole);
@@ -54,7 +57,7 @@ export default function LogScreen() {
     countPhotosBySubject(drillholeId, 'interval').then(setPhotoCounts);
   }, [drillholeId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   function confirmDelete(interval: LogInterval) {
     Alert.alert(
@@ -81,7 +84,9 @@ export default function LogScreen() {
         <PrimaryButton
           label="Add interval"
           onPress={() =>
-            router.push(`/projects/${projectId}/drillholes/${drillholeId}/log/new`)
+            router.push(
+              `/projects/${projectId}/drillholes/${drillholeId}/log/new`,
+            )
           }
         />
         <PrimaryButton

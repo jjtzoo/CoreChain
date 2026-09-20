@@ -12,7 +12,7 @@ import {
   type SampleStatus,
   type SampleType,
 } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ import {
   listSamples,
 } from '@/data/samplesRepository';
 import { sampleStatusTone } from '@/utils/status';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 const ALL = 'all';
 
@@ -86,7 +87,7 @@ export default function SampleRegisterScreen() {
     listQcEvents(projectId).then(setEvents);
   }, [projectId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   const holeName = useMemo(
     () => new Map(holes.map((h) => [h.id, h.holeId])),
@@ -115,7 +116,9 @@ export default function SampleRegisterScreen() {
   function openNew(extra = '') {
     const hole = holeFilter === ALL ? '' : `drillholeId=${holeFilter}`;
     const query = [hole, extra].filter(Boolean).join('&');
-    router.push(`/projects/${projectId}/samples/new${query ? `?${query}` : ''}`);
+    router.push(
+      `/projects/${projectId}/samples/new${query ? `?${query}` : ''}`,
+    );
   }
 
   async function handleDismiss(controlType: ControlType, reason: string) {
@@ -130,7 +133,11 @@ export default function SampleRegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <PrimaryButton label="New sample" icon="plus" onPress={() => openNew()} />
+        <PrimaryButton
+          label="New sample"
+          icon="plus"
+          onPress={() => openNew()}
+        />
 
         <QcReminders
           reminders={reminders}
@@ -144,7 +151,8 @@ export default function SampleRegisterScreen() {
             <ThemedText
               key={a.controlType}
               type="small"
-              themeColor="textSecondary">
+              themeColor="textSecondary"
+            >
               {capitalise(CONTROL_LABELS[a.controlType])}s: {a.count}
               {a.achievedEveryN != null
                 ? ` (1 per ${a.achievedEveryN} samples`
@@ -161,7 +169,9 @@ export default function SampleRegisterScreen() {
               options={[ALL, ...holes.map((h) => h.id)]}
               value={holeFilter}
               onChange={setHoleFilter}
-              format={(id) => (id === ALL ? 'All holes' : (holeName.get(id) ?? id))}
+              format={(id) =>
+                id === ALL ? 'All holes' : (holeName.get(id) ?? id)
+              }
             />
           ) : null}
           <FilterRow
@@ -199,11 +209,14 @@ export default function SampleRegisterScreen() {
               onPress={() =>
                 router.push(`/projects/${projectId}/samples/${sample.id}`)
               }
-              accessibilityLabel={`Open sample ${sample.sampleNumber}`}>
+              accessibilityLabel={`Open sample ${sample.sampleNumber}`}
+            >
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <View style={styles.numberRow}>
-                    <ThemedText type="heading">{sample.sampleNumber}</ThemedText>
+                    <ThemedText type="heading">
+                      {sample.sampleNumber}
+                    </ThemedText>
                     {sample.type !== 'primary' ? (
                       <StatusPill
                         label={`${capitalise(sample.type)} · QC`}
@@ -255,7 +268,8 @@ function FilterRow({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}>
+        contentContainerStyle={styles.chips}
+      >
         {options.map((option) => (
           <Chip
             key={option}

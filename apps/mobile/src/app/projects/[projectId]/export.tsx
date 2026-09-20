@@ -1,5 +1,5 @@
 import type { ExportTable } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { loadExportTables, shareTable } from '@/data/exportRepository';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /**
  * E9-1: export the project's data as CSV — one file per table — through the
@@ -28,7 +29,7 @@ export default function ExportScreen() {
       );
   }, [projectId]);
 
-  useFocusEffect(load);
+  useFocusReload(load);
 
   async function handleShare(table: ExportTable) {
     setError(null);

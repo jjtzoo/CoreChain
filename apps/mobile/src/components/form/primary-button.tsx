@@ -10,7 +10,7 @@ export type PrimaryButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   /** An icon shown before the label. */
   icon?: IconName;
 };
@@ -18,7 +18,8 @@ export type PrimaryButtonProps = {
 /**
  * The app's button. Primary is a solid accent fill (the one main action on a
  * screen); secondary is an outlined button for everything else. Both are big
- * enough to hit with gloves on.
+ * enough to hit with gloves on. Danger is outlined in red, for actions that
+ * remove something.
  */
 export function PrimaryButton({
   label,
@@ -31,7 +32,12 @@ export function PrimaryButton({
   const theme = useTheme();
   const isDisabled = disabled || loading;
   const primary = variant === 'primary';
-  const labelColor = primary ? theme.onAccent : theme.accent;
+  const danger = variant === 'danger';
+  const labelColor = primary
+    ? theme.onAccent
+    : danger
+      ? theme.danger
+      : theme.accent;
 
   return (
     <Pressable
@@ -43,18 +49,29 @@ export function PrimaryButton({
         styles.button,
         primary
           ? { backgroundColor: theme.accent }
-          : { borderWidth: 1.5, borderColor: theme.accent },
+          : {
+              borderWidth: 1.5,
+              borderColor: danger ? theme.danger : theme.accent,
+            },
         pressed && styles.pressed,
         isDisabled && styles.disabled,
-      ]}>
+      ]}
+    >
       {loading ? (
         <ActivityIndicator color={labelColor} />
       ) : (
         <View style={styles.content}>
           {icon ? (
-            <Icon name={icon} size={22} themeColor={primary ? 'onAccent' : 'accent'} />
+            <Icon
+              name={icon}
+              size={22}
+              themeColor={primary ? 'onAccent' : danger ? 'danger' : 'accent'}
+            />
           ) : null}
-          <ThemedText type="smallBold" style={[styles.label, { color: labelColor }]}>
+          <ThemedText
+            type="smallBold"
+            style={[styles.label, { color: labelColor }]}
+          >
             {label}
           </ThemedText>
         </View>

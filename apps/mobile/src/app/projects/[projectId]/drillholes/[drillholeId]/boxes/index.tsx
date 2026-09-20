@@ -1,5 +1,5 @@
 import type { FieldCoreBox } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { deleteBox, listBoxes } from '@/data/coreRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /** E3-1: the hole's core boxes, with any depth gaps or overlaps between them. */
 export default function CoreBoxesScreen() {
@@ -21,14 +22,16 @@ export default function CoreBoxesScreen() {
   }>();
   const router = useRouter();
   const [boxes, setBoxes] = useState<FieldCoreBox[] | null>(null);
-  const [photoCounts, setPhotoCounts] = useState<Map<string, number>>(new Map());
+  const [photoCounts, setPhotoCounts] = useState<Map<string, number>>(
+    new Map(),
+  );
 
   const reload = useCallback(() => {
     listBoxes(drillholeId).then(setBoxes);
     countPhotosBySubject(drillholeId, 'box').then(setPhotoCounts);
   }, [drillholeId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   function confirmDelete(box: FieldCoreBox) {
     Alert.alert(
@@ -72,8 +75,7 @@ export default function CoreBoxesScreen() {
               <View style={styles.rowText}>
                 <ThemedText type="heading">Box {box.boxNumber}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {box.fromM}–{box.toM} m
-                  {box.note ? ` · ${box.note}` : ''}
+                  {box.fromM}–{box.toM} m{box.note ? ` · ${box.note}` : ''}
                 </ThemedText>
               </View>
               <View style={styles.actions}>

@@ -101,7 +101,9 @@ export default function NewIntervalScreen() {
         return;
       }
       setCodes(loadedCodes);
-      setPrevious(intervals.length > 0 ? intervals[intervals.length - 1] : null);
+      setPrevious(
+        intervals.length > 0 ? intervals[intervals.length - 1] : null,
+      );
       const initialForm: Form = draft
         ? { ...EMPTY_FORM, ...draft }
         : {
@@ -218,12 +220,15 @@ export default function NewIntervalScreen() {
         footer={
           <StickyActions warnings={activeWarnings}>
             <PrimaryButton
-              label={activeWarnings.length > 0 ? 'Save anyway' : 'Save interval'}
+              label={
+                activeWarnings.length > 0 ? 'Save anyway' : 'Save interval'
+              }
               onPress={handleSave}
               loading={saving}
             />
           </StickyActions>
-        }>
+        }
+      >
         {restored ? (
           <ThemedText type="small" themeColor="textSecondary">
             Restored your unsaved entry.

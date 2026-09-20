@@ -761,6 +761,14 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Depth shortcuts verified on the phone (2026-09-20):** the "known depths" chips (logged to, run or box end, planned depth) and the quick-length chips (0.5, 1, 2 m) fill the depth fields correctly in the sample form.
 - **Not yet verified on the phone:** sign-out then sign-in on the same phone, the low-numbers warning and the used-up-run case. Still to do in S4: nothing else. Production PowerSync instance: added before the field test (the free plan includes two instances; it switches projects off after a week of inactivity, so the field test should use the $49/month plan).
 
+### S5 started: sign out and remove data (E1-5, 2026-09-20)
+
+- **What it does.** The Account screen has a red "Sign out and remove my data" button below the normal "Sign out". Before removing anything it counts what exists only on the phone (changes not sent, changes the server refused, photos, unsent feedback) and lists them in plain numbers (`packages/domain/src/signOut.ts`, tested). If nothing is at risk it says so and that everything comes back at the next sign-in; otherwise it defaults to Cancel and the button reads "Remove anyway". The wipe removes the records, queued changes, unsent feedback, photo files, the data-owner marker and the sign-in, and tells the file to give back the freed space.
+- **Photos.** Photo image files are not backed up yet (E5-3), so until that lands every photo on the phone counts as "only on this phone".
+- **The same wipe now runs when a phone changes account**, so a second account never inherits the first one's photos or unsent feedback.
+- **Verified on the test phone:** after the wipe and a fresh sign-in the Alberta sample project came back from the server, and the server's counts were unchanged (one project, six holes, 27 intervals, 15 samples), so nothing was duplicated.
+- **Found and fixed:** after that sign-in Home kept showing "Start your first project" until the app was restarted, because screens loaded their lists once, on opening. The sync layer now counts each completed sync and every list screen reloads when it changes (`useFocusReload`). Built and installed; not yet re-checked on the phone, which needs another wipe and sign-in.
+
 ---
 
 ## 8. Field-test plan

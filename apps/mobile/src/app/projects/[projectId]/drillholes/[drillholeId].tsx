@@ -14,12 +14,7 @@ import {
   type FieldDrillhole,
   type LogInterval,
 } from '@corechain/domain';
-import {
-  useFocusEffect,
-  useLocalSearchParams,
-  useRouter,
-  type Href,
-} from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +43,7 @@ import { listIntervals } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { listHoleSamples } from '@/data/samplesRepository';
 import { statusLabel, statusTone } from '@/utils/status';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 function count(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
@@ -60,7 +56,9 @@ export default function DrillholeDetailScreen() {
   }>();
   const router = useRouter();
   const go = (path: string) =>
-    router.push(`/projects/${projectId}/drillholes/${drillholeId}${path}` as Href);
+    router.push(
+      `/projects/${projectId}/drillholes/${drillholeId}${path}` as Href,
+    );
 
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -82,10 +80,16 @@ export default function DrillholeDetailScreen() {
 
   // Deepest depth recorded by any core box, run or log interval — what the
   // E2-2 "final depth is shallower than what's recorded" warning compares to.
-  const deepestRecordedM = deepestRecordedDepthM([...boxes, ...runs, ...intervals]);
+  const deepestRecordedM = deepestRecordedDepthM([
+    ...boxes,
+    ...runs,
+    ...intervals,
+  ]);
 
   const load = useCallback(() => {
-    getProject(projectId).then((project) => setProjectName(project?.name ?? ''));
+    getProject(projectId).then((project) =>
+      setProjectName(project?.name ?? ''),
+    );
     getDrillhole(drillholeId).then((loaded) => {
       if (!loaded) {
         return;
@@ -93,20 +97,27 @@ export default function DrillholeDetailScreen() {
       setDrillhole(loaded);
       // Tidy any date saved in an older, looser format (e.g. 2026/09/19).
       const started = normaliseDateInput(loaded.startedAt ?? '', 'Started');
-      const completed = normaliseDateInput(loaded.completedAt ?? '', 'Completed');
+      const completed = normaliseDateInput(
+        loaded.completedAt ?? '',
+        'Completed',
+      );
       setStartedAt(started.valid ? started.value : null);
       setCompletedAt(completed.valid ? completed.value : null);
       setActualFinalDepthM(
-        loaded.actualFinalDepthM != null ? String(loaded.actualFinalDepthM) : '',
+        loaded.actualFinalDepthM != null
+          ? String(loaded.actualFinalDepthM)
+          : '',
       );
     });
-    listHoleSamples(drillholeId).then((samples) => setSampleCount(samples.length));
+    listHoleSamples(drillholeId).then((samples) =>
+      setSampleCount(samples.length),
+    );
     listBoxes(drillholeId).then(setBoxes);
     listRuns(drillholeId).then(setRuns);
     listIntervals(drillholeId).then(setIntervals);
   }, [projectId, drillholeId]);
 
-  useFocusEffect(load);
+  useFocusReload(load);
 
   async function handleStatusChange(status: DrillholeStatus) {
     setStatusSaving(true);
@@ -182,7 +193,8 @@ export default function DrillholeDetailScreen() {
           </View>
           <ThemedText type="small" themeColor="textSecondary">
             {projectName ? `${projectName} · ` : ''}
-            {holeDepthM} m {drillhole.actualFinalDepthM != null ? 'final' : 'planned'}
+            {holeDepthM} m{' '}
+            {drillhole.actualFinalDepthM != null ? 'final' : 'planned'}
             {drillhole.plannedAzimuthDeg != null
               ? ` · azimuth ${drillhole.plannedAzimuthDeg}°`
               : ''}
@@ -192,7 +204,9 @@ export default function DrillholeDetailScreen() {
           </ThemedText>
           <View style={styles.collarRow}>
             <Icon
-              name={drillhole.collar ? 'map-marker-check' : 'map-marker-off-outline'}
+              name={
+                drillhole.collar ? 'map-marker-check' : 'map-marker-off-outline'
+              }
               size={18}
               themeColor={drillhole.collar ? 'success' : 'muted'}
             />
@@ -216,8 +230,8 @@ export default function DrillholeDetailScreen() {
             <ContinuityStrip ranges={intervals} holeDepthM={holeDepthM} />
           ) : (
             <ThemedText type="small" themeColor="textSecondary">
-              Nothing logged yet. Your depth strip appears here once you log
-              the first interval.
+              Nothing logged yet. Your depth strip appears here once you log the
+              first interval.
             </ThemedText>
           )}
         </Card>
@@ -232,10 +246,18 @@ export default function DrillholeDetailScreen() {
         ))}
 
         <PrimaryButton
-          label={intervals.length === 0 && boxes.length === 0 ? 'Add first core box' : 'Log next interval'}
+          label={
+            intervals.length === 0 && boxes.length === 0
+              ? 'Add first core box'
+              : 'Log next interval'
+          }
           icon="plus"
           onPress={() =>
-            go(intervals.length === 0 && boxes.length === 0 ? '/boxes/new' : '/log/new')
+            go(
+              intervals.length === 0 && boxes.length === 0
+                ? '/boxes/new'
+                : '/log/new',
+            )
           }
         />
 
@@ -267,7 +289,9 @@ export default function DrillholeDetailScreen() {
             title="Samples"
             detail={count(sampleCount, 'sample', 'samples')}
             onPress={() =>
-              router.push(`/projects/${projectId}/samples?drillholeId=${drillholeId}`)
+              router.push(
+                `/projects/${projectId}/samples?drillholeId=${drillholeId}`,
+              )
             }
           />
         </View>

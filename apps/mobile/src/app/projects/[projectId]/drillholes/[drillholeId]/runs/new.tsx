@@ -107,7 +107,8 @@ export default function NewCoreRunScreen() {
               loading={saving}
             />
           </StickyActions>
-        }>
+        }
+      >
         <FormSection title="Depth drilled">
           <FormRow>
             <TextField
@@ -147,7 +148,9 @@ export default function NewCoreRunScreen() {
               <Chip
                 label="Full recovery"
                 selected={false}
-                onPress={() => setRecoveredM(String(Math.round(drilled * 1000) / 1000))}
+                onPress={() =>
+                  setRecoveredM(String(Math.round(drilled * 1000) / 1000))
+                }
               />
             </View>
           ) : null}

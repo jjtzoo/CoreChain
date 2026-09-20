@@ -196,6 +196,8 @@ export async function queueAllLocalRowsForUpload(): Promise<void> {
 export async function wipeSyncedData(): Promise<void> {
   const { sync } = await ensureOpen();
   const schema = rawTableSchema();
+  // Stop talking to the server first, so nothing is sent or received mid-wipe.
+  await sync.disconnect();
   // Switch the change capture off first, so the deletes are not queued as changes.
   for (const table of schema.rawTables) {
     for (const operation of TRIGGER_OPERATIONS) {
@@ -211,7 +213,14 @@ export async function wipeSyncedData(): Promise<void> {
     await tx.execute('DELETE FROM log_drafts');
     await tx.execute('DELETE FROM sync_issues');
     await tx.execute('DELETE FROM sample_blocks');
+    await tx.execute('DELETE FROM feedback_outbox');
   });
   await sync.disconnectAndClear();
   await installChangeCapture(sync, schema);
+  try {
+    // Hand the freed space back, so removed records do not linger in the file.
+    await sync.execute('VACUUM');
+  } catch {
+    // Housekeeping only: the records are already gone from every table.
+  }
 }

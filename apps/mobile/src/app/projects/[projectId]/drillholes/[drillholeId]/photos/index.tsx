@@ -4,7 +4,7 @@ import {
   type PhotoSubjectType,
 } from '@corechain/domain';
 import { Image } from 'expo-image';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { RowAction } from '@/components/ui/row-action';
 import { Spacing } from '@/constants/theme';
 import { deletePhotoFile, photoFile } from '@/data/photoFiles';
 import { deletePhotoRecord, listPhotos } from '@/data/photosRepository';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 function describeSize(bytes: number): string {
   return bytes >= 1024 * 1024
@@ -39,7 +40,7 @@ export default function PhotosScreen() {
     listPhotos(subjectType, subjectId).then(setPhotos);
   }, [subjectType, subjectId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   function confirmDelete(photo: FieldPhoto) {
     Alert.alert(

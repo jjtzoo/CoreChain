@@ -5,7 +5,7 @@ import {
   type FieldDrillhole,
   type Project,
 } from '@corechain/domain';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
+import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /** Only show the search box once there are enough holes to need it. */
 const SEARCH_FROM_HOLES = 5;
@@ -35,7 +36,9 @@ export default function ProjectDetailScreen() {
   const [project, setProject] = useState<Project | null>(null);
   const [drillholes, setDrillholes] = useState<FieldDrillhole[]>([]);
   // Metres logged per drillhole id (overlapping intervals counted once).
-  const [loggedMetres, setLoggedMetres] = useState<Map<string, number>>(new Map());
+  const [loggedMetres, setLoggedMetres] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [query, setQuery] = useState('');
 
   const reload = useCallback(() => {
@@ -43,12 +46,17 @@ export default function ProjectDetailScreen() {
     listDrillholes(projectId).then(setDrillholes);
     listIntervalRangesByProject(projectId).then((byHole) => {
       setLoggedMetres(
-        new Map([...byHole].map(([holeId, ranges]) => [holeId, loggedLengthM(ranges)])),
+        new Map(
+          [...byHole].map(([holeId, ranges]) => [
+            holeId,
+            loggedLengthM(ranges),
+          ]),
+        ),
       );
     });
   }, [projectId]);
 
-  useFocusEffect(reload);
+  useFocusReload(reload);
 
   const visibleDrillholes = useMemo(
     () => drillholes.filter((d) => matchesDrillholeSearch(d, query)),
@@ -69,7 +77,8 @@ export default function ProjectDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.title}>
           <ThemedText type="subtitle">{project.name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -83,7 +92,9 @@ export default function ProjectDetailScreen() {
           {shortcuts.map((shortcut) => (
             <Pressable
               key={shortcut.path}
-              onPress={() => router.push(`/projects/${projectId}/${shortcut.path}`)}
+              onPress={() =>
+                router.push(`/projects/${projectId}/${shortcut.path}`)
+              }
               accessibilityRole="button"
               accessibilityLabel={shortcut.label}
               style={({ pressed }) => [
@@ -94,7 +105,8 @@ export default function ProjectDetailScreen() {
                     : theme.backgroundElement,
                   borderColor: theme.border,
                 },
-              ]}>
+              ]}
+            >
               <Icon name={shortcut.icon} size={24} themeColor="accent" />
               <ThemedText type="small">{shortcut.label}</ThemedText>
             </Pressable>
@@ -126,8 +138,8 @@ export default function ProjectDetailScreen() {
               <Icon name="target" size={32} themeColor="accent" />
               <ThemedText type="heading">Add your first hole</ThemedText>
               <ThemedText type="default" themeColor="textSecondary">
-                Record the collar, then log core box by box. Everything is
-                saved on this phone.
+                Record the collar, then log core box by box. Everything is saved
+                on this phone.
               </ThemedText>
             </Card>
           ) : visibleDrillholes.length === 0 ? (
@@ -138,7 +150,10 @@ export default function ProjectDetailScreen() {
             </Card>
           ) : (
             visibleDrillholes.map((hole) => {
-              const progress = loggingProgress(loggedMetres.get(hole.id) ?? 0, hole);
+              const progress = loggingProgress(
+                loggedMetres.get(hole.id) ?? 0,
+                hole,
+              );
               return (
                 <Card
                   key={hole.id}
@@ -146,7 +161,8 @@ export default function ProjectDetailScreen() {
                     router.push(`/projects/${projectId}/drillholes/${hole.id}`)
                   }
                   accessibilityLabel={`Open hole ${hole.holeId}`}
-                  style={styles.holeCard}>
+                  style={styles.holeCard}
+                >
                   <View style={styles.holeTop}>
                     <View style={styles.holeTitle}>
                       <ThemedText type="heading">{hole.holeId}</ThemedText>

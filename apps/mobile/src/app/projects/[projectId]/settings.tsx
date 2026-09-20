@@ -110,8 +110,8 @@ export default function ProjectSettingsScreen() {
 
         <ThemedText type="smallBold">QC insertion rate</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          A reminder fires every N samples for each control type. Changing
-          this doesn&apos;t renumber samples already created.
+          A reminder fires every N samples for each control type. Changing this
+          doesn&apos;t renumber samples already created.
         </ThemedText>
         <TextField
           label="Standard — every N samples"

@@ -97,7 +97,8 @@ export default function NewCoreBoxScreen() {
               loading={saving}
             />
           </StickyActions>
-        }>
+        }
+      >
         <FormSection title="This box">
           <TextField
             label="Box number"
