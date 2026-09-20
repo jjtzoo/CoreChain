@@ -767,7 +767,7 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Photos.** Photo image files are not backed up yet (E5-3), so until that lands every photo on the phone counts as "only on this phone".
 - **The same wipe now runs when a phone changes account**, so a second account never inherits the first one's photos or unsent feedback.
 - **Verified on the test phone:** after the wipe and a fresh sign-in the Alberta sample project came back from the server, and the server's counts were unchanged (one project, six holes, 27 intervals, 15 samples), so nothing was duplicated.
-- **Found and fixed:** after that sign-in Home kept showing "Start your first project" until the app was restarted, because screens loaded their lists once, on opening. The sync layer now counts each completed sync and every list screen reloads when it changes (`useFocusReload`). Built and installed; not yet re-checked on the phone, which needs another wipe and sign-in.
+- **Found and fixed:** after that sign-in Home kept showing "Start your first project" until the app was restarted, because screens loaded their lists once, on opening. The sync layer now counts each completed sync and every list screen reloads when it changes (`useFocusReload`). Verified on the test phone with a second wipe and sign-in: the project appeared on Home by itself, with no restart.
 
 ---
 
