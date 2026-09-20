@@ -22,7 +22,7 @@ export default function Home() {
             className="header-action"
             href="/projects/alberta-drillhole-demo"
           >
-            Open demo workspace
+            See a sample project
             <ArrowUpRight aria-hidden="true" size={15} strokeWidth={1.5} />
           </Link>
           <Link className="header-signin" href="/login">
@@ -45,7 +45,7 @@ export default function Home() {
             className="primary-action"
             href="/projects/alberta-drillhole-demo"
           >
-            Explore the workspace
+            See a sample project
             <ArrowUpRight aria-hidden="true" size={17} strokeWidth={1.5} />
           </Link>
         </div>
@@ -54,31 +54,34 @@ export default function Home() {
 
       <section className="landing-evidence" aria-labelledby="evidence-title">
         <div>
-          <p className="page-kicker">Phase 1 demonstration</p>
+          <p className="page-kicker">About the sample project</p>
           <h2 id="evidence-title">
-            Built on source records, not placeholder mining data.
+            Built on public source records, not invented mining data.
           </h2>
         </div>
         <div className="evidence-list">
           <article>
             <Database aria-hidden="true" size={20} strokeWidth={1.5} />
             <h3>Public provenance</h3>
-            <p>Each demo record keeps its original source reference.</p>
+            <p>
+              Every hole, interval and assay result keeps its original source
+              reference.
+            </p>
           </article>
           <article>
             <Route aria-hidden="true" size={20} strokeWidth={1.5} />
             <h3>One connected chain</h3>
             <p>
-              The first build starts with drillholes, intervals, and assay
-              evidence.
+              Follow one assay result back through its dispatch, its sample and
+              its core box to the hole and interval it came from.
             </p>
           </article>
           <article>
             <FileCheck2 aria-hidden="true" size={20} strokeWidth={1.5} />
             <h3>Honest boundaries</h3>
             <p>
-              Synthetic workflow records will be visibly marked before the pilot
-              uses real data.
+              Core box, custody and dispatch entries are synthetic examples,
+              marked as such wherever they appear.
             </p>
           </article>
         </div>

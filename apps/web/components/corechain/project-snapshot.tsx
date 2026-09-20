@@ -10,7 +10,7 @@ export function ProjectSnapshot({ compact = false }: ProjectSnapshotProps) {
   return (
     <section
       className={`project-snapshot${compact ? " is-compact" : ""}`}
-      aria-label="Alberta demo project summary"
+      aria-label="Sample project summary"
     >
       <div className="project-snapshot-head">
         <div>
@@ -53,7 +53,7 @@ export function ProjectSnapshot({ compact = false }: ProjectSnapshotProps) {
       </div>
       <div className="project-provenance">
         <Database aria-hidden="true" size={16} strokeWidth={1.5} />
-        <span>For workflow demonstration only</span>
+        <span>Custody and dispatch entries are synthetic examples</span>
       </div>
     </section>
   );

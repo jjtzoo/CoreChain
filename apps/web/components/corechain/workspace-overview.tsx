@@ -1,22 +1,33 @@
-import { ArrowUpRight, Database, FileCheck2, FolderKanban } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { albertaDemoProject } from "@/lib/demo/alberta-project";
 
-const availableRecords = [
-  [
-    "Drillhole register",
-    `${albertaDemoProject.drillholeCount} source records`,
-    "Ready for the first explorer screen.",
-  ],
-  [
-    "Geological intervals",
-    `${albertaDemoProject.intervalCount} linked intervals`,
-    "Mapped to their drillhole source records.",
-  ],
-  [
-    "Assay records",
-    `${albertaDemoProject.assayCount} source results`,
-    "Ready for matching and QA/QC demonstration.",
-  ],
+const base = `/projects/${albertaDemoProject.id}`;
+
+// The sample project is read in this order: it follows one assay result back
+// to the hole it came from, the way a reviewer would.
+const steps = [
+  {
+    title: "Drillholes",
+    text: "Six real holes with their collar and depth. Open one to see its geological intervals.",
+    href: `${base}/drillholes`,
+  },
+  {
+    title: "Sample",
+    text: "One sample traced to its interval and its core box.",
+    href: `${base}/samples`,
+  },
+  {
+    title: "Custody and dispatch",
+    text: "Each hand-over recorded in order, through to the dispatch to the laboratory.",
+    href: `${base}/dispatches`,
+  },
+  {
+    title: "Assays and QA/QC",
+    text: "The results that came back, and how a QA/QC review reads them against standards and blanks.",
+    href: `${base}/assays`,
+  },
 ] as const;
 
 export function WorkspaceOverview() {
@@ -24,9 +35,13 @@ export function WorkspaceOverview() {
     <div className="workspace-content">
       <header className="workspace-page-header">
         <div>
-          <p className="page-kicker">Project overview</p>
-          <h1>{albertaDemoProject.name}</h1>
-          <p>{albertaDemoProject.description}</p>
+          <p className="page-kicker">Sample project · read-only</p>
+          <h1>Follow one assay result back to the core.</h1>
+          <p>
+            This project shows how CoreChain links what happens in the field to
+            what comes back from the laboratory. Open the steps in order, or
+            jump to any of them.
+          </p>
         </div>
         <a
           className="source-link"
@@ -39,54 +54,64 @@ export function WorkspaceOverview() {
         </a>
       </header>
 
-      <section
-        className="workspace-summary"
-        aria-labelledby="available-records-title"
-      >
-        <div className="workspace-summary-title">
-          <p className="page-kicker">Available now</p>
-          <h2 id="available-records-title">
-            Source records ready for the workflow
-          </h2>
+      <dl className="sample-stats">
+        <div>
+          <dt>Drillholes</dt>
+          <dd>{albertaDemoProject.drillholeCount}</dd>
         </div>
-        <div className="record-grid">
-          {availableRecords.map(([label, value, note], index) => (
-            <article className="record-item" key={label}>
-              {index === 0 ? (
-                <FolderKanban aria-hidden="true" size={20} strokeWidth={1.5} />
-              ) : null}
-              {index === 1 ? (
-                <FileCheck2 aria-hidden="true" size={20} strokeWidth={1.5} />
-              ) : null}
-              {index === 2 ? (
-                <Database aria-hidden="true" size={20} strokeWidth={1.5} />
-              ) : null}
-              <h3>{label}</h3>
-              <strong>{value}</strong>
-              <p>{note}</p>
-            </article>
-          ))}
+        <div>
+          <dt>Geological intervals</dt>
+          <dd>{albertaDemoProject.intervalCount}</dd>
+        </div>
+        <div>
+          <dt>Assay results</dt>
+          <dd>{albertaDemoProject.assayCount}</dd>
+        </div>
+      </dl>
+
+      <section className="sample-provenance" aria-labelledby="provenance-title">
+        <h2 id="provenance-title">What you are looking at</h2>
+        <div className="sample-provenance-grid">
+          <div>
+            <p className="page-kicker">Real public data</p>
+            <p>
+              The drillholes, geological intervals and assay results come from{" "}
+              {albertaDemoProject.sourceReference}, published by the Alberta
+              Geological Survey. Each record keeps its source reference.
+            </p>
+          </div>
+          <div>
+            <p className="page-kicker">Synthetic examples</p>
+            <p>
+              The core box, the custody events and the dispatch were created to
+              show the chain. They are marked as synthetic wherever they appear.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="workspace-next" aria-labelledby="next-work-title">
-        <div>
-          <p className="page-kicker">Next workflow area</p>
-          <h2 id="next-work-title">
-            Inspect each drillhole before extending the chain.
-          </h2>
-          <p>
-            The next screen will connect each source drillhole to its geological
-            intervals and available assay evidence.
-          </p>
-        </div>
-        <div className="workspace-next-detail">
-          <span>Current boundary</span>
-          <strong>Project to assay source record</strong>
-          <span>Coming after drillhole review</span>
-          <strong>Core boxes, samples, custody, and dispatch</strong>
-        </div>
+      <section className="sample-steps" aria-labelledby="steps-title">
+        <h2 id="steps-title">Follow the chain</h2>
+        <ol>
+          {steps.map((step, index) => (
+            <li key={step.title}>
+              <Link href={step.href as Route} className="sample-step">
+                <span className="sample-step-number">{index + 1}</span>
+                <span className="sample-step-body">
+                  <strong>{step.title}</strong>
+                  <span>{step.text}</span>
+                </span>
+                <ArrowUpRight aria-hidden="true" size={18} strokeWidth={1.5} />
+              </Link>
+            </li>
+          ))}
+        </ol>
       </section>
+
+      <p className="sample-footnote">
+        In the pilot, the same chain is recorded on a phone at the rig, with or
+        without signal. This sample project is a read-only view of it.
+      </p>
     </div>
   );
 }

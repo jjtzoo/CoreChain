@@ -1,17 +1,17 @@
 export const albertaDemoProject = {
   id: "alberta-drillhole-demo",
-  name: "Alberta drillhole demonstration",
+  name: "Alberta sample project",
   shortName: "Alberta demo",
   location: "Alberta, Canada",
   workstream: "Exploration workflow demonstration",
-  dataOrigin: "Public source data",
+  dataOrigin: "Sample project · public data",
   sourceReference: "AER/AGS Digital Data 2024-0022",
   sourceUrl: "https://ags.aer.ca/publications/all-publications/dig-2024-0022",
   drillholeCount: 6,
   intervalCount: 27,
   assayCount: 313,
   description:
-    "A small, traceable subset of public drillhole, geological interval, and assay data for building the CoreChain workflow.",
+    "Public drillhole, geological interval and assay data from Alberta, with one sample traced through its core box, custody and dispatch. Read-only.",
 } as const;
 
 export const workspaceNavigation = [

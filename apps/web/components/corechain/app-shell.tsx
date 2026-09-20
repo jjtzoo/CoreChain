@@ -41,9 +41,16 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       </a>
       <header className="workspace-mobile-header">
         <Link className="workspace-brand" href="/" aria-label="CoreChain home">
-          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
+          <Image
+            className="brand-logo"
+            src="/branding/corechain-primary-horizontal.svg"
+            alt="CoreChain"
+            width={150}
+            height={42}
+            priority
+          />
         </Link>
-        <span className="workspace-mobile-label">Demo workspace</span>
+        <span className="workspace-mobile-label">Sample project</span>
       </header>
 
       <aside className="workspace-sidebar">
@@ -53,9 +60,20 @@ export function AppShell({ activeItem, children }: AppShellProps) {
             href="/"
             aria-label="CoreChain home"
           >
-          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
-        </Link>
-          <p className="workspace-brand-note">Exploration workflow workspace</p>
+            <Image
+              className="brand-logo"
+              src="/branding/corechain-primary-horizontal.svg"
+              alt="CoreChain"
+              width={150}
+              height={42}
+              priority
+            />
+          </Link>
+          <p className="workspace-brand-note">
+            {activeItem === "Projects"
+              ? "Workspace"
+              : "Sample project · read-only"}
+          </p>
         </div>
 
         <nav className="workspace-nav" aria-label="Project navigation">
@@ -66,6 +84,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
             <FolderKanban aria-hidden="true" size={17} strokeWidth={1.5} />
             Projects
           </Link>
+          <p className="workspace-nav-heading">Sample project</p>
           {workspaceNavigation.map((item) =>
             item.available ? (
               <Link
@@ -103,6 +122,12 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       </aside>
 
       <main className="workspace-main" id="main-content">
+        {activeItem !== "Projects" ? (
+          <p className="sample-banner" role="note">
+            <strong>Sample project · read-only.</strong> Public Alberta data,
+            with synthetic custody records that are marked where they appear.
+          </p>
+        ) : null}
         {children}
       </main>
     </div>

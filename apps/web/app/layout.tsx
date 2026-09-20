@@ -6,8 +6,8 @@ const sans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "CoreChain | Drill-to-assay workflow",
-  description: "Trace the work from drill core to QA/QC decision.",
+  title: "CoreChain | Core logging and sample custody",
+  description: "An offline-first field app and team workspace for core logging, sampling and chain of custody.",
 };
 
 export default function RootLayout({
