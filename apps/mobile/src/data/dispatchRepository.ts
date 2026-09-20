@@ -392,8 +392,32 @@ export async function handOverDispatch(
       };
     }
 
+    // Safe to repeat: a sample that already has a "dispatched" step for this
+    // dispatch (one that no correction has voided) is not given a second one.
+    // This lets a handover that never fully reached the server be finished
+    // without duplicating the custody record.
+    const recorded = await tx.execute(
+      `SELECT sample_id FROM custody_events
+       WHERE dispatch_id = ? AND event_type = 'dispatched'
+         AND id NOT IN (
+           SELECT corrects_event_id FROM custody_events
+           WHERE corrects_event_id IS NOT NULL
+         )`,
+      [dispatchId],
+    );
+    const alreadyDispatched = new Set(
+      (recorded.rows as unknown as { sample_id: string }[]).map(
+        (r) => r.sample_id,
+      ),
+    );
+
     const timestamp = nowIso();
     for (const sampleId of sampleIds) {
+      if (alreadyDispatched.has(sampleId)) {
+        // Only changes the sample if its status had fallen behind its steps.
+        await refreshSampleStatus(tx, sampleId, timestamp);
+        continue;
+      }
       await tx.execute(
         `INSERT INTO custody_events (
           id, project_id, sample_id, event_type, occurred_at, handled_by,
