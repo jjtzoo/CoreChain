@@ -84,7 +84,7 @@ export default function CorrectCustodyScreen() {
           error={errorFor('note')}
         />
         <TextField
-          label="Who is correcting it"
+          label="Corrected by"
           value={handledBy}
           onChangeText={setHandledBy}
           autoCapitalize="words"

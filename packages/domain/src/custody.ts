@@ -81,11 +81,11 @@ export function validateCustodyEvent(
   if (!(RECORDABLE_EVENT_TYPES as readonly string[]).includes(input.type)) {
     errors.push({
       field: "type",
-      message: "Choose what happened to the sample.",
+      message: "Choose the custody step.",
     });
   }
   if (!input.handledBy.trim()) {
-    errors.push({ field: "handledBy", message: "Say who did it." });
+    errors.push({ field: "handledBy", message: "Enter who handled the sample." });
   }
   const time = Date.parse(input.occurredAt);
   if (Number.isNaN(time)) {
@@ -96,11 +96,11 @@ export function validateCustodyEvent(
   } else if (time > now.getTime() + FUTURE_TOLERANCE_MS) {
     errors.push({
       field: "occurredAt",
-      message: "That time is in the future.",
+      message: "The time cannot be in the future.",
     });
   }
   if (input.type === "handed_over" && !(input.recipient ?? "").trim()) {
-    errors.push({ field: "recipient", message: "Say who it was handed to." });
+    errors.push({ field: "recipient", message: "Enter who received the samples." });
   }
   return errors;
 }
@@ -111,10 +111,10 @@ export function validateCorrection(input: {
 }): CustodyError[] {
   const errors: CustodyError[] = [];
   if (!input.note.trim()) {
-    errors.push({ field: "note", message: "Say what was wrong." });
+    errors.push({ field: "note", message: "Explain what was wrong." });
   }
   if (!input.handledBy.trim()) {
-    errors.push({ field: "handledBy", message: "Say who is correcting it." });
+    errors.push({ field: "handledBy", message: "Enter who is making the correction." });
   }
   return errors;
 }
@@ -285,7 +285,7 @@ export function validateDispatch(input: {
   if (!input.laboratory.trim()) {
     errors.push({
       field: "laboratory",
-      message: "Say which laboratory it is going to.",
+      message: "Enter the laboratory.",
     });
   }
   if (input.sampleCount < 1) {

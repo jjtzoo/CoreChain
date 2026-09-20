@@ -157,9 +157,9 @@ export default function SampleTraceScreen() {
     ['bagged', 'sealed', 'handed_over'] as RecordableEventType[]
   ).filter((type) => canRecordEvent(type, events).ok);
   const STEP_LABELS: Record<RecordableEventType, string> = {
-    bagged: 'Bag it',
-    sealed: 'Seal it',
-    handed_over: 'Hand it over',
+    bagged: 'Bag sample',
+    sealed: 'Seal sample',
+    handed_over: 'Hand over sample',
   };
   const recordStep = (type: RecordableEventType) =>
     router.push(

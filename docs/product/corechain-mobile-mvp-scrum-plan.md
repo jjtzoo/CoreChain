@@ -398,6 +398,15 @@ As a field geologist, I want to generate a dispatch sheet (PDF or CSV) and share
 - It lists every sample ID, type, hole, depth range and QC type, with the totals.
 - It's shared through the Android share sheet (email, messaging, Drive).
 
+**E7-4 — Sign-off on handover (proposed, not in a sprint yet)**
+As a field geologist, I want the handover to a courier or laboratory to carry a sign-off tied to my account, so that the record shows who took responsibility for the samples.
+
+- Bagging and sealing stay one tap plus a form; no signature is asked for them.
+- Handover and dispatch show a confirmation statement ("I confirm these samples were handed over as listed") and record it against the signed-in account, with the time.
+- The "Handled by" name is taken from the signed-in account instead of being free text.
+- Optional: the person receiving draws their signature on the screen.
+- To validate before building: ask the friendly geologist and the resident manager whether a signed handover is what their laboratories and auditors expect, and whether the receiver's signature is wanted.
+
 ### E8 — Offline and sync
 
 **E8-1 — Encrypted local database (5)** _(Sprint 1)_

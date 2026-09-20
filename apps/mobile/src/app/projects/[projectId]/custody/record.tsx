@@ -1,8 +1,4 @@
-import {
-  CUSTODY_LABELS,
-  type CustodyError,
-  type RecordableEventType,
-} from '@corechain/domain';
+import { type CustodyError, type RecordableEventType } from '@corechain/domain';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -22,6 +18,12 @@ const TITLES: Record<RecordableEventType, string> = {
   bagged: 'Bag samples',
   sealed: 'Seal samples',
   handed_over: 'Hand samples over',
+};
+
+const HEADINGS: Record<RecordableEventType, string> = {
+  bagged: 'Bagging',
+  sealed: 'Sealing',
+  handed_over: 'Handing over',
 };
 
 const SAVE_LABELS: Record<RecordableEventType, string> = {
@@ -120,24 +122,23 @@ export default function RecordCustodyScreen() {
       >
         <View style={styles.summary}>
           <ThemedText type="heading">
-            {CUSTODY_LABELS[eventType]}
-            {' · '}
-            {ids.length} {ids.length === 1 ? 'sample' : 'samples'}
+            {HEADINGS[eventType]} {ids.length}{' '}
+            {ids.length === 1 ? 'sample' : 'samples'}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Custody steps are added to the record and never edited. A mistake is
-            corrected with a new step that says what was wrong.
+            Each step is a permanent part of the custody record. If one is
+            wrong, add a correction that says what was wrong.
           </ThemedText>
         </View>
 
         <DateTimeField
-          label="When"
+          label="Date and time"
           value={occurredAt}
           onChange={setOccurredAt}
           error={errorFor('occurredAt')}
         />
         <TextField
-          label="Who did it"
+          label="Handled by"
           value={handledBy}
           onChangeText={setHandledBy}
           autoCapitalize="words"
@@ -145,20 +146,20 @@ export default function RecordCustodyScreen() {
         />
         {eventType === 'handed_over' ? (
           <TextField
-            label="Handed to"
+            label="Received by"
             value={recipient}
             onChangeText={setRecipient}
             autoCapitalize="words"
-            placeholder="Courier or person receiving"
+            placeholder="Courier, driver or laboratory staff"
             error={errorFor('recipient')}
           />
         ) : null}
         <TextField
-          label="Where"
+          label="Location"
           optional
           value={location}
           onChangeText={setLocation}
-          placeholder="Core shed, camp, gate"
+          placeholder="Core shed, camp gate, laboratory reception"
         />
         <TextField
           label="Note"

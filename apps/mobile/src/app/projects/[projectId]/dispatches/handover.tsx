@@ -114,25 +114,25 @@ export default function HandOverScreen() {
           </ThemedText>
         </View>
         <DateTimeField
-          label="When"
+          label="Date and time"
           value={occurredAt}
           onChange={setOccurredAt}
           error={errorFor('occurredAt')}
         />
         <TextField
-          label="Who handed it over"
+          label="Handed over by"
           value={handledBy}
           onChangeText={setHandledBy}
           autoCapitalize="words"
           error={errorFor('handledBy')}
         />
         <TextField
-          label="Taken by"
+          label="Received by"
           optional
           value={recipient}
           onChangeText={setRecipient}
           autoCapitalize="words"
-          placeholder={`Courier or person. Left blank: ${laboratory}`}
+          placeholder={`Courier or person. If blank: ${laboratory}`}
         />
       </FormScrollView>
     </SafeAreaView>

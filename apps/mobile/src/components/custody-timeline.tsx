@@ -15,7 +15,7 @@ export function CustodyTimeline({ lines }: { lines: readonly CustodyLine[] }) {
   if (lines.length === 0) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        Nothing recorded yet. Bag the sample to start its custody record.
+        No custody steps recorded yet. Bag the sample to start its record.
       </ThemedText>
     );
   }
