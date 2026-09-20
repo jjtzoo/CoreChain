@@ -530,10 +530,10 @@ QA/QC starts in the field and runs through sampling, custody, the laboratory and
 
 **E13 — Laboratory view (web) (8, later).** A dispatch inbox for laboratory personnel: receive a batch, confirm what arrived, return results against the batch. The open question is whether the laboratory is in-house or an outside contractor, which changes what it may see.
 
-**E14 — My work (phone), proposed 2026-09-21, not in a sprint yet.** The geologist's own view of what they did, by date. It is calculated from the data already on the phone, so it works with no signal, and the same numbers per geologist feed the manager overview (E11-2). Mockup: `docs/product/mockups/my-work.html`; to be tried with a geologist before any build.
+**E14 — My work (phone), proposed 2026-09-21; E14-1, E14-2 and E14-3 built the same day and installed on the test phone, awaiting a geologist's review.** The geologist's own view of what they did, by date. It is calculated from the data already on the phone, so it works with no signal, and the same numbers per geologist feed the manager overview (E11-2). Mockup: `docs/product/mockups/my-work.html`; to be tried with a geologist before any build.
 
 - **E14-1 — My work by date (5).** As a field geologist, I want to see what I did on a day, a week or any range of dates, so that I can check my progress and report it without adding it up by hand.
-  - Today, Yesterday, This week or Pick dates; a week strip shows which days have work.
+  - Today, Yesterday, Last 7 days or Pick dates; a week strip shows which days have work.
   - For the range: metres logged, core boxes and runs, photos, samples (and how many are QC), custody steps and dispatches, plus the holes worked on with their own numbers.
   - Counted by the date the work was done, not the date it synced. Editing an old interval does not count as new metres. A custody step counts on the day it happened.
   - Works offline; private to the geologist (no scores or rankings).

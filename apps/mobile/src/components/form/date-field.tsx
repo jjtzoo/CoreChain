@@ -14,6 +14,8 @@ export type DateFieldProps = {
   /** Earliest date the calendar allows, as `YYYY-MM-DD`. */
   minimumDate?: string | null;
   optional?: boolean;
+  /** Show a Clear button while a date is set. On by default. */
+  clearable?: boolean;
   error?: string;
 };
 
@@ -39,6 +41,7 @@ export function DateField({
   onChange,
   minimumDate,
   optional,
+  clearable = true,
   error,
 }: DateFieldProps) {
   const theme = useTheme();
@@ -81,7 +84,7 @@ export function DateField({
             {value ? describe(value) : 'Not set — tap to choose'}
           </ThemedText>
         </Pressable>
-        {value ? (
+        {value && clearable ? (
           <Pressable
             onPress={() => onChange(null)}
             accessibilityRole="button"

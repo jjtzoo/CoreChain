@@ -62,6 +62,15 @@ export async function listCustodyEvents(
   return (rows as unknown as EventRow[]).map(rowToEvent);
 }
 
+/** Every custody event on the phone, for the "My work" totals. */
+export async function listAllCustody(): Promise<FieldCustodyEvent[]> {
+  const db = await getDatabase();
+  const { rows } = await db.execute(
+    'SELECT * FROM custody_events ORDER BY occurred_at, created_at',
+  );
+  return (rows as unknown as EventRow[]).map(rowToEvent);
+}
+
 /** Every custody event in the project, grouped by sample. */
 export async function listProjectCustody(
   projectId: string,

@@ -1,11 +1,15 @@
 import {
+  formatRange,
   loggedLengthM,
   loggingProgress,
+  rangeForPreset,
   sessionMessage,
+  summariseWork,
   type FieldDrillhole,
   type Project,
+  type WorkSummary,
 } from '@corechain/domain';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +31,7 @@ import {
 } from '@/data/drillholesRepository';
 import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { listProjects } from '@/data/projectsRepository';
+import { loadWorkInput } from '@/data/workRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
@@ -81,10 +86,14 @@ export default function HomeScreen() {
   const sessionNote = health ? sessionMessage(health) : null;
   const [summaries, setSummaries] = useState<ProjectSummary[] | null>(null);
   const [recent, setRecent] = useState<Recent | null>(null);
+  const [today, setToday] = useState<WorkSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     (async () => {
+      void loadWorkInput().then((work) =>
+        setToday(summariseWork(work, rangeForPreset('today', new Date()))),
+      );
       const projects = await listProjects();
       setSummaries(await Promise.all(projects.map(summarise)));
 
@@ -133,6 +142,51 @@ export default function HomeScreen() {
           </ThemedText>
         ) : null}
 
+        {today ? (
+          <Card
+            onPress={() => router.push('/work' as Href)}
+            accessibilityLabel="Open My work">
+            <View style={styles.todayTop}>
+              <ThemedText type="heading">Today</ThemedText>
+              <View style={styles.todayLink}>
+                <ThemedText type="smallBold" themeColor="brand">
+                  My work
+                </ThemedText>
+                <Icon name="chevron-right" size={20} themeColor="brand" />
+              </View>
+            </View>
+            <ThemedText type="caption" themeColor="textSecondary">
+              {formatRange(today.range)}
+            </ThemedText>
+            <View style={styles.todayNumbers}>
+              <View>
+                <ThemedText type="title" style={styles.todayValue}>
+                  {today.metresLogged}
+                </ThemedText>
+                <ThemedText type="caption" themeColor="textSecondary">
+                  m logged
+                </ThemedText>
+              </View>
+              <View>
+                <ThemedText type="title" style={styles.todayValue}>
+                  {today.samples.total}
+                </ThemedText>
+                <ThemedText type="caption" themeColor="textSecondary">
+                  samples
+                </ThemedText>
+              </View>
+              <View>
+                <ThemedText type="title" style={styles.todayValue}>
+                  {today.custody.total}
+                </ThemedText>
+                <ThemedText type="caption" themeColor="textSecondary">
+                  custody steps
+                </ThemedText>
+              </View>
+            </View>
+          </Card>
+        ) : null}
+
         {recent ? (
           <View style={styles.section}>
             <ThemedText type="caption" themeColor="textSecondary">
@@ -145,8 +199,7 @@ export default function HomeScreen() {
                 )
               }
               accessibilityLabel={`Continue with hole ${recent.drillhole.holeId}`}
-              style={styles.recentCard}
-            >
+              style={styles.recentCard}>
               <View style={styles.recentTop}>
                 <View style={styles.recentTitle}>
                   <ThemedText type="heading">
@@ -174,12 +227,10 @@ export default function HomeScreen() {
                 </ThemedText>
               </View>
               <View
-                style={[styles.continueRow, { backgroundColor: theme.accent }]}
-              >
+                style={[styles.continueRow, { backgroundColor: theme.accent }]}>
                 <ThemedText
                   type="smallBold"
-                  style={[styles.continueLabel, { color: theme.onAccent }]}
-                >
+                  style={[styles.continueLabel, { color: theme.onAccent }]}>
                   Continue
                 </ThemedText>
                 <Icon name="arrow-right" size={20} themeColor="onAccent" />
@@ -208,8 +259,7 @@ export default function HomeScreen() {
                 key={project.id}
                 onPress={() => router.push(`/projects/${project.id}`)}
                 accessibilityLabel={`Open project ${project.name}`}
-                style={styles.projectCard}
-              >
+                style={styles.projectCard}>
                 <View style={styles.projectTop}>
                   <View style={styles.recentTitle}>
                     <ThemedText type="smallBold" style={styles.projectName}>
@@ -247,8 +297,7 @@ export default function HomeScreen() {
             router.push({ pathname: '/feedback', params: { from: 'Home' } })
           }
           accessibilityRole="button"
-          style={styles.feedbackLink}
-        >
+          style={styles.feedbackLink}>
           <Icon
             name="message-text-outline"
             size={18}
@@ -264,6 +313,24 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  todayTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  todayLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  todayNumbers: {
+    flexDirection: 'row',
+    gap: Spacing.four,
+    marginTop: Spacing.two,
+  },
+  todayValue: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
   safeArea: {
     flex: 1,
   },

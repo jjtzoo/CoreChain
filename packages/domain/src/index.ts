@@ -170,6 +170,7 @@ export * from "./field";
 export * from "./core";
 export * from "./logging";
 export * from "./holeLog";
+export * from "./myWork";
 export * from "./sampling";
 export * from "./export";
 export * from "./photos";
