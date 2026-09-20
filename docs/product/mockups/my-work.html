@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | My work mockup</title>
+<!--
+  MOCKUP, not the app. The field geologist's own view of the work they did, by
+  date (plan epic E14). It reads only what is already on the phone, so it works
+  with no signal. The same numbers, per geologist, are what the manager's
+  overview (E11, see team-overview.html) shows.
+  Hole names are real (Alberta Geological Survey, AGS DIG 2024-0022). Every
+  number, name and time is ILLUSTRATIVE, made up so the screens have something
+  to show. Colours are the phone app's dark theme (apps/mobile/src/constants/theme.ts).
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --ink: #182321; --text: #3a4642; --muted: #6b736e;
+    --line: #d6cfc0; --copper: #a66a43;
+    /* the phone's dark theme */
+    --bg: #0f1615; --card: #182321; --sel: #243431; --bd: #2a3a37; --t1: #eeeae1; --t2: #a8b0a9; --t3: #7e8983;
+    --brand: #c98559; --ok: #5fcb9b; --oksoft: #12301f; --warn: #e6a94c; --warnsoft: #3a2a0e;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p, ul { margin: 0; padding: 0; }
+  ul { list-style: none; }
+  .wrap { width: min(1240px, 100% - 48px); margin: 0 auto; }
+  .top { padding: 56px 0 24px; border-bottom: 1px solid var(--line); }
+  .tag { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.15; margin: 10px 0 14px; max-width: 24ch; }
+  .lede { max-width: 70ch; color: var(--text); font-size: 18px; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); max-width: 84ch; }
+
+  .row { display: flex; gap: 36px; padding: 36px 0 8px; overflow-x: auto; align-items: flex-start; }
+  figure { margin: 0; flex: none; width: 340px; }
+  figcaption { margin-top: 14px; font-size: 14px; color: var(--text); }
+  figcaption b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 2px; }
+
+  .phone { width: 340px; height: 700px; background: var(--bg); border-radius: 30px; border: 8px solid #0a0f0e; box-shadow: 0 14px 34px rgba(24,35,33,.22); overflow: hidden; color: var(--t1); position: relative; }
+  .scr { height: 100%; overflow: hidden; padding: 0 16px 16px; }
+  .sb { display: flex; justify-content: space-between; font-size: 11px; color: var(--t2); padding: 10px 4px 6px; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 6px 0 12px; font-size: 20px; font-weight: 700; }
+  .bar span { font-size: 22px; color: var(--t2); font-weight: 400; }
+  .cap { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); margin: 14px 0 7px; }
+
+  .chips { display: flex; gap: 6px; flex-wrap: nowrap; }
+  .chip { flex: none; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bd); font-size: 12.5px; color: var(--t1); background: var(--card); }
+  .chip.on { background: var(--t1); color: var(--bg); border-color: var(--t1); font-weight: 700; }
+
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
+  .day { text-align: center; padding: 7px 0 6px; border-radius: 12px; border: 1px solid var(--bd); background: var(--card); font-size: 10.5px; color: var(--t2); }
+  .day b { display: block; font-size: 15px; color: var(--t1); margin: 1px 0 4px; }
+  .day i { display: block; height: 4px; margin: 0 auto; width: 16px; border-radius: 2px; background: var(--sel); }
+  .day i.a { background: #6d8f7e; } .day i.b { background: var(--ok); } .day i.c { background: var(--brand); }
+  .day.on { background: var(--t1); border-color: var(--t1); color: #3a4642; }
+  .day.on b { color: var(--bg); }
+  .day.off { opacity: .45; }
+
+  .hero { background: var(--card); border: 1px solid var(--bd); border-radius: 16px; padding: 14px; margin-top: 12px; }
+  .hero small { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
+  .hero .big { font-size: 34px; font-weight: 700; line-height: 1.1; margin-top: 4px; }
+  .hero .big em { font-style: normal; font-size: 15px; font-weight: 400; color: var(--t2); }
+  .hero p { font-size: 12px; color: var(--t2); margin-top: 3px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-top: 8px; }
+  .tile { background: var(--card); border: 1px solid var(--bd); border-radius: 14px; padding: 10px 10px 9px; }
+  .tile b { display: block; font-size: 21px; line-height: 1.1; }
+  .tile span { display: block; font-size: 10.5px; color: var(--t2); margin-top: 3px; line-height: 1.25; }
+
+  .list { background: var(--card); border: 1px solid var(--bd); border-radius: 16px; padding: 4px 14px; }
+  .list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--bd); font-size: 13px; }
+  .list li:first-child { border-top: 0; }
+  .list li small { display: block; color: var(--t2); font-size: 11px; }
+  .list li b { font-weight: 700; }
+  .list .n { text-align: right; white-space: nowrap; font-size: 13px; }
+  .list .n small { color: var(--t3); }
+  .tl li { display: grid; grid-template-columns: 46px 1fr; gap: 8px; align-items: start; }
+  .tl time { font-size: 11.5px; color: var(--t3); padding-top: 1px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; background: var(--oksoft); color: var(--ok); }
+  .cta { margin-top: 12px; text-align: center; padding: 13px; border-radius: 14px; background: var(--t1); color: var(--bg); font-weight: 700; font-size: 14px; }
+  .cta.sec { background: transparent; border: 1.5px solid var(--t1); color: var(--t1); }
+
+  /* week chart */
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 110px; margin-top: 8px; }
+  .chart div { flex: 1; text-align: center; font-size: 10.5px; color: var(--t2); }
+  .chart div i { display: block; background: var(--brand); border-radius: 5px 5px 2px 2px; margin-bottom: 5px; }
+  .chart div.now i { background: var(--t1); }
+  .chart div b { display: block; color: var(--t1); font-size: 11px; margin-bottom: 3px; }
+
+  /* home card */
+  .greet { font-size: 26px; font-weight: 700; margin: 18px 0 2px; }
+  .sub { font-size: 13px; color: var(--ok); margin-bottom: 4px; }
+  .today { background: var(--card); border: 1px solid var(--bd); border-radius: 18px; padding: 14px; margin-top: 10px; }
+  .today .h { display: flex; justify-content: space-between; align-items: baseline; }
+  .today .h b { font-size: 15px; }
+  .today .h span { font-size: 12px; color: var(--t2); }
+  .today .nums { display: flex; gap: 14px; margin-top: 10px; }
+  .today .nums div { font-size: 11px; color: var(--t2); }
+  .today .nums div b { display: block; font-size: 22px; color: var(--t1); }
+
+  /* the shared report */
+  .report { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.55; color: var(--ink); white-space: pre; overflow-x: auto; }
+
+  .why { padding: 34px 0 60px; }
+  .why h2 { font-size: 22px; margin-bottom: 10px; }
+  .why p { font-size: 15px; color: var(--text); max-width: 80ch; margin-bottom: 12px; }
+  .why ul { max-width: 84ch; }
+  .why li { position: relative; padding-left: 18px; margin-bottom: 8px; font-size: 15px; color: var(--text); }
+  .why li::before { content: ""; position: absolute; left: 0; top: 10px; width: 7px; height: 7px; border-radius: 50%; background: var(--copper); }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="tag">Mockup · plan epic E14</div>
+  <h1>My work: what I did, by date</h1>
+  <p class="lede">A geologist opens one screen and sees the work they did on any day, week or range of dates: metres logged, samples, custody steps, dispatches. It comes from what is already on the phone, so it works with no signal, and it can be shared as a day report.</p>
+  <p class="note">Hole names are real (Alberta Geological Survey data). All numbers, people and times are illustrative, made up so the screens have something to show.</p>
+</div></header>
+
+<main class="wrap">
+  <div class="row">
+
+    <!-- 1. Home entry -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>4:43</span><span>100%</span></div>
+        <div class="greet">Good morning</div>
+        <div class="sub">Up to date · saved on this phone</div>
+
+        <div class="today">
+          <div class="h"><b>Today</b><span>Mon 21 Sep</span></div>
+          <div class="nums">
+            <div><b>18.4 m</b>logged</div>
+            <div><b>6</b>samples</div>
+            <div><b>9</b>custody steps</div>
+          </div>
+          <div class="cta sec" style="margin-top:12px;padding:10px;font-size:13px">See my work</div>
+        </div>
+
+        <div class="cap">Continue where you left off</div>
+        <div class="list"><ul><li><div><b>200110-128</b><small>Alberta sample project</small></div><span class="pill">Logged</span></li></ul></div>
+      </div></div>
+      <figcaption><b>1. A "Today" card on Home</b>The day's numbers at a glance, and one tap to the full view.</figcaption>
+    </figure>
+
+    <!-- 2. A day -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>4:43</span><span>100%</span></div>
+        <div class="bar"><span>←</span>My work</div>
+        <div class="chips"><span class="chip on">Today</span><span class="chip">Yesterday</span><span class="chip">This week</span><span class="chip">Pick dates</span></div>
+        <div class="week">
+          <div class="day off">Tue<b>15</b><i></i></div>
+          <div class="day">Wed<b>16</b><i class="b"></i></div>
+          <div class="day">Thu<b>17</b><i class="c"></i></div>
+          <div class="day">Fri<b>18</b><i class="a"></i></div>
+          <div class="day off">Sat<b>19</b><i></i></div>
+          <div class="day">Sun<b>20</b><i class="a"></i></div>
+          <div class="day on">Mon<b>21</b><i class="c"></i></div>
+        </div>
+
+        <div class="hero"><small>Core logged · Mon 21 Sep</small><div class="big">18.4 <em>m</em></div><p>across 2 holes · 7 intervals</p></div>
+        <div class="tiles">
+          <div class="tile"><b>3</b><span>core boxes</span></div>
+          <div class="tile"><b>6</b><span>samples<br>(2 are QC)</span></div>
+          <div class="tile"><b>9</b><span>custody steps</span></div>
+          <div class="tile"><b>2</b><span>core runs</span></div>
+          <div class="tile"><b>11</b><span>photos</span></div>
+          <div class="tile"><b>1</b><span>dispatch handed over</span></div>
+        </div>
+        <div class="cap">Holes worked</div>
+        <div class="list"><ul>
+          <li><div><b>200110-128</b><small>Logged 154.2 – 163.6 m</small></div><span class="n"><b>9.4 m</b><small><br>4 samples</small></span></li>
+          <li><div><b>200110-129</b><small>Logged 12.0 – 21.0 m</small></div><span class="n"><b>9.0 m</b><small><br>2 samples</small></span></li>
+        </ul></div>
+      </div></div>
+      <figcaption><b>2. One day</b>A week strip shows which days have work (the bar under each date). Tiles show the counts. Nothing to type or add up.</figcaption>
+    </figure>
+
+    <!-- 3. A range -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>4:43</span><span>100%</span></div>
+        <div class="bar"><span>←</span>My work</div>
+        <div class="chips"><span class="chip">Today</span><span class="chip">Yesterday</span><span class="chip on">This week</span><span class="chip">Pick dates</span></div>
+
+        <div class="hero"><small>Core logged · 15 – 21 Sep</small><div class="big">96.8 <em>m</em></div><p>across 4 holes · 5 working days</p></div>
+        <div class="chart">
+          <div><b>·</b><i style="height:2px"></i>Tue</div>
+          <div><b>21.5</b><i style="height:38px"></i>Wed</div>
+          <div><b>29.7</b><i style="height:52px"></i>Thu</div>
+          <div><b>12.3</b><i style="height:22px"></i>Fri</div>
+          <div><b>·</b><i style="height:2px"></i>Sat</div>
+          <div><b>14.9</b><i style="height:26px"></i>Sun</div>
+          <div class="now"><b>18.4</b><i style="height:32px"></i>Mon</div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><b>17</b><span>core boxes</span></div>
+          <div class="tile"><b>23</b><span>samples<br>(5 are QC)</span></div>
+          <div class="tile"><b>41</b><span>custody steps</span></div>
+          <div class="tile"><b>9</b><span>core runs</span></div>
+          <div class="tile"><b>54</b><span>photos</span></div>
+          <div class="tile"><b>2</b><span>dispatches</span></div>
+        </div>
+        <div class="cta">Share report</div>
+      </div></div>
+      <figcaption><b>3. A week, or any range</b>Choose "Pick dates" for any start and end. The chart shows the rhythm of the work; the tiles are the totals for the range.</figcaption>
+    </figure>
+
+    <!-- 4. Activity -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>4:43</span><span>100%</span></div>
+        <div class="bar"><span>←</span>Mon 21 Sep</div>
+        <div class="cap" style="margin-top:2px">Activity</div>
+        <div class="list tl"><ul>
+          <li><time>4:42</time><div><b>Handed over DSP-001</b><small>3 samples to Als Manila, taken by Courier Juan</small></div></li>
+          <li><time>3:47</time><div><b>Bagged 3 samples</b><small>AGS-00003 to AGS-00005</small></div></li>
+          <li><time>11:20</time><div><b>Logged 200110-129</b><small>12.0 – 21.0 m, 3 intervals</small></div></li>
+          <li><time>10:05</time><div><b>Sample AGS-00021</b><small>Field duplicate of AGS-00020</small></div></li>
+          <li><time>9:30</time><div><b>Logged 200110-128</b><small>154.2 – 163.6 m, 4 intervals</small></div></li>
+          <li><time>8:15</time><div><b>Core box 24 photographed</b><small>200110-128 · 69.65 – 78.2 m</small></div></li>
+        </ul></div>
+        <div class="cta sec">Share day report</div>
+      </div></div>
+      <figcaption><b>4. What happened, in order</b>The day as a timeline, newest first. Tap a line to open that record.</figcaption>
+    </figure>
+  </div>
+
+  <section class="why">
+    <h2>The day report (what "Share" sends)</h2>
+    <p>A plain-text summary that goes through the phone's share sheet (WhatsApp, Messenger, email), so a geologist can send it to a resident manager at the end of a shift without typing it.</p>
+    <div class="report">CoreChain · Daily report
+Alberta sample project
+Test Geologist 1 · Mon 21 Sep 2026
+
+CORE LOGGED      18.4 m across 2 holes (7 intervals)
+  200110-128     154.2 - 163.6 m   9.4 m
+  200110-129      12.0 -  21.0 m   9.0 m
+
+SAMPLES          6 (2 QC: 1 blank, 1 duplicate)
+CUSTODY          9 steps   (3 bagged, 3 sealed, 3 dispatched)
+DISPATCHES       DSP-001 handed over to Als Manila, 3 samples
+PHOTOS           11
+CORE BOXES       3   ·   RUNS 2
+
+Sent from CoreChain Field · synced 4:43 AM</div>
+
+    <h2 style="margin-top:34px">How it is decided</h2>
+    <ul>
+      <li><b>By the date the work was done</b>, not the date it was synced: an interval logged on Tuesday with no signal still counts on Tuesday.</li>
+      <li><b>Metres logged</b> is the length of the intervals logged that day. Editing an old interval does not count as new metres.</li>
+      <li><b>Custody steps</b> count by when the step happened (the time typed in the form), so a step recorded late lands on the right day.</li>
+      <li><b>Works offline.</b> Everything is calculated from the phone's own data. It shows the same numbers the manager will later see for this geologist.</li>
+      <li><b>Private to the geologist.</b> It is their own record. Nothing here is a score or a ranking.</li>
+    </ul>
+
+    <h2 style="margin-top:34px">Questions to answer with a geologist</h2>
+    <ul>
+      <li>Which number do you report at the end of a shift? Metres logged, samples, or something else?</li>
+      <li>Does your resident manager already ask for a daily or weekly summary? In what form?</li>
+      <li>Would you rather send the report as text, or as a PDF?</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
