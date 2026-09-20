@@ -8,12 +8,27 @@ export default function Home() {
     <main className="landing-shell">
       <header className="landing-header">
         <Link className="landing-brand" href="/" aria-label="CoreChain home">
-          <Image className="brand-logo" src="/branding/corechain-primary-horizontal.svg" alt="CoreChain" width={150} height={42} priority />
+          <Image
+            className="brand-logo"
+            src="/branding/corechain-primary-horizontal.svg"
+            alt="CoreChain"
+            width={150}
+            height={42}
+            priority
+          />
         </Link>
-        <Link className="header-action" href="/projects/alberta-drillhole-demo">
-          Open demo workspace
-          <ArrowUpRight aria-hidden="true" size={15} strokeWidth={1.5} />
-        </Link>
+        <nav className="landing-header-actions" aria-label="Main">
+          <Link
+            className="header-action"
+            href="/projects/alberta-drillhole-demo"
+          >
+            Open demo workspace
+            <ArrowUpRight aria-hidden="true" size={15} strokeWidth={1.5} />
+          </Link>
+          <Link className="header-signin" href="/login">
+            Sign in
+          </Link>
+        </nav>
       </header>
 
       <section className="landing-hero" aria-labelledby="page-title">

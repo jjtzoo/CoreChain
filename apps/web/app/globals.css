@@ -2388,3 +2388,37 @@ h3 {
     display: none;
   }
 }
+
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-signin {
+  padding: 8px 16px;
+  color: var(--forest);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.header-signin:hover {
+  background: var(--surface-muted);
+}
+
+.header-signin:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--forest) 42%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .landing-header-actions {
+    gap: 12px;
+  }
+
+  .landing-header-actions .header-action {
+    display: none;
+  }
+}
