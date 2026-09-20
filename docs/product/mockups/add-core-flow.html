@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain Field | Add core flow mockup</title>
+<!--
+  MOCKUP, not the app. The run-first "Add core" flow from
+  docs/product/field-workflow-friction-and-design-principles.md (section 4):
+  enter a run once, then box it, log it and sample it with a tap each, instead
+  of typing the same depths into four forms. Serves P1 (capture once), P3
+  (thumb reach), P5 (errors caught at entry) and P7 (fast path first).
+  Depths and rock names are from the Alberta sample project (AGS DIG 2024-0022,
+  hole 200110-128); box numbers, recovery and the split point are illustrative.
+  Colours are the app's own tokens (apps/mobile/src/constants/theme.ts, dark).
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --ink: #182321; --text: #3a4642; --muted: #6b736e;
+    --line: #d6cfc0; --line-strong: #bdb5a3; --copper: #a66a43;
+    /* the app, dark theme */
+    --bg: #0f1615; --card: #182321; --sel: #243431; --appline: #2a3a37; --apptext: #eeeae1;
+    --sub: #a8b0a9; --appmuted: #7e8983; --accent: #eeeae1; --onaccent: #182321; --brand: #c98559;
+    --ok: #5fcb9b; --okbg: #12301f; --warn: #e6a94c; --warnbg: #3a2a0e;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+  .wrap { width: min(1240px, 100% - 48px); margin: 0 auto; }
+
+  .top { padding: 56px 0 24px; border-bottom: 1px solid var(--line); }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.15; margin: 10px 0 14px; max-width: 22ch; }
+  .lede { max-width: 68ch; color: var(--text); font-size: 18px; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); max-width: 80ch; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(270px, 1fr)); gap: 28px; padding: 40px 0 24px; overflow-x: auto; }
+  .step h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .step h3 { font-size: 20px; line-height: 1.25; margin-bottom: 8px; }
+  .step > p { font-size: 15px; color: var(--text); margin-bottom: 18px; min-height: 66px; }
+
+  /* the phone */
+  .phone { width: 290px; height: 620px; background: var(--bg); border: 1px solid #0a0f0e; border-radius: 30px; padding: 12px 0 0; position: relative; overflow: hidden; color: var(--apptext); font-size: 12.5px; }
+  .status { display: flex; justify-content: space-between; padding: 0 20px 6px; font-size: 11px; color: var(--sub); }
+  .appbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px 10px; }
+  .appbar b { font-size: 16px; }
+  .back { font-size: 16px; color: var(--sub); }
+  .body { padding: 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .caption { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--appmuted); }
+  .card { background: var(--card); border: 1px solid var(--appline); border-radius: 14px; padding: 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .hole { font-size: 17px; font-weight: 700; }
+  .sub { color: var(--sub); font-size: 11.5px; }
+
+  /* depth strip */
+  .strip { position: relative; height: 22px; border-radius: 6px; background: var(--sel); overflow: hidden; }
+  .strip .seg { position: absolute; top: 0; bottom: 0; }
+  .strip .drilled { background: #3a4d49; }
+  .strip .new { background: var(--brand); }
+  .ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--appmuted); margin-top: 3px; }
+  .cursor { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); }
+  .cursor::after { content: ""; position: absolute; left: -5px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+
+  .field { border: 1px solid var(--appline); border-radius: 12px; padding: 8px 12px; background: var(--bg); }
+  .field small { display: block; font-size: 10.5px; color: var(--appmuted); }
+  .field b { font-size: 20px; }
+  .locked b { color: var(--sub); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { min-height: 34px; padding: 0 12px; display: inline-flex; align-items: center; border: 1px solid var(--appline); border-radius: 999px; font-size: 12.5px; color: var(--apptext); }
+  .chip.on { background: var(--accent); color: var(--onaccent); border-color: var(--accent); font-weight: 700; }
+  .ok { color: var(--ok); }
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; background: var(--okbg); color: var(--ok); font-size: 11px; font-weight: 700; }
+  .pill.warn { background: var(--warnbg); color: var(--warn); }
+  .btn { min-height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: var(--accent); color: var(--onaccent); }
+  .btn.line { background: transparent; color: var(--apptext); border: 1.5px solid var(--apptext); }
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px 16px; background: var(--bg); border-top: 1px solid var(--appline); display: flex; flex-direction: column; gap: 8px; }
+
+  .next { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .next .card { padding: 10px 6px; text-align: center; }
+  .next svg { display: block; margin: 0 auto 4px; }
+  .next b { display: block; font-size: 12px; }
+  .next span { font-size: 10px; color: var(--sub); }
+
+  .interval { display: flex; flex-direction: column; gap: 6px; }
+  .interval .range { font-size: 16px; font-weight: 700; }
+  .auto { font-size: 10.5px; color: var(--ok); }
+
+  .tl li { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 9px 0; border-top: 1px solid var(--appline); }
+  .tl li:first-child { border-top: 0; }
+  .dots { display: flex; gap: 4px; align-items: center; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+  .dot.no { background: transparent; border: 1.5px solid var(--appmuted); }
+  .legend { font-size: 9.5px; color: var(--appmuted); display: flex; justify-content: space-between; margin-top: 2px; }
+
+  .callout { background: var(--warnbg); color: var(--warn); border-radius: 12px; padding: 9px 11px; font-size: 11.5px; }
+
+  /* below the phones */
+  .band { border-top: 1px solid var(--line); padding: 44px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .band h2 { font-size: 24px; margin-bottom: 14px; }
+  .band p, .band li { color: var(--text); font-size: 16px; }
+  .band li { padding: 10px 0; border-top: 1px solid var(--line); }
+  .band li:first-child { border-top: 0; }
+  .band li b { color: var(--ink); }
+  .measure { display: flex; gap: 32px; align-items: baseline; margin: 6px 0 12px; }
+  .measure .n { font-size: 56px; font-weight: 700; line-height: 1; }
+  .measure .n small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); margin-top: 6px; }
+  .arrow { font-size: 28px; color: var(--copper); }
+  .p { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 8px; margin-right: 4px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="tag">Design mockup · not built</span>
+    <h1>Add core: enter the run once</h1>
+    <p class="lede">Today one 3 m run of core is typed into four forms: the run, the box, the log interval and the sample. Each is a different measurement, but the depths are the same core. This flow asks for the run once and makes everything after it a tap.</p>
+    <p class="note">Depths and rock names are real, from hole 200110-128 of the Alberta sample project (Alberta Geological Survey, AGS DIG 2024-0022). Box numbers, recovery and the split point are illustrative. Screens use the app's own dark theme.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="flow" aria-label="The four screens">
+
+    <!-- 1 -->
+    <article class="step">
+      <h2>1 · The run</h2>
+      <h3>One depth to type, and it is usually a tap</h3>
+      <p>The start is already known: where the last run ended. The end is a chip. Recovery updates as you type and warns before you save.</p>
+      <div class="phone">
+        <div class="status"><span>7:00</span><span>100%</span></div>
+        <div class="appbar"><span class="back">←</span><b>Add core</b></div>
+        <div class="body">
+          <div class="row"><span class="hole">200110-128</span><span class="sub">159.7 m final</span></div>
+          <div>
+            <div class="strip"><div class="seg drilled" style="left:0;width:96.5%"></div><div class="seg new" style="left:96.5%;width:1.9%"></div></div>
+            <div class="ticks"><span>0</span><span>run 154.2 to 157.2</span><span>159.7</span></div>
+          </div>
+          <div class="field locked"><small>Starts at · end of last run</small><b>154.2 m</b></div>
+          <div class="field" style="border-color:var(--apptext)"><small>Ends at</small><b>157.2 m</b></div>
+          <div class="chips"><span class="chip">+1.5</span><span class="chip on">+3.0</span><span class="chip">+6.0</span><span class="chip">Type it</span></div>
+          <div class="field"><small>Recovered</small><div class="row"><b>2.85 m</b><span class="pill">95% recovery</span></div></div>
+          <div class="chips"><span class="chip">Full 3.0</span><span class="chip on">−0.15</span><span class="chip">−0.30</span><span class="chip">Type it</span></div>
+          <div class="sub">RQD pieces · optional</div>
+        </div>
+        <div class="foot"><div class="btn">Save run</div></div>
+      </div>
+    </article>
+
+    <!-- 2 -->
+    <article class="step">
+      <h2>2 · What next</h2>
+      <h3>One tap each, in any order</h3>
+      <p>The run is saved. The core can now be boxed, logged or sampled from it, with the depths already filled in. Nothing is forced, so a technician can box and a geologist can log.</p>
+      <div class="phone">
+        <div class="status"><span>7:00</span><span>100%</span></div>
+        <div class="appbar"><span class="back">←</span><b>Run saved</b></div>
+        <div class="body">
+          <div class="card">
+            <div class="row"><span class="hole">154.2 – 157.2 m</span><span class="pill">95% recovery</span></div>
+            <div style="margin-top:8px" class="strip"><div class="seg new" style="left:0;width:100%"></div></div>
+            <div class="ticks"><span>154.2</span><span>155.7</span><span>157.2</span></div>
+          </div>
+          <div class="caption">Do next</div>
+          <div class="next">
+            <div class="card"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eeeae1" stroke-width="1.6"><path d="M12 3l8 4v10l-8 4-8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg><b>Box it</b><span>Box 52 · 154.2–157.2</span></div>
+            <div class="card"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eeeae1" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><b>Log it</b><span>1 interval</span></div>
+            <div class="card"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eeeae1" stroke-width="1.6"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/></svg><b>Sample it</b><span>AGS-00016</span></div>
+          </div>
+          <div class="callout">Photograph before logging: box 52 has no photo yet.</div>
+          <div class="sub">Each button opens its form with the depths already in it. You only add what is new: the box note, the rock, the sample type.</div>
+        </div>
+        <div class="foot"><div class="btn">Add next run</div><div class="btn line">Back to hole</div></div>
+      </div>
+    </article>
+
+    <!-- 3 -->
+    <article class="step">
+      <h2>3 · Log it</h2>
+      <h3>Split the run by tapping the strip</h3>
+      <p>Geology changes inside a run. Tap where it changes; the depths of both intervals follow. Then pick the rock. No depth is typed.</p>
+      <div class="phone">
+        <div class="status"><span>7:00</span><span>100%</span></div>
+        <div class="appbar"><span class="back">←</span><b>Log run 154.2–157.2</b></div>
+        <div class="body">
+          <div>
+            <div class="strip" style="height:34px"><div class="seg" style="left:0;width:40%;background:#7a5a44"></div><div class="seg" style="left:40%;width:60%;background:#5a6e63"></div><div class="cursor" style="left:40%"></div></div>
+            <div class="ticks"><span>154.2</span><span style="color:var(--apptext);font-weight:700">split at 155.4</span><span>157.2</span></div>
+          </div>
+          <div class="sub">Tap the strip to move or add a split. Drag to fine-tune.</div>
+          <div class="card interval">
+            <div class="row"><span class="range">154.2 – 155.4 m</span><span class="auto">from the strip</span></div>
+            <div class="chips"><span class="chip on">Shale</span><span class="chip">Limestone</span><span class="chip">Sandstone</span><span class="chip">More</span></div>
+            <div class="sub">Mineral · Pyrite</div>
+          </div>
+          <div class="card interval">
+            <div class="row"><span class="range">155.4 – 157.2 m</span><span class="auto">from the strip</span></div>
+            <div class="chips"><span class="chip">Shale</span><span class="chip on">Limestone</span><span class="chip">Sandstone</span><span class="chip">More</span></div>
+            <div class="sub">Mineral · Pyrite</div>
+          </div>
+          <div class="pill" style="align-self:flex-start">No gaps or overlaps</div>
+        </div>
+        <div class="foot"><div class="btn">Save 2 intervals</div></div>
+      </div>
+    </article>
+
+    <!-- 4 -->
+    <article class="step">
+      <h2>4 · The hole</h2>
+      <h3>See what is waiting, in the order the core moves</h3>
+      <p>The hole screen shows each run's progress along the chain, so the next job at this hole is obvious, and the next person can pick it up.</p>
+      <div class="phone">
+        <div class="status"><span>7:00</span><span>100%</span></div>
+        <div class="appbar"><span class="back">←</span><b>200110-128</b></div>
+        <div class="body">
+          <div class="card">
+            <div class="row"><b>Core logged</b><span class="sub">36.6 of 159.7 m</span></div>
+            <div class="strip" style="margin-top:8px"><div class="seg" style="left:0;width:23%;background:#5a6e63"></div></div>
+          </div>
+          <div class="callout">2 boxes need photos · 1 run not logged</div>
+          <div class="caption">Runs</div>
+          <ul class="tl card" style="padding:4px 12px">
+            <li><div><b>154.2 – 157.2 m</b><div class="sub">Box 52 · 95% recovery</div></div><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot no"></span><span class="dot"></span><span class="dot no"></span></div></li>
+            <li><div><b>151.2 – 154.2 m</b><div class="sub">Box 51 · 100% recovery</div></div><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></li>
+            <li><div><b>148.2 – 151.2 m</b><div class="sub">Box 50 · 92% recovery</div></div><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot no"></span><span class="dot no"></span><span class="dot no"></span></div></li>
+          </ul>
+          <div class="legend"><span>Run · Boxed · Photo · Logged · Sampled</span></div>
+        </div>
+        <div class="foot"><div class="btn">Add core</div></div>
+      </div>
+    </article>
+  </section>
+</main>
+
+<section class="band">
+  <div class="wrap grid2">
+    <div>
+      <h2>How we will know it works</h2>
+      <p>Depth values typed to take one 3 m run through box, log and sample:</p>
+      <div class="measure">
+        <div class="n">4<small>today, one per form,<br>with the new shortcuts</small></div>
+        <div class="arrow">→</div>
+        <div class="n">1<small>target: the end of the run,<br>usually a chip</small></div>
+      </div>
+      <p style="font-size:14px;color:var(--muted)">A design target, not a measurement. The app can count typed depths itself during the field test, so we will have the real number.</p>
+    </div>
+    <div>
+      <h2>Principles it serves</h2>
+      <ul>
+        <li><span class="p">P1</span><b>Capture once.</b> The start is inherited, the end is a chip, the split is a tap.</li>
+        <li><span class="p">P3</span><b>Thumb reach.</b> Big chips and buttons, one hand, gloves on. No precision typing.</li>
+        <li><span class="p">P5</span><b>Errors at entry.</b> Recovery over 100% or a gap between runs is flagged before saving, and can be dismissed with a reason.</li>
+        <li><span class="p">P7</span><b>Fast path first.</b> Depth and rock only. RQD, notes and minerals are optional, one tap away.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap grid2">
+    <div>
+      <h2>Questions for the friendly geologist</h2>
+      <ol>
+        <li><b>Is a run the right starting point?</b> Or does the geologist think box first, because that is what is on the table?</li>
+        <li><b>How often does geology change inside a run?</b> If it is most runs, splitting on the strip must be very fast.</li>
+        <li><b>Are the +1.5 / +3.0 / +6.0 chips the right run lengths?</b> Rod length depends on the rig.</li>
+        <li><b>Who does what?</b> If a technician boxes and a geologist logs, the "What next" screen should show each person their own job.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>What stays exactly as it is</h2>
+      <ul>
+        <li>The four forms remain, for anyone who prefers them or needs to correct one record.</li>
+        <li>Every record keeps its own depths, so editing a box never silently moves a log interval.</li>
+        <li>Everything works offline and syncs later; nothing here needs signal.</li>
+        <li>The gap, overlap and recovery warnings stay, and now appear before saving.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

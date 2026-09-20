@@ -83,7 +83,7 @@ Each principle is a rule the design is held to, with a test that can fail.
 |---|---|---|---|
 | Depth shortcuts on every "to" field: end of last run, end of this box, end of last interval, +1 m | P1 | Small | Next workflow pass |
 | "Hole next steps" on the hole screen: boxes to photograph, intervals to log, samples to bag | P2, P9 | Medium | After alpha feedback |
-| Run-first "Add core" flow: enter the run once; one tap each to box it, log it, or split at a tap on the strip | P1, P5 | Large (mock up first) | Sprint 6 or later, from tester feedback |
+| Run-first "Add core" flow: enter the run once; one tap each to box it, log it, or split at a tap on the strip | P1, P5 | Large. Mockup: `docs/product/mockups/add-core-flow.html`; to be tried with the friendly geologist before any build | Sprint 6 or later, from tester feedback |
 | Sample from an interval, and split an interval into equal samples | P1 | Medium | With E6 follow-ups |
 | Fields the PMRC asks for that we lack: how each sample was cut (whole, half, quarter), core orientation, drill core diameter (the hole already has it), core storage location, lab name and accreditation | P11 | Small | Before the field test |
 | Core-library flag: mark which core was submitted to the MGB on request (DAO 22(i)) | P11 | Small | With custody (E7) |
