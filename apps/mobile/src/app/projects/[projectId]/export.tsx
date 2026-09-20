@@ -46,9 +46,10 @@ export default function ExportScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="small" themeColor="textSecondary">
-          One CSV file per table, with HOLEID / FROM / TO columns that Excel,
-          Leapfrog and GEOVIA can import. Pick an app from the share sheet to
-          save or send each file. This works without a signal.
+          One CSV file per table. Hole and depth columns are named HOLEID, FROM
+          and TO, the names most drillhole importers expect. Pick an app from
+          the share sheet to save or send each file. This works without a
+          signal.
         </ThemedText>
 
         {error ? (

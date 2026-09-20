@@ -2,8 +2,8 @@
 // (docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 3: E9-1).
 //
 // One file per table, with stable column names. Hole ID and from/to columns use
-// HOLEID / FROM / TO, the names Leapfrog and most GEOVIA imports recognise
-// automatically. Dispatches are not exported yet: they arrive with the custody
+// HOLEID / FROM / TO, the names most drillhole importers expect. (Not yet
+// tried in Leapfrog or GEOVIA themselves.) Dispatches are not exported yet: they arrive with the custody
 // stories (E7).
 
 import type { FieldCoreRun } from "./core";

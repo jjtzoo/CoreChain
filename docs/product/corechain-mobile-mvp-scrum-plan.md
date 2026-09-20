@@ -431,6 +431,7 @@ As a field geologist, I want to export collars, surveys (planned azimuth/dip), l
 
 - One file per table with stable column names. Hole ID and from/to columns follow the conventions those tools import.
 - It's shared through the Android share sheet and works offline.
+- Not yet tried in Leapfrog or GEOVIA, so the app does not claim it. During the field test, ask a geologist to import a real export and record what needed changing.
 
 ### E10 — Test support
 

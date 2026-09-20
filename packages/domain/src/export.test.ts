@@ -146,7 +146,7 @@ describe("buildExportTables", () => {
     ]);
   });
 
-  it("uses the column names Leapfrog and GEOVIA recognise", () => {
+  it("uses the standard HOLEID / FROM / TO column names", () => {
     expect(lines("collars")[0]).toBe(
       "HOLEID,LONGITUDE,LATITUDE,COORDINATE_SYSTEM,COLLAR_SOURCE,ACCURACY_M,PLANNED_DEPTH,FINAL_DEPTH,STATUS,STARTED,COMPLETED",
     );
