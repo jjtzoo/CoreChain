@@ -652,7 +652,27 @@ The owner created the accounts, and the server side is standing:
 - **Sync Streams** are drafted in `apps/web/powersync/sync-streams.yaml`: a geologist gets the projects they created and everything under them; audit events stay on the server. It is not deployed yet; the owner pastes it into the dashboard.
 - Secrets live only in `apps/web/.env` (git-ignored); `.env.example` names the variables.
 
-Still to do in S4: the raw-tables spike on a device (PowerSync reading and writing the phone's existing encrypted tables), Client Auth with Better Auth sign-in, the upload API, and the phone's sign-in screens. Production instance: added before the field test.
+The live server and sign-in are also up: the web app is on Vercel (`corechain-orpin.vercel.app`) with Better Auth sign-in, three tiers (admin, project manager, geologist), open sign-up switched off (D13), and a token endpoint that PowerSync trusts (Client Auth points at the server's public keys; audience `corechain-powersync`). Tokens last one hour and carry only the user id and tier.
+
+### Sync spike result (2026-09-20, on the phone)
+
+**Raw tables work on the existing encrypted database.** From the app's own build on the Infinix, signed in as a tester:
+
+- PowerSync opened the app's own `corechain.sqlite` (SQLCipher key from the keystore) and left the app's `user_version` (5) and tables alone. The "inferred" raw-table mode reads the existing columns, so **no table on the phone had to change** and the repositories keep their SQL.
+- The project and drillhole placed on the server for that user downloaded into the app's own `projects` and `drillholes` tables, and the **app's Home screen showed them** through its normal database connection. First sync took about 4 seconds.
+- Timestamps arrive as ISO 8601 text with microseconds (`2026-09-20T05:55:28.964000Z`), compatible with the phone's text columns.
+- A local write to a synced table was captured for upload (`PUT projects`).
+
+**Decision D14: the phone keeps its own tables and syncs into them with PowerSync raw tables.** The fallback (moving the repositories onto PowerSync-managed tables) is not needed.
+
+**What the real stories must handle (found or expected, not yet all tested):**
+
+1. **One connection only.** The capture triggers call a function that only exists on connections PowerSync has set up, so once triggers are installed the app's own separate connection can no longer write those tables. The fix is small and mechanical: `database.ts` should hand every repository PowerSync's connection (53 `execute`, 2 `executeBatch`, 1 `transaction` call sites). The spike removed its triggers at the end for exactly this reason. Expected from how SQLite works; confirm in E8-3.
+2. **A delete after an upload was not seen.** The insert was offered for upload, but the follow-up delete of the same row was not, within 6 seconds. Cause unknown (timing of the upload loop, or the delete trigger). Re-test insert, update and delete explicitly at the start of E8-3.
+3. **Columns the server adds** (`organization_id`, `created_by`, `project_id` on child tables) are ignored by the phone; the upload API fills them (as the schema already assumes).
+4. The spike screen (`apps/mobile/src/sync/spike.ts`, `src/app/sync-spike.tsx`, reached only by the deep link `corechain-field://sync-spike`) is developer-only and **must be deleted before the field-test build (S6)**.
+
+Still to do in S4: the phone's sign-in screens and sign-out, the upload API, sample-number block issuing, and the admin screen on the web. Production instance: added before the field test.
 
 ---
 
