@@ -15,7 +15,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "accounts:create": "tsx --env-file=.env scripts/create-accounts.ts"
+    "accounts:create": "tsx --env-file=.env scripts/create-accounts.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.5",
