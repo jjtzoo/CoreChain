@@ -682,7 +682,7 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 1. **One connection only.** The capture triggers call a function that only exists on connections PowerSync has set up, so once triggers are installed the app's own separate connection can no longer write those tables. The fix is small and mechanical: `database.ts` should hand every repository PowerSync's connection (53 `execute`, 2 `executeBatch`, 1 `transaction` call sites). The spike removed its triggers at the end for exactly this reason. Expected from how SQLite works; confirm in E8-3.
 2. **A delete after an upload was not seen.** The insert was offered for upload, but the follow-up delete of the same row was not, within 6 seconds. Cause unknown (timing of the upload loop, or the delete trigger). Re-test insert, update and delete explicitly at the start of E8-3.
 3. **Columns the server adds** (`organization_id`, `created_by`, `project_id` on child tables) are ignored by the phone; the upload API fills them (as the schema already assumes).
-4. The spike screen (`apps/mobile/src/sync/spike.ts`, `src/app/sync-spike.tsx`, reached only by the deep link `corechain-field://sync-spike`) is developer-only and **must be deleted before the field-test build (S6)**.
+4. The developer spike screen and its code were **removed on 2026-09-20** (commit history keeps them), and the test project it downloaded was deleted from the server. The test phone still holds the downloaded copy until its app data is cleared.
 
 ### S4 sign-in built (2026-09-20)
 
