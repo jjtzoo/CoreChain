@@ -28,3 +28,7 @@ coverage/
 *.orig.*
 apps/mobile/android/
 apps/mobile/ios/
+
+# Pilot tester logins (passwords). Never commit.
+tester-accounts.private.txt
+*.private.txt
