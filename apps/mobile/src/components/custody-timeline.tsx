@@ -6,12 +6,17 @@ import { ThemedText } from '@/components/themed-text';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 
+// A step saved in the last two minutes is tagged, so a save that lands at the
+// bottom of a long record is never mistaken for one that did not take.
+const JUST_NOW_MS = 2 * 60 * 1000;
+
 /**
  * A sample's custody record, oldest first: what happened, when, who did it, and
  * where or to whom. A step that a later correction cancelled stays visible,
  * marked "Voided", so the record never hides a mistake.
  */
 export function CustodyTimeline({ lines }: { lines: readonly CustodyLine[] }) {
+  const now = Date.now();
   if (lines.length === 0) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
@@ -32,6 +37,9 @@ export function CustodyTimeline({ lines }: { lines: readonly CustodyLine[] }) {
               {CUSTODY_LABELS[line.type]}
             </ThemedText>
             {line.voided ? <StatusPill label="Voided" tone="warning" /> : null}
+            {!line.voided && now - Date.parse(line.createdAt) < JUST_NOW_MS ? (
+              <StatusPill label="Just recorded" tone="success" />
+            ) : null}
           </View>
           <ThemedText type="small" themeColor="textSecondary">
             {describeMoment(line.occurredAt)} · {line.handledBy}
