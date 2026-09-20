@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Team overview mockup</title>
+<!--
+  MOCKUP, not the app. The resident / project-manager view (plan epic E11: team
+  overview E11-2, activity E11-3, hole view E11-4). Read-only: a manager sees
+  where the programme stands without messaging anyone. Serves P9 (show state,
+  not only data), P10 (design the exceptions) and P12 (each person sees their
+  own work first).
+  Hole names and planned depths are real (Alberta Geological Survey, AGS DIG
+  2024-0022). Everything else (metres logged, recovery, samples, people, times)
+  is ILLUSTRATIVE, made up so the screen has something to show. The real
+  survey logged only selected intervals, so it would not make a useful
+  programme-progress picture. Colours are the web app's tokens
+  (apps/web/app/globals.css).
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --surface-muted: #e3ddcf; --ink: #182321; --text: #3a4642;
+    --muted: #6b736e; --line: #d6cfc0; --line-strong: #bdb5a3; --forest: #182321; --forest-dark: #0f1615;
+    --copper: #a66a43; --warn-bg: #fff8e5; --warn-line: #e4c983; --warn-ink: #745a12;
+    --ok: #2f7a55; --okbg: #e2f0e7; --bad: #a8402f;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+  .wrap { width: min(1240px, 100% - 48px); margin: 0 auto; }
+
+  .top { padding: 56px 0 24px; border-bottom: 1px solid var(--line); }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.15; margin: 10px 0 14px; max-width: 24ch; }
+  .lede { max-width: 70ch; color: var(--text); font-size: 18px; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); max-width: 84ch; }
+
+  .view { padding: 40px 0 8px; }
+  .view > h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .view > h3 { font-size: 22px; line-height: 1.25; margin-bottom: 8px; }
+  .view > p { font-size: 15px; color: var(--text); max-width: 80ch; margin-bottom: 18px; }
+  .scroll { overflow-x: auto; padding-bottom: 12px; }
+
+  /* the browser window */
+  .win { width: 1180px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(24,35,33,.10); }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--surface-muted); border-bottom: 1px solid var(--line); }
+  .chrome i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .chrome span { margin-left: 10px; flex: 1; max-width: 420px; background: var(--surface); border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+  .app { display: grid; grid-template-columns: 190px 1fr; min-height: 640px; }
+  .side { background: var(--forest); color: #d8d3c6; padding: 18px 12px; font-size: 13.5px; }
+  .side .brand { color: #eeeae1; font-weight: 700; font-size: 15px; padding: 0 8px 16px; letter-spacing: .02em; }
+  .side .brand small { display: block; font-weight: 400; color: #a8b0a9; font-size: 11px; margin-top: 2px; }
+  .side li { padding: 8px 10px; border-radius: 8px; margin-bottom: 2px; }
+  .side li.on { background: #243431; color: #fff; font-weight: 600; }
+  .side .who { margin-top: 26px; padding: 10px; border-top: 1px solid #2a3a37; font-size: 12px; color: #a8b0a9; }
+  .main { padding: 20px 24px 26px; background: var(--canvas); }
+
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 14px; }
+  .head h4 { margin: 0; font-size: 22px; }
+  .head p { font-size: 12.5px; color: var(--muted); }
+  .asof { font-size: 12px; color: var(--muted); text-align: right; }
+  .asof b { color: var(--ink); }
+
+  .kpis { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .kpi small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kpi b { display: block; font-size: 26px; line-height: 1.15; margin-top: 4px; }
+  .kpi b em { font-style: normal; font-size: 13px; font-weight: 400; color: var(--muted); }
+  .kpi span { font-size: 12px; color: var(--muted); }
+  .bar { height: 8px; border-radius: 4px; background: var(--surface-muted); overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: var(--copper); }
+
+  .cols { display: grid; grid-template-columns: 1fr 330px; gap: 12px; align-items: start; }
+  .panel h5 { margin: 0 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 8px 6px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td .h { font-weight: 700; white-space: nowrap; }
+  td small { display: block; color: var(--muted); font-size: 11.5px; }
+  .mini { width: 130px; }
+  .mini .bar { margin-top: 4px; }
+  .st { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--surface-muted); color: var(--text); }
+  .st.logged { background: var(--okbg); color: var(--ok); }
+  .st.drill { background: #f1e2d4; color: #85502f; }
+  .flag { color: var(--warn-ink); font-weight: 700; }
+
+  .attn li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--warn-line); font-size: 13px; }
+  .attn li:first-child { border-top: 0; padding-top: 2px; }
+  .attn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .attn h5 { color: var(--warn-ink); }
+  .attn b { display: block; }
+  .attn span { color: var(--warn-ink); font-size: 12px; }
+  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #c98a1c; margin-top: 6px; }
+  .feed li { padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; display: grid; grid-template-columns: 58px 1fr; gap: 8px; }
+  .feed li:first-child { border-top: 0; }
+  .feed time { color: var(--muted); font-size: 12px; }
+  .feed .day { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 0 2px; }
+  .phones li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .phones li:first-child { border-top: 0; }
+  .phones small { display: block; color: var(--muted); font-size: 11.5px; }
+  .seen { text-align: right; white-space: nowrap; }
+  .seen.old { color: var(--warn-ink); font-weight: 700; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+
+  /* hole view */
+  .crumb { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  .lanes { position: relative; margin-top: 4px; }
+  .lane { display: grid; grid-template-columns: 110px 1fr 120px; align-items: center; gap: 10px; padding: 7px 0; font-size: 12.5px; }
+  .lane .track { position: relative; height: 18px; background: var(--surface-muted); border-radius: 5px; overflow: hidden; }
+  .lane .seg { position: absolute; top: 0; bottom: 0; background: var(--copper); }
+  .lane .seg.grey { background: #8a948e; }
+  .lane .gap { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #e9cf8c, #e9cf8c 4px, #f6e6b6 4px, #f6e6b6 8px); }
+  .lane .tick { position: absolute; top: 2px; bottom: 2px; width: 3px; margin-left: -1px; background: var(--forest); border-radius: 1px; }
+  .lane .val { color: var(--muted); font-size: 12px; text-align: right; }
+  .axis { display: grid; grid-template-columns: 110px 1fr 120px; gap: 10px; font-size: 11px; color: var(--muted); }
+  .axis div { position: relative; height: 16px; }
+  .axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .todo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+  .todo .panel b { display: block; font-size: 20px; }
+  .todo .panel span { font-size: 12.5px; color: var(--muted); }
+  .todo .panel.w { background: var(--warn-bg); border-color: var(--warn-line); }
+  .todo .panel.w span { color: var(--warn-ink); }
+
+  /* below the windows */
+  .band { border-top: 1px solid var(--line); padding: 44px 0; margin-top: 24px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .band h2 { font-size: 24px; margin-bottom: 14px; }
+  .band p, .band li { color: var(--text); font-size: 16px; }
+  .band li { padding: 10px 0; border-top: 1px solid var(--line); }
+  .band li:first-child { border-top: 0; }
+  .band li b { color: var(--ink); }
+  .band .src { width: 100%; font-size: 14.5px; }
+  .band .src td, .band .src th { padding: 9px 12px 9px 0; }
+  .yes { color: var(--ok); font-weight: 700; }
+  .later { color: var(--warn-ink); font-weight: 700; }
+  .no { color: var(--bad); font-weight: 700; }
+  .p { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 8px; margin-right: 4px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="tag">Design mockup · not built</span>
+    <h1>Team overview: where does the programme stand?</h1>
+    <p class="lede">A resident or project manager should be able to open one screen and know where each hole stands, what is waiting to go to the laboratory, and whose phone has not reported, without messaging a single geologist. It is read-only: the geologists' records stay theirs.</p>
+    <p class="note">Hole names and planned depths are real, from the Alberta sample project (Alberta Geological Survey, AGS DIG 2024-0022). Everything else is illustrative: metres logged, recovery, samples, people and times. The real survey logged only selected intervals, so it would not show a programme in progress. Screens use the web app's own colours.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 1 -->
+  <section class="view" aria-label="Team overview">
+    <h2>1 · Team overview</h2>
+    <h3>The morning glance</h3>
+    <p>Five numbers across the top, every hole below, and on the right whatever needs a person to act: a phone that has gone quiet, a hole where logging has stalled, samples that have been bagged for days without being dispatched.</p>
+    <div class="scroll">
+    <div class="win">
+      <div class="chrome"><i></i><i></i><i></i><span>corechain-orpin.vercel.app/team</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="brand">CoreChain<small>Alberta programme</small></div>
+          <ul>
+            <li class="on">Team overview</li>
+            <li>Holes</li>
+            <li>Samples</li>
+            <li>Phones</li>
+          </ul>
+          <div class="who">Resident manager<br>(illustrative)</div>
+        </aside>
+        <div class="main">
+          <div class="head">
+            <div><h4>Alberta sample project</h4><p>6 holes · 2 field geologists · 1 QA/QC reviewer</p></div>
+            <div class="asof">20 Sep 2026, 16:40<br><b>Each figure is as of that phone's last sync</b></div>
+          </div>
+
+          <div class="kpis">
+            <div class="panel kpi"><small>Metres logged</small><b>469.5 <em>of 721.6 m</em></b><span>65% of planned depth</span><div class="bar"><i style="width:65%"></i></div></div>
+            <div class="panel kpi"><small>Holes</small><b>6</b><span>2 logged · 2 complete<br>1 drilling · 1 planned</span></div>
+            <div class="panel kpi"><small>Core recovery</small><b>93%</b><span>weighted by metres logged</span></div>
+            <div class="panel kpi"><small>Samples</small><b>33</b><span>27 dispatched<br>6 waiting to dispatch</span></div>
+            <div class="panel kpi"><small>Phones</small><b>1 <em>of 2</em></b><span>synced today</span></div>
+          </div>
+
+          <div class="cols">
+            <div class="panel">
+              <h5>Holes</h5>
+              <table>
+                <thead><tr><th>Hole</th><th>Status</th><th>Logged</th><th>Recovery</th><th>Samples</th><th>Last activity</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="h">200110-128</span></td><td><span class="st logged">Logged</span></td><td class="mini">159.7 of 159.7 m<div class="bar"><i style="width:100%"></i></div></td><td>95%</td><td>12<small>12 dispatched</small></td><td>14 Sep</td></tr>
+                  <tr><td><span class="h">200110-129</span></td><td><span class="st logged">Logged</span></td><td class="mini">150.8 of 150.8 m<div class="bar"><i style="width:100%"></i></div></td><td>93%</td><td>10<small>10 dispatched</small></td><td>15 Sep</td></tr>
+                  <tr><td><span class="h">200110-133</span></td><td><span class="st">Complete</span></td><td class="mini">96.0 of 131.9 m<div class="bar"><i style="width:73%"></i></div></td><td>91%</td><td>8<small>5 dispatched, 3 waiting</small></td><td>Today, 11:45</td></tr>
+                  <tr><td><span class="h">200134-001</span></td><td><span class="st drill">Drilling</span></td><td class="mini">41.0 of 132.9 m<div class="bar"><i style="width:31%"></i></div></td><td>89%</td><td>3<small>3 waiting</small></td><td>Today, 16:32</td></tr>
+                  <tr><td><span class="h">200134-006</span></td><td><span class="st">Complete</span></td><td class="mini">22.0 of 73.0 m<div class="bar"><i style="width:30%"></i></div></td><td>92%</td><td>0</td><td class="flag">17 Sep</td></tr>
+                  <tr><td><span class="h">200134-008</span></td><td><span class="st">Planned</span></td><td class="mini">0 of 73.3 m<div class="bar"><i style="width:0"></i></div></td><td>·</td><td>0</td><td>·</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="stack">
+              <div class="panel attn">
+                <h5>Needs attention · 3</h5>
+                <ul>
+                  <li><span class="dot"></span><div><b>Field geologist B's phone was last seen 2 days ago</b><span>Work done since then may not have reached the office.</span></div></li>
+                  <li><span class="dot"></span><div><b>200134-006: no new logging for 3 days</b><span>Complete, 30% logged.</span></div></li>
+                  <li><span class="dot"></span><div><b>6 samples bagged, not yet dispatched</b><span>The oldest was bagged 5 days ago (200110-133).</span></div></li>
+                </ul>
+              </div>
+              <div class="panel feed">
+                <h5>Activity</h5>
+                <span class="day">Today</span>
+                <ul>
+                  <li><time>16:32</time><span>Field geologist A logged 3 intervals on <b>200134-001</b> (38.0 to 44.0 m).</span></li>
+                  <li><time>15:10</time><span>Field geologist A bagged 3 samples on <b>200134-001</b>.</span></li>
+                  <li><time>11:45</time><span>Field geologist A took the run 90.0 to 93.0 m on <b>200110-133</b>, 91% recovery.</span></li>
+                </ul>
+                <span class="day">Yesterday</span>
+                <ul>
+                  <li><time>17:05</time><span>Field geologist A dispatched 5 samples from <b>200110-133</b> to the laboratory.</span></li>
+                </ul>
+              </div>
+              <div class="panel phones">
+                <h5>Phones</h5>
+                <ul>
+                  <li><div>Field geologist A<small>Phone A1 · app 0.1.0</small></div><div class="seen">12 min ago</div></li>
+                  <li><div>Field geologist B<small>Phone B1 · app 0.1.0</small></div><div class="seen old">2 days ago</div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="view" aria-label="Hole view">
+    <h2>2 · Hole view</h2>
+    <h3>Every lane on one depth axis, so gaps show themselves</h3>
+    <p>Click a hole and the same evidence the geologist sees appears as lanes along the hole: drilled, boxed, photographed, logged, sampled. A gap in any lane is a job not done, or work still on a phone that has not synced. The manager reads it; they do not edit it.</p>
+    <div class="scroll">
+    <div class="win">
+      <div class="chrome"><i></i><i></i><i></i><span>corechain-orpin.vercel.app/team/holes/200110-133</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="brand">CoreChain<small>Alberta programme</small></div>
+          <ul>
+            <li>Team overview</li>
+            <li class="on">Holes</li>
+            <li>Samples</li>
+            <li>Phones</li>
+          </ul>
+          <div class="who">Resident manager<br>(illustrative)</div>
+        </aside>
+        <div class="main">
+          <div class="crumb">Holes / Alberta sample project</div>
+          <div class="head">
+            <div><h4>200110-133 <span class="st">Complete</span></h4><p>Diamond · planned and final depth 131.9 m · logged by Field geologist A</p></div>
+            <div class="asof">Last sync 12 min ago<br><b>Read-only view</b></div>
+          </div>
+
+          <div class="panel">
+            <h5>Depth, 0 to 131.9 m</h5>
+            <div class="lanes">
+              <div class="lane"><span>Drilled</span><div class="track"><div class="seg grey" style="left:0;width:100%"></div></div><span class="val">131.9 m</span></div>
+              <div class="lane"><span>Boxed</span><div class="track"><div class="seg" style="left:0;width:79.6%"></div></div><span class="val">105.0 m · 35 boxes</span></div>
+              <div class="lane"><span>Photographed</span><div class="track"><div class="seg" style="left:0;width:68.2%"></div></div><span class="val">90.0 m · 30 boxes</span></div>
+              <div class="lane"><span>Logged</span><div class="track"><div class="seg" style="left:0;width:31.8%"></div><div class="gap" style="left:31.8%;width:4.6%"></div><div class="seg" style="left:36.4%;width:40.9%"></div></div><span class="val">96.0 m · 9 intervals</span></div>
+              <div class="lane"><span>Sampled</span><div class="track">
+                <i class="tick" style="left:9.1%"></i><i class="tick" style="left:20.5%"></i><i class="tick" style="left:25%"></i><i class="tick" style="left:40.9%"></i><i class="tick" style="left:47.8%"></i><i class="tick" style="left:56.9%"></i><i class="tick" style="left:63.7%"></i><i class="tick" style="left:72.8%"></i>
+              </div><span class="val">8 samples</span></div>
+              <div class="axis"><span></span><div><span style="left:0">0</span><span style="left:22.7%">30</span><span style="left:45.5%">60</span><span style="left:68.2%">90</span><span style="left:90.9%">120 m</span></div><span></span></div>
+            </div>
+          </div>
+
+          <div class="todo">
+            <div class="panel w"><b>6.0 m not logged</b><span>42.0 to 48.0 m sits between two logged intervals.</span></div>
+            <div class="panel w"><b>5 boxes without photos</b><span>Boxes 31 to 35, 90.0 to 105.0 m.</span></div>
+            <div class="panel w"><b>3 samples waiting to dispatch</b><span>Bagged 5, 5 and 3 days ago.</span></div>
+          </div>
+
+          <div class="panel">
+            <h5>Samples on this hole</h5>
+            <table>
+              <thead><tr><th>Sample</th><th>Type</th><th>From to</th><th>Status</th><th>Last custody event</th></tr></thead>
+              <tbody>
+                <tr><td><span class="h">AGS-00019</span></td><td>Primary</td><td>12.0 to 13.0 m</td><td>Dispatched</td><td>Yesterday 17:05, handed to the laboratory</td></tr>
+                <tr><td><span class="h">AGS-00024</span></td><td>Standard</td><td>·</td><td>Dispatched</td><td>Yesterday 17:05, handed to the laboratory</td></tr>
+                <tr><td><span class="h">AGS-00027</span></td><td>Primary</td><td>63.0 to 64.0 m</td><td class="flag">Bagged</td><td>15 Sep, bagged by Field geologist A</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="grid2">
+      <div>
+        <h2>What it deliberately does not do</h2>
+        <ul>
+          <li><b>It does not edit.</b> A manager sees a geologist's records; changing them is the geologist's job, so the history stays honest.</li>
+          <li><b>It never shows a number without its age.</b> Every figure is as of a phone's last sync, and the screen says so.</li>
+          <li><b>It does not score people.</b> "Who logged what" is for tracing evidence, not a league table.</li>
+          <li><b>It does not replace the phone.</b> Nothing here is needed in the field; the phone works with no signal.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Where each number would come from</h2>
+        <table class="src">
+          <thead><tr><th>Shown</th><th>Source</th><th>Ready?</th></tr></thead>
+          <tbody>
+            <tr><td>Metres logged, holes, who logged</td><td>Intervals, holes and who created them, once synced</td><td class="yes">Data exists today</td></tr>
+            <tr><td>Recovery</td><td>Core runs</td><td class="yes">Data exists today</td></tr>
+            <tr><td>Phone last seen</td><td>The server records when each phone last sent work (a phone with nothing to send would need a small addition)</td><td class="yes">Data exists today</td></tr>
+            <tr><td>Samples bagged</td><td>Sample status</td><td class="yes">Data exists today</td></tr>
+            <tr><td>Dispatched, custody events</td><td>Custody and dispatch stories (E7)</td><td class="later">Needs E7 first</td></tr>
+            <tr><td>Photographed lane</td><td>Photo sync (E5-3)</td><td class="later">Needs E5-3 first</td></tr>
+            <tr><td>Work still waiting on a phone</td><td>Only the phone knows this</td><td class="no">Not shown, by design</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="grid2">
+      <div>
+        <h2>How we will know it works</h2>
+        <p>The test is simple: on a working day, can a manager say where every hole stands, and which phones are behind, without asking anyone?</p>
+        <ul>
+          <li><b>Status questions sent to geologists per week.</b> Should fall towards none. Counted by asking the manager during the field test.</li>
+          <li><b>Time to answer "where do things stand?".</b> Target: under a minute from opening the page. A design target, not yet measured.</li>
+          <li><b>How often "as of" is the reason a number was not trusted.</b> Tells us whether sync age needs to be louder.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Questions for a resident or project manager</h2>
+        <ul>
+          <li><span class="p">1</span>What do you look at first each morning, and what do you ask geologists that this screen should already answer?</li>
+          <li><span class="p">2</span>Is percentage of planned depth logged the right progress measure, or would you rather see metres drilled, logged and sampled side by side?</li>
+          <li><span class="p">3</span>What makes you trust a number? Is "as of the phone's last sync" enough, or do you need to see what is missing?</li>
+          <li><span class="p">4</span>Who else needs this view: the competent person, the laboratory, an inspector? Should they see the same screen?</li>
+          <li><span class="p">5</span>Which reports do you assemble by hand today, and from which tables?</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
