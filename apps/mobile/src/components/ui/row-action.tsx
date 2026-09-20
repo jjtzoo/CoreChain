@@ -2,13 +2,13 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Icon, type IconName } from '@/components/ui/icon';
-import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
+import { MinTap, Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /**
- * A small action on a list row ("Photos (2)", "Sample", delete). At least 44
- * px tall and wide so it can be hit with gloves on; icon-only when `label` is
- * left out.
+ * A small action on a list row ("Photos (2)", "Sample", delete). At least
+ * MinTap tall and wide so it can be hit with gloves on; icon-only when `label`
+ * is left out. A delete action keeps extra space from its neighbours.
  */
 export function RowAction({
   icon,
@@ -34,6 +34,7 @@ export function RowAction({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.action,
+        tone === 'danger' && styles.danger,
         { backgroundColor: theme[softColor] },
         pressed && styles.pressed,
       ]}>
@@ -53,10 +54,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.two,
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: MinTap,
+    minWidth: MinTap,
     paddingHorizontal: Spacing.two + 4,
     borderRadius: Radius.control,
+  },
+  danger: {
+    marginLeft: Spacing.three,
   },
   pressed: {
     opacity: 0.8,

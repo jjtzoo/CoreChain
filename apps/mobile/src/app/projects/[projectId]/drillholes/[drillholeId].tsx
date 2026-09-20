@@ -1,5 +1,6 @@
 import {
   actualDepthWarning,
+  buildHoleLog,
   deepestRecordedDepthM,
   DRILLHOLE_STATUSES,
   holeAttention,
@@ -20,6 +21,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContinuityStrip } from '@/components/continuity-strip';
+import { HoleLogRibbons } from '@/components/hole-log-ribbons';
 import { ChipSelect } from '@/components/form/chip-select';
 import { DateField } from '@/components/form/date-field';
 import { FormScrollView } from '@/components/form/form-scroll-view';
@@ -236,6 +238,26 @@ export default function DrillholeDetailScreen() {
           )}
         </Card>
 
+        {intervals.length > 0 ? (
+          <Card
+            style={styles.progressCard}
+            onPress={() => go('/graphic')}
+            accessibilityLabel="Open the graphic hole log">
+            <View style={styles.progressTop}>
+              <ThemedText type="heading">Hole log</ThemedText>
+              <View style={styles.openRow}>
+                <ThemedText type="smallBold" themeColor="brand">
+                  Open
+                </ThemedText>
+                <Icon name="chevron-right" size={20} themeColor="brand" />
+              </View>
+            </View>
+            <HoleLogRibbons
+              log={buildHoleLog({ intervals, runs, depthM: holeDepthM })}
+            />
+          </Card>
+        ) : null}
+
         {attention.map((item) => (
           <AlertRow
             key={`${item.kind}-${item.message}`}
@@ -383,6 +405,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
+  },
+  openRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tiles: {
     flexDirection: 'row',

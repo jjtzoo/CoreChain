@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { SessionProvider, useSession } from '@/auth/session-context';
@@ -12,6 +13,7 @@ import { BrandLockup } from '@/components/brand-lockup';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { SyncProvider, useSync } from '@/sync/sync-context';
+import { applyThemePreference, loadThemePreference } from '@/theme/appearance';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,14 +44,12 @@ function OpeningData({ failed }: { failed: boolean }) {
         justifyContent: 'center',
         gap: Spacing.three,
         padding: Spacing.five,
-      }}
-    >
+      }}>
       {failed ? null : <ActivityIndicator />}
       <ThemedText
         type="small"
         themeColor="textSecondary"
-        style={{ textAlign: 'center' }}
-      >
+        style={{ textAlign: 'center' }}>
         {failed
           ? 'Your data could not be opened. Close the app and open it again. If this keeps happening, contact your CoreChain administrator.'
           : 'Opening your data…'}
@@ -81,8 +81,7 @@ function AppStack() {
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: '700' },
         headerBackButtonDisplayMode: 'minimal',
-      }}
-    >
+      }}>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       </Stack.Protected>
@@ -115,6 +114,10 @@ function AppStack() {
         <Stack.Screen
           name="projects/[projectId]/samples/index"
           options={{ title: 'Samples' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/graphic"
+          options={{ title: 'Hole log' }}
         />
         <Stack.Screen
           name="projects/[projectId]/samples/[sampleId]"
@@ -206,6 +209,9 @@ function AppStack() {
 // sections. See docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 1.
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useEffect(() => {
+    void loadThemePreference().then(applyThemePreference);
+  }, []);
   // The icon font must be ready before the first screen draws, or icons show as blanks.
   const [iconsLoaded, iconsError] = useFonts(MaterialCommunityIcons.font);
   if (!iconsLoaded && !iconsError) {
@@ -213,8 +219,7 @@ export default function RootLayout() {
   }
   return (
     <ThemeProvider
-      value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}
-    >
+      value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}>
       <AnimatedSplashOverlay />
       {/* Dark icons on the light theme, light icons on the dark one. */}
       <StatusBar style="auto" />

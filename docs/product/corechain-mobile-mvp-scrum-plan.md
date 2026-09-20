@@ -334,14 +334,17 @@ As a field geologist, I want to copy the previous interval's codes into a new on
 
 - Copies every code except from/to depth and free text.
 
-**E4-6 — Graphic hole log (5)** _(proposed 2026-09-21, not in a sprint yet)_
+**E4-6 — Graphic hole log (5)** _(built 2026-09-21, installed on the test phone; awaiting a geologist's review)_
 As a field geologist, I want to see my hole as a picture, so that I can read the geology at a glance and spot mistakes without scrolling a list of codes.
 
 - Added after owner feedback that the phone app "feels like just an input app": the core log is today a list of codes such as "AND · ARG3 · PY 1%".
 - A vertical strip log by depth, with side-by-side columns for lithology, alteration and mineralisation, coloured from the code library, plus recovery and RQD bars from the core runs.
 - Tap a segment to open that interval; pinch or scroll to move along the hole; works offline from the data already on the phone.
 - Shown on the hole screen and as a landscape view; the shareable image of the log is a later option.
+- Built: a compact "Hole log" card with three ribbons on the hole screen, and a full strip log (Overview, Standard and Detail scales; tap a stretch for its codes, descriptions and notes, then open it in the core log). Alteration and mineral bars are wider for stronger alteration or more mineral. Not yet built: pinch to zoom, landscape view, the shareable image.
 - Best shown with the synthetic Cordillera porphyry sample (`apps/web/data/demo/synthetic-cordillera-porphyry`), where alteration and mineralisation change clearly with depth.
+
+**Appearance switch (small, built 2026-09-21).** Account has Match phone, Light or Dark, remembered on the phone, so a geologist can force the light theme (tuned for bright sun) when the phone is in dark mode. Row actions on lists are now at least 52 dp with extra space before the delete button, which already asks for confirmation.
 
 ### E5 — Photos
 

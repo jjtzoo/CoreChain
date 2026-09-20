@@ -6,11 +6,12 @@ import {
   wipeWarning,
 } from '@corechain/domain';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
+import { ChipSelect } from '@/components/form/chip-select';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { syncTone } from '@/components/sync-status';
 import {
@@ -27,6 +28,14 @@ import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
+import {
+  applyThemePreference,
+  loadThemePreference,
+  saveThemePreference,
+  THEME_PREFERENCE_LABELS,
+  THEME_PREFERENCES,
+  type ThemePreference,
+} from '@/theme/appearance';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -46,6 +55,16 @@ function formatDate(iso: string): string {
 export default function AccountScreen() {
   const router = useRouter();
   const { user, health, signOut } = useSession();
+  const [themePreference, setThemePreference] =
+    useState<ThemePreference>('auto');
+  useEffect(() => {
+    void loadThemePreference().then(setThemePreference);
+  }, []);
+  function chooseTheme(next: ThemePreference) {
+    setThemePreference(next);
+    applyThemePreference(next);
+    void saveThemePreference(next);
+  }
   const { summary } = useSync();
   const [issues, setIssues] = useState<SyncIssue[]>([]);
   const [removing, setRemoving] = useState(false);
@@ -225,6 +244,19 @@ export default function AccountScreen() {
           </Card>
         ) : null}
 
+        <Card style={styles.appearance}>
+          <ChipSelect
+            label="Appearance"
+            options={THEME_PREFERENCES}
+            value={themePreference}
+            onChange={chooseTheme}
+            formatOption={(option) => THEME_PREFERENCE_LABELS[option]}
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            Light is easiest to read in bright sun.
+          </ThemedText>
+        </Card>
+
         <PrimaryButton
           label="Send feedback"
           icon="message-text-outline"
@@ -274,6 +306,9 @@ const styles = StyleSheet.create({
   person: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.three,
+  },
+  appearance: {
     gap: Spacing.three,
   },
   status: {
