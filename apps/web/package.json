@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "accounts:create": "tsx --env-file=.env scripts/create-accounts.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "auth:check-token": "tsx scripts/check-token.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.5",
@@ -51,6 +52,7 @@
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.35.0",
     "eslint-config-next": "^15.5.0",
+    "jose": "^6.2.12",
     "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "prisma": "^6.19.0",
