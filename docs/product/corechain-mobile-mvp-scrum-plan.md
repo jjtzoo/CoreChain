@@ -725,6 +725,12 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 
 **Workflow and design principles:** `docs/product/field-workflow-friction-and-design-principles.md` mirrors the real core-handling workflow (with the Philippine reporting rules, DAO 2010-21 and PMRC 2020), maps where it hurts, and sets twelve design principles. Its first finding, from our own alpha, is that the same core depths are typed again for every run, box, interval and sample; the fix (depth shortcuts, then a run-first flow) is sized in section 4 of that document and is to be mocked up and tried with a real geologist before it is built.
 
+**Sync server APIs built (2026-09-20), tested against the real database, not yet called by the phone:**
+
+- **`POST /api/devices`** registers a phone under the account (a device id can't be claimed by another account; a removed device is refused).
+- **`POST /api/sample-blocks` (E6-4, server side).** Issues a device a reserved run of sample numbers for one of the account's projects. The project row is locked, so 8 simultaneous requests produced 8 non-overlapping blocks; the database constraint backs it. A device may hold at most 20 blocks per project; sizes 1 to 500.
+- **`POST /api/sync/upload` (E8-3, server side, pulled forward from Sprint 5).** Applies the changes a phone made offline: only the ten synced tables and their known columns, every value type-checked, owner and project filled in by the server, retried uploads harmless (duplicates), hard deletes refused (soft delete only), append-only records never changed, one bad change never blocks the others (each has its own savepoint), and every applied change written to the audit log with who and which device. **Two phones editing one record offline produce a recorded conflict, not an overwrite**: the server keeps what it has and stores the incoming change in full. A found-and-fixed bug: asking about another account's record first answered "conflict", which would have confirmed it exists; lookups are now limited to the caller's organization and answer "not found". The phone's connector (E8-3 phone side), the conflict screen and the "needs attention" badge (E8-4) come with the device.
+
 Still to do in S4: connect the app's database to PowerSync for real (all repositories through PowerSync's connection, plus the connector and the download on sign-in), the sample-number block API, and removing the developer spike screen. The upload API is E8-3 (Sprint 5). Production PowerSync instance: added before the field test.
 
 ---
