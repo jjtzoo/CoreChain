@@ -442,10 +442,12 @@ As a new field geologist, I want a short guided walkthrough on my phone, so that
 - The app picks the guide from the person's tier. Written after the friendly-geologist alpha, so it explains what a real person got stuck on. The field-day PDF stays linked.
 - Guides for the other tiers (QA/QC, laboratory, resident / project manager) ship with their own screens after the field test: a guide for a screen that doesn't exist yet would be wrong.
 
-**E10-2 — In-app feedback (2)**
-As a tester, I want to send feedback with a screenshot from any screen, so that problems are reported in context.
+**E10-2 — In-app feedback (3)**
+As a tester, I want to send feedback from any screen, so that problems are reported in context.
 
-- Feedback is queued offline and sent when connected.
+- A "Send feedback" action on the Account screen and on every screen's menu. Choose bug, idea or question; type a message; a screenshot of the current screen is attached when the person allows it.
+- The app adds what the tester should not have to type: app version, phone model, the screen, the person's tier, and the time.
+- Queued offline and sent when connected (with a plain "will send when you have signal" note). Never blocks the screen the person was on.
 
 **E10-3 — Crash reporting and version (2)**
 As the Product Owner, I want crash reports with the app version and device, so that field failures can be fixed.
@@ -458,12 +460,44 @@ As the admin, I want a short checklist on the Users page, so that I can set up m
 
 - Steps: add a user, choose their tier, send them the login. It disappears once done and can be shown again.
 
+**E10-6 — Tester feedback inbox (admin, web) (3)**
+As the admin, I want to see everything testers send, in one place, so that I can triage it and tell testers what happened.
+
+- A Feedback page in the admin area: newest first, filter by category, tier, app version and status. Each item shows the tester, tier, version, phone model, screen and screenshot.
+- Status per item: new, seen, planned, done (with a note the tester can see later). Export to CSV for the field-test review.
+- Counts by screen and category, so the screens people struggle with stand out (this feeds the field-test metrics in section 8).
+- Web testers can send feedback from the admin and web pages with the same form.
+
+### Team release (after the field test; tentative Sprints 7 and 8)
+
+The project-manager dashboard and the QA/QC interface are part of the product, not an afterthought: the landing page and the tiers (D15) already promise them. They wait until real field data is flowing and testers have shown what a manager and a QA/QC reviewer need first. Each brings its own guide (E10-1), written when its screens exist.
+
+**E11 — Resident / project-manager dashboard (web; phone "Team" tab later)**
+
+- **E11-1 — Teams (5).** The admin groups accounts into a team (an organization, decision D9): geologists, QA/QC, laboratory and a resident / project manager. The sync streams change from "projects I created" to "projects my team owns", using the `organization_id` already on every row.
+- **E11-2 — Team overview (5).** As a project manager, I want one screen of my team's holes with progress (metres logged of planned, core recovery, percentage logged), samples waiting to be bagged or dispatched, who logged what, and when each phone last synced, so that I know where things stand without chasing updates. Read-only; the data appears after a phone syncs.
+- **E11-3 — Activity feed (3).** What changed today, by whom, and what needs attention (unsynced phones, a hole with no new logging for days).
+- **E11-4 — Hole view (3).** A read-only view of one hole: intervals, photos, samples and custody, the same evidence the geologist sees.
+- **E11-5 — Semester and final-report export (5).** Sample locations, logs and assay tables in the shape the DAO 2010-21 reports need (see `docs/product/field-workflow-friction-and-design-principles.md`).
+
+**E12 — QA/QC interface (web first; phone later), scoped to a stage of the chain**
+
+QA/QC starts in the field and runs through sampling, custody, the laboratory and assays, so a QA/QC account is limited to a stage: core and logging, sampling and custody, or laboratory and assays (decision D15).
+
+- **E12-1 — Stage scope on the account (2).** The admin sets which stage a QA/QC account reviews.
+- **E12-2 — Exceptions queue (5).** For the person's stage: gaps and overlaps, recovery over 100%, overdue or missing QC inserts, custody gaps, unsynced work. Each exception links to its evidence and can be resolved with a reason.
+- **E12-3 — Review decisions (3).** Accept, hold or reject with a note. Decisions are appended, never edited, and show who decided and when. The qualified geologist decides; the app makes the evidence and the exceptions visible.
+- **E12-4 — Standards, blanks and duplicates (8).** Control charts and pass/fail against the certified values. Needs the assay import (see the later backlog) and a laboratory view (E13).
+- **E12-5 — Audit trail (3).** A per-sample and per-hole history a reviewer or auditor can read end to end (D7: append-only custody, versioned edits).
+
+**E13 — Laboratory view (web) (8, later).** A dispatch inbox for laboratory personnel: receive a batch, confirm what arrived, return results against the batch. The open question is whether the laboratory is in-house or an outside contractor, which changes what it may see.
+
 ### Later backlog (not in the MVP)
 
 | Epic                                   | Notes                                                                                         |
 | -------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Assay import and matching (web)        | CSV/Excel import; match by sample ID; the Phase 1 views become real                           |
-| QA/QC review (web)                     | Standard, blank and duplicate charts and alerts; decisions recorded                           |
+| QA/QC review (web)                     | Now epic E12 in the team release above                                                        |
 | Teams, invites and roles               | Client admin, project geologist, core-yard technician, QA/QC reviewer, viewer, platform admin |
 | Approvals and sign-off                 | Once real approval workflows are validated                                                    |
 | QR/barcode scanning and label printing | After validating what hardware the testers use                                                |
@@ -502,7 +536,7 @@ Sprints last 2 weeks (Sprint 0 is 1 week). Capacity starts at ~20 points per spr
 | **S3** Sample it — **internal alpha** | A full field day works offline end to end                       | E5-1, E5-2, E6-1, E6-2, E6-3, E9-1                                                                                                                                                  | 25           | Installable APK: log, photograph, sample with QC inserts and export CSV — shown to one friendly geologist          |
 | **S4** Accounts and backup            | Sign up, and data reaches the cloud                             | Backend: Postgres + Prisma schema, Better Auth, PowerSync service; E1-3, E1-4, E6-4, E8-2                                                                                           | 16 + backend | Sign up, and alpha projects attach to the account; a second device downloads them                                  |
 | **S5** Safe sync and custody          | Offline work always syncs safely; the custody chain is complete | E8-3, E8-4, E8-5, E5-3, E1-5, E7-1, E7-2, E7-3                                                                                                                                      | 32           | Two devices edit the same record offline, and the conflict is resolved; a dispatch is created and its sheet shared |
-| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4, E10-5 + fixes from alpha feedback                                                                                                                              | 17 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
+| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4, E10-5, E10-6 + fixes from alpha feedback                                                                                                                              | 21 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
 
 S2 and S5 are over capacity by design. At S2 planning, split E4-3 and move E4-5 or E4-2 to S3 if velocity is under 30. At S5 planning, E7-3 is the first story to slip to S6.
 
