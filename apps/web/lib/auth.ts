@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
+import { nextCookies } from "better-auth/next-js";
 import { admin, jwt } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
@@ -53,5 +54,7 @@ export const auth = betterAuth({
         definePayload: ({ user }) => ({ role: user.role ?? DEFAULT_ROLE }),
       },
     }),
+    // Lets the web pages sign in and out from server actions (must stay last).
+    nextCookies(),
   ],
 });

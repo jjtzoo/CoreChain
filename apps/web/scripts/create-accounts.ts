@@ -12,7 +12,7 @@
 import { randomInt } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { type UserRole } from "@corechain/domain";
+import { suggestPassphrase, type UserRole } from "@corechain/domain";
 
 type Wanted = { name: string; email: string; role: UserRole };
 
@@ -30,18 +30,8 @@ const WANTED: Wanted[] = [
 
 const OUTPUT = resolve(process.cwd(), "tester-accounts.private.txt");
 
-// Testers type their password on a phone, often outdoors, so theirs is three
-// short everyday words and three digits ("copper-ridge-gold-482"): easy to say
-// and spell, still far too many combinations to guess. The admin's is fully
-// random. Short, spellable words only.
-const WORDS = [
-  "copper", "gold", "silver", "nickel", "iron", "zinc", "lead", "tin", "cobalt",
-  "quartz", "granite", "basalt", "shale", "slate", "chalk", "flint", "jade",
-  "opal", "agate", "garnet", "mica", "talc", "coal", "sand", "clay", "ridge",
-  "valley", "river", "creek", "hill", "rock", "stone", "core", "drill", "camp",
-  "trail", "peak", "ledge", "cliff", "mesa", "dune", "reef", "delta", "spring",
-  "boulder", "pebble", "lava", "ash", "moss", "fern",
-];
+// The admin's password is fully random; testers get an easy passphrase (see
+// packages/domain/src/passwords.ts for why).
 const RANDOM = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function makePassword(role: UserRole): string {
@@ -50,8 +40,7 @@ function makePassword(role: UserRole): string {
       Array.from({ length: 4 }, () => RANDOM[randomInt(RANDOM.length)]).join("");
     return `${group()}-${group()}-${group()}`;
   }
-  const words = Array.from({ length: 3 }, () => WORDS[randomInt(WORDS.length)]);
-  return `${words.join("-")}-${randomInt(100, 1000)}`;
+  return suggestPassphrase(randomInt);
 }
 
 function readKnownPasswords(): Map<string, string> {

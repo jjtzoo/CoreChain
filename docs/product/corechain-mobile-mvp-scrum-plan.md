@@ -672,7 +672,12 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 3. **Columns the server adds** (`organization_id`, `created_by`, `project_id` on child tables) are ignored by the phone; the upload API fills them (as the schema already assumes).
 4. The spike screen (`apps/mobile/src/sync/spike.ts`, `src/app/sync-spike.tsx`, reached only by the deep link `corechain-field://sync-spike`) is developer-only and **must be deleted before the field-test build (S6)**.
 
-Still to do in S4: the phone's sign-in screens and sign-out, the upload API, sample-number block issuing, and the admin screen on the web. Production instance: added before the field test.
+### S4 sign-in built (2026-09-20)
+
+- **Phone:** sign-in screen (no self sign-up, D13), session in the keystore, 30-day offline session with a warning banner on Home and an account screen with sign-out. Sign-out keeps local data until sync exists; "sign out and wipe" stays with E1-5 in Sprint 5. The server's sessions last the same 30 days.
+- **Web admin area** (`/login`, `/admin/users`): the admin signs in, sees everyone, creates a user with a tier (admin, project manager, field geologist) and an easy starting password, changes a tier, resets a password (which also signs out that person's phones), and switches an account off or on. The credentials are shown once for the admin to pass on. Every action re-checks that the caller is an admin, and an admin can't change their own tier or switch themselves off. The operations were tested against the live database: a geologist is refused every admin call.
+
+Still to do in S4: connect the app's database to PowerSync for real (all repositories through PowerSync's connection, plus the connector and the download on sign-in), the sample-number block API, and removing the developer spike screen. The upload API is E8-3 (Sprint 5). Production PowerSync instance: added before the field test.
 
 ---
 
