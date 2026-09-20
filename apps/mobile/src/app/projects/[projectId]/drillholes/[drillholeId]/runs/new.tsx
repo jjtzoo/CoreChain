@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormRow, FormSection } from '@/components/form/form-section';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { LengthChips } from '@/components/form/length-chips';
+import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
@@ -32,6 +33,7 @@ export default function NewCoreRunScreen() {
   const router = useRouter();
 
   const [fromM, setFromM] = useState('');
+  const landmarks = useDepthLandmarks(drillholeId, fromM, 'run');
   const [toM, setToM] = useState('');
   const [recoveredM, setRecoveredM] = useState('');
   const [rqdPiecesM, setRqdPiecesM] = useState('');
@@ -124,7 +126,12 @@ export default function NewCoreRunScreen() {
               autoFocus
             />
           </FormRow>
-          <LengthChips fromText={fromM} lengths={[1.5, 3, 4.5, 6]} onPick={setToM} />
+          <LengthChips
+            fromText={fromM}
+            lengths={[1.5, 3, 4.5, 6]}
+            landmarks={landmarks}
+            onPick={setToM}
+          />
         </FormSection>
 
         <FormSection title="Core recovered">

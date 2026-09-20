@@ -16,6 +16,7 @@ import { ChipSelect } from '@/components/form/chip-select';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { FormRow, FormSection } from '@/components/form/form-section';
 import { LengthChips } from '@/components/form/length-chips';
+import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
@@ -81,6 +82,7 @@ export default function NewSampleScreen() {
   );
   const [sampleNumber, setSampleNumber] = useState('');
   const [fromM, setFromM] = useState(params.fromM ?? '');
+  const landmarks = useDepthLandmarks(holeId, fromM, 'sample');
   const [toM, setToM] = useState(params.toM ?? '');
   const [standardRef, setStandardRef] = useState('');
   const [parentNumber, setParentNumber] = useState<string | null>(null);
@@ -282,6 +284,7 @@ export default function NewSampleScreen() {
             <LengthChips
               fromText={fromM}
               lengths={[0.5, 1, 2]}
+              landmarks={landmarks}
               onPick={(v) => {
                 setToM(v);
                 clearErrors('fromM', 'toM');

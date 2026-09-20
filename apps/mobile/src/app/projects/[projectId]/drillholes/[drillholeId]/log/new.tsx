@@ -13,6 +13,7 @@ import { CodePicker } from '@/components/form/code-picker';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { FormRow, FormSection } from '@/components/form/form-section';
 import { LengthChips } from '@/components/form/length-chips';
+import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
@@ -73,6 +74,7 @@ export default function NewIntervalScreen() {
   const router = useRouter();
 
   const [form, setForm] = useState<Form>(EMPTY_FORM);
+  const landmarks = useDepthLandmarks(drillholeId, form.fromM, 'interval');
   const [codes, setCodes] = useState<LibraryCode[]>([]);
   const [previous, setPrevious] = useState<LogInterval | null>(null);
   const [restored, setRestored] = useState(false);
@@ -249,6 +251,7 @@ export default function NewIntervalScreen() {
           <LengthChips
             fromText={form.fromM}
             lengths={[1, 2, 3, 5]}
+            landmarks={landmarks}
             onPick={(v) => update('toM', v)}
           />
           <PrimaryButton

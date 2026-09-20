@@ -12,6 +12,7 @@ import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { Spacing } from '@/constants/theme';
 import { createBox, listBoxes } from '@/data/coreRepository';
+import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { parseRequiredNumber } from '@/utils/numbers';
 
 /**
@@ -25,6 +26,7 @@ export default function NewCoreBoxScreen() {
 
   const [boxNumber, setBoxNumber] = useState('');
   const [fromM, setFromM] = useState('');
+  const landmarks = useDepthLandmarks(drillholeId, fromM, 'box');
   const [toM, setToM] = useState('');
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -121,7 +123,12 @@ export default function NewCoreBoxScreen() {
               autoFocus
             />
           </FormRow>
-          <LengthChips fromText={fromM} lengths={[3, 4, 5]} onPick={setToM} />
+          <LengthChips
+            fromText={fromM}
+            lengths={[3, 4, 5]}
+            landmarks={landmarks}
+            onPick={setToM}
+          />
         </FormSection>
 
         <FormSection>
