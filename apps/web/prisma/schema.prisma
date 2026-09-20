@@ -499,3 +499,27 @@ model AccessRequest {
   @@index([status, createdAt])
   @@map("access_requests")
 }
+
+// E10-2 / E10-6: feedback sent by testers (phone or web). The admin triages it
+// on /admin/feedback. `client_id` is made on the phone so a message queued
+// offline and retried is stored once. Screenshots come later, with file storage.
+model Feedback {
+  id         String   @id @default(uuid()) @db.Uuid
+  clientId   String?  @unique @map("client_id") @db.Uuid
+  userId     String   @map("user_id")
+  tier       String
+  source     String   // "android" or "web"
+  appVersion String?  @map("app_version")
+  device     String?
+  screen     String?
+  category   String   // bug | idea | question
+  message    String
+  status     String   @default("new") // new | seen | planned | done
+  note       String?  // the admin's note, which the tester can see later
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("feedback")
+}

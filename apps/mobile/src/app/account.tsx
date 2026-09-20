@@ -68,22 +68,38 @@ export default function AccountScreen() {
         </Card>
 
         {message ? (
-          <AlertRow tone={health.state === 'expired' ? 'danger' : 'warning'} message={message} />
+          <AlertRow
+            tone={health.state === 'expired' ? 'danger' : 'warning'}
+            message={message}
+          />
         ) : (
           <Card style={styles.status}>
             <Icon name="shield-check-outline" size={24} themeColor="success" />
             <View style={styles.personText}>
               <ThemedText type="smallBold">Signed in</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Works without signal until {formatDate(health.expiresAt)}. Connect any time
-                before then to keep going.
+                Works without signal until {formatDate(health.expiresAt)}.
+                Connect any time before then to keep going.
               </ThemedText>
             </View>
           </Card>
         )}
 
+        <PrimaryButton
+          label="Send feedback"
+          icon="message-text-outline"
+          variant="secondary"
+          onPress={() =>
+            router.push({ pathname: '/feedback', params: { from: 'Account' } })
+          }
+        />
+
         <View style={styles.signOut}>
-          <PrimaryButton label="Sign out" variant="secondary" onPress={confirmSignOut} />
+          <PrimaryButton
+            label="Sign out"
+            variant="secondary"
+            onPress={confirmSignOut}
+          />
           <ThemedText type="small" themeColor="textSecondary">
             Everything you have logged stays on this phone.
           </ThemedText>

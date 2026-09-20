@@ -248,4 +248,22 @@ export const MIGRATIONS: readonly Migration[] = [
       ['CREATE INDEX idx_photos_drillhole_id ON photos (drillhole_id)'],
     ],
   },
+  {
+    // Sprint 6, E10-2: tester feedback waiting to be sent. Local only, never synced.
+    version: 6,
+    commands: [
+      [
+        `CREATE TABLE feedback_outbox (
+          id TEXT PRIMARY KEY NOT NULL,
+          category TEXT NOT NULL,
+          message TEXT NOT NULL,
+          screen TEXT,
+          app_version TEXT,
+          device TEXT,
+          created_at TEXT NOT NULL,
+          sent_at TEXT
+        )`,
+      ],
+    ],
+  },
 ];

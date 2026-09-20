@@ -1,21 +1,21 @@
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useFonts } from "expo-font";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { useColorScheme } from "react-native";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFonts } from 'expo-font';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useColorScheme } from 'react-native';
 
-import { SessionProvider, useSession } from "@/auth/session-context";
-import { AccountButton } from "@/components/account-button";
-import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import { BrandLockup } from "@/components/brand-lockup";
-import { Colors } from "@/constants/theme";
+import { SessionProvider, useSession } from '@/auth/session-context';
+import { AccountButton } from '@/components/account-button';
+import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { BrandLockup } from '@/components/brand-lockup';
+import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
 /** Navigation colours taken from the app's own tokens, so headers match the screens. */
-function navigationTheme(scheme: "light" | "dark") {
-  const base = scheme === "dark" ? DarkTheme : DefaultTheme;
+function navigationTheme(scheme: 'light' | 'dark') {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const colors = Colors[scheme];
   return {
     ...base,
@@ -39,16 +39,16 @@ function navigationTheme(scheme: "light" | "dark") {
  */
 function AppStack() {
   const { phase } = useSession();
-  if (phase === "loading") {
+  if (phase === 'loading') {
     return null;
   }
-  const signedIn = phase === "signed-in";
+  const signedIn = phase === 'signed-in';
   return (
     <Stack
       screenOptions={{
         headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: "700" },
-        headerBackButtonDisplayMode: "minimal",
+        headerTitleStyle: { fontWeight: '700' },
+        headerBackButtonDisplayMode: 'minimal',
       }}
     >
       <Stack.Protected guard={!signedIn}>
@@ -58,83 +58,87 @@ function AppStack() {
         <Stack.Screen
           name="index"
           options={{
-            title: "CoreChain",
+            title: 'CoreChain',
             headerTitle: () => <BrandLockup height={28} />,
             headerRight: () => <AccountButton />,
           }}
         />
-        <Stack.Screen name="account" options={{ title: "Account" }} />
+        <Stack.Screen name="account" options={{ title: 'Account' }} />
+        <Stack.Screen
+          name="feedback"
+          options={{ title: 'Send feedback', presentation: 'modal' }}
+        />
         <Stack.Screen
           name="projects/new"
-          options={{ title: "New project", presentation: "modal" }}
+          options={{ title: 'New project', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/index"
-          options={{ title: "Project" }}
+          options={{ title: 'Project' }}
         />
         <Stack.Screen
           name="projects/[projectId]/settings"
-          options={{ title: "Project settings" }}
+          options={{ title: 'Project settings' }}
         />
         <Stack.Screen
           name="projects/[projectId]/samples/index"
-          options={{ title: "Samples" }}
+          options={{ title: 'Samples' }}
         />
         <Stack.Screen
           name="projects/[projectId]/samples/[sampleId]"
-          options={{ title: "Sample" }}
+          options={{ title: 'Sample' }}
         />
         <Stack.Screen
           name="projects/[projectId]/samples/new"
-          options={{ title: "New sample", presentation: "modal" }}
+          options={{ title: 'New sample', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/export"
-          options={{ title: "Export" }}
+          options={{ title: 'Export' }}
         />
         <Stack.Screen
           name="projects/[projectId]/codes"
-          options={{ title: "Code library" }}
+          options={{ title: 'Code library' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/new"
-          options={{ title: "New drillhole", presentation: "modal" }}
+          options={{ title: 'New drillhole', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]"
-          options={{ title: "Drillhole" }}
+          options={{ title: 'Drillhole' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/boxes/index"
-          options={{ title: "Core boxes" }}
+          options={{ title: 'Core boxes' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/boxes/new"
-          options={{ title: "New core box", presentation: "modal" }}
+          options={{ title: 'New core box', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/runs/index"
-          options={{ title: "Core runs" }}
+          options={{ title: 'Core runs' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/runs/new"
-          options={{ title: "New core run", presentation: "modal" }}
+          options={{ title: 'New core run', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/log/index"
-          options={{ title: "Core log" }}
+          options={{ title: 'Core log' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/log/new"
-          options={{ title: "New interval", presentation: "modal" }}
+          options={{ title: 'New interval', presentation: 'modal' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/photos/index"
-          options={{ title: "Photos" }}
+          options={{ title: 'Photos' }}
         />
         <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/photos/take"
-          options={{ title: "Take photo" }}
+          options={{ title: 'Take photo' }}
         />
       </Stack.Protected>
     </Stack>
@@ -153,7 +157,7 @@ export default function RootLayout() {
   }
   return (
     <ThemeProvider
-      value={navigationTheme(colorScheme === "dark" ? "dark" : "light")}
+      value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}
     >
       <AnimatedSplashOverlay />
       {/* Dark icons on the light theme, light icons on the dark one. */}

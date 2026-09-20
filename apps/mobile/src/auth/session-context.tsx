@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 
 import { checkSession, signInWithEmail, signOutRemote, type SessionUser } from './authApi';
 import { clearSession, loadSession, saveSession, type StoredSession } from './sessionStore';
+import { flushFeedback } from '@/feedback/sender';
 
 // Who is signed in on this phone (E1-3), and whether that sign-in can still
 // sync (E1-4). The app never locks a geologist out of their own data: signed
@@ -18,6 +19,8 @@ type Auth =
 type SessionContextValue = {
   phase: Auth['phase'];
   user: SessionUser | null;
+  /** The session cookie, for calls to our own server. Null when signed out. */
+  cookie: string | null;
   /** How healthy the sign-in is; null when nobody is signed in. */
   health: SessionStatus | null;
   /** Throws a SignInError the screen can turn into words. */
@@ -78,6 +81,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           await saveSession({ ...stored, cookie: check.cookie, lastVerifiedAt: verifiedAt });
         }
         if (cancelled) return;
+        // There is signal and a good session: send any feedback written offline.
+        flushFeedback(check.cookie).catch(() => {});
         setNow(new Date());
         setAuth((previous) =>
           previous.phase === 'signed-in' && previous.session.cookie === cookie
@@ -128,6 +133,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       value={{
         phase: auth.phase,
         user: auth.phase === 'signed-in' ? auth.session.user : null,
+        cookie: auth.phase === 'signed-in' ? auth.session.cookie : null,
         health,
         signIn,
         signOut,

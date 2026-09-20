@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { AdminNav } from "./admin-nav";
 import { signOutAction } from "../login/actions";
 
 export const metadata: Metadata = { title: "Admin | CoreChain" };
@@ -14,6 +16,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await requireAdmin();
+  const newFeedback = await prisma.feedback.count({ where: { status: "new" } });
 
   return (
     <div className="admin-shell">
@@ -27,11 +30,7 @@ export default async function AdminLayout({
             height={42}
             priority
           />
-          <nav className="admin-nav" aria-label="Admin">
-            <span className="admin-nav-item" aria-current="page">
-              Users
-            </span>
-          </nav>
+          <AdminNav newFeedback={newFeedback} />
           <div className="admin-account">
             <span className="admin-account-email">{session.user.email}</span>
             <form action={signOutAction}>
