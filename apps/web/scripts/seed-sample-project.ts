@@ -123,6 +123,10 @@ async function main() {
           id,
         );
       for (const t of [
+        // Custody and dispatch rows point at samples, so they go first.
+        "dispatch_samples",
+        "custody_events",
+        "dispatches",
         "samples",
         "qc_dismissals",
         "code_library",

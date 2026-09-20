@@ -11,7 +11,9 @@ export type EnumName =
   | "SampleStatus"
   | "ControlType"
   | "PhotoSubjectType"
-  | "CodeCategory";
+  | "CodeCategory"
+  | "CustodyEventType"
+  | "DispatchStatus";
 
 export type ColumnType =
   | "uuid"
@@ -243,6 +245,59 @@ export const SYNC_TABLES: Record<string, TableSpec> = {
       control_type: oneOf("ControlType", CONTROL_TYPE, { required: true }),
       reason: text({ required: true, max: 1000 }),
       created_at: when({ required: true }),
+    },
+  },
+  // E7-1: only ever added. A mistake is corrected by a new "correction" event.
+  custody_events: {
+    name: "custody_events",
+    parent: "project",
+    appendOnly: true,
+    columns: {
+      id: uuid({ required: true, immutable: true }),
+      project_id: uuid({ required: true, immutable: true }),
+      sample_id: uuid({ required: true, immutable: true }),
+      event_type: oneOf(
+        "CustodyEventType",
+        ["bagged", "sealed", "handed_over", "dispatched", "correction"],
+        { required: true },
+      ),
+      occurred_at: when({ required: true }),
+      handled_by: text({ required: true, max: 200 }),
+      location: text({ nullable: true, max: 400 }),
+      recipient: text({ nullable: true, max: 200 }),
+      note: text({ nullable: true }),
+      dispatch_id: uuid({ nullable: true }),
+      corrects_event_id: uuid({ nullable: true }),
+      created_at: when({ required: true }),
+    },
+  },
+  // E7-2: a batch of samples going to one laboratory.
+  dispatches: {
+    name: "dispatches",
+    parent: "project",
+    columns: {
+      ...tracked,
+      project_id: uuid({ required: true, immutable: true }),
+      dispatch_number: text({ required: true, max: 40 }),
+      laboratory: text({ required: true, max: 200 }),
+      preparation_request: text({ nullable: true }),
+      handover_at: { type: "day", nullable: true },
+      status: oneOf("DispatchStatus", ["open", "dispatched"], {
+        required: true,
+      }),
+      note: text({ nullable: true }),
+    },
+  },
+  // E7-2: which samples are in which dispatch; removed (deleted_at) when a
+  // sample leaves a dispatch that is still open.
+  dispatch_samples: {
+    name: "dispatch_samples",
+    parent: "project",
+    columns: {
+      ...tracked,
+      project_id: uuid({ required: true, immutable: true }),
+      dispatch_id: uuid({ required: true, immutable: true }),
+      sample_id: uuid({ required: true, immutable: true }),
     },
   },
   photos: {

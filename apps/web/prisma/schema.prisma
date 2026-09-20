@@ -71,6 +71,19 @@ enum PhotoSubjectType {
   interval
 }
 
+enum CustodyEventType {
+  bagged
+  sealed
+  handed_over
+  dispatched
+  correction
+}
+
+enum DispatchStatus {
+  open
+  dispatched
+}
+
 enum CodeCategory {
   lithology
   alteration_type
@@ -100,11 +113,14 @@ model Project {
   version           Int
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  drillholes   Drillhole[]
-  codes        CodeLibraryEntry[]
-  samples      Sample[]
-  qcDismissals QcDismissal[]
-  numberBlocks SampleNumberBlock[]
+  drillholes      Drillhole[]
+  codes           CodeLibraryEntry[]
+  samples         Sample[]
+  qcDismissals    QcDismissal[]
+  numberBlocks    SampleNumberBlock[]
+  custodyEvents   CustodyEvent[]
+  dispatches      Dispatch[]
+  dispatchSamples DispatchSample[]
 
   @@index([organizationId])
   @@map("projects")
@@ -277,14 +293,90 @@ model Sample {
   version        Int
   deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
 
-  project    Project   @relation(fields: [projectId], references: [id])
-  drillhole  Drillhole @relation(fields: [drillholeId], references: [id])
-  parent     Sample?   @relation("Duplicates", fields: [parentSampleId], references: [id])
-  duplicates Sample[]  @relation("Duplicates")
+  project         Project          @relation(fields: [projectId], references: [id])
+  drillhole       Drillhole        @relation(fields: [drillholeId], references: [id])
+  parent          Sample?          @relation("Duplicates", fields: [parentSampleId], references: [id])
+  duplicates      Sample[]         @relation("Duplicates")
+  custodyEvents   CustodyEvent[]
+  dispatchSamples DispatchSample[]
 
   @@index([drillholeId])
   @@index([projectId])
   @@map("samples")
+}
+
+// E7-1: one line of a sample's chain of custody. Only ever added; a mistake is
+// corrected by a "correction" event that points at it (corrects_event_id).
+model CustodyEvent {
+  id              String           @id @db.Uuid
+  organizationId  String           @map("organization_id")
+  projectId       String           @map("project_id") @db.Uuid
+  createdBy       String           @map("created_by")
+  sampleId        String           @map("sample_id") @db.Uuid
+  eventType       CustodyEventType @map("event_type")
+  occurredAt      DateTime         @map("occurred_at") @db.Timestamptz(3)
+  handledBy       String           @map("handled_by")
+  location        String?
+  recipient       String?
+  note            String?
+  dispatchId      String?          @map("dispatch_id") @db.Uuid
+  correctsEventId String?          @map("corrects_event_id") @db.Uuid
+  createdAt       DateTime         @map("created_at") @db.Timestamptz(3)
+
+  project Project @relation(fields: [projectId], references: [id])
+  sample  Sample  @relation(fields: [sampleId], references: [id])
+
+  @@index([projectId])
+  @@index([sampleId])
+  @@map("custody_events")
+}
+
+// E7-2: a batch of samples going to one laboratory.
+model Dispatch {
+  id                 String         @id @db.Uuid
+  organizationId     String         @map("organization_id")
+  projectId          String         @map("project_id") @db.Uuid
+  createdBy          String         @map("created_by")
+  dispatchNumber     String         @map("dispatch_number")
+  laboratory         String
+  preparationRequest String?        @map("preparation_request")
+  handoverAt         DateTime?      @map("handover_at") @db.Date
+  status             DispatchStatus
+  note               String?
+  createdAt          DateTime       @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime       @map("updated_at") @db.Timestamptz(3)
+  version            Int
+  deletedAt          DateTime?      @map("deleted_at") @db.Timestamptz(3)
+
+  project Project          @relation(fields: [projectId], references: [id])
+  samples DispatchSample[]
+
+  @@index([projectId])
+  @@map("dispatches")
+}
+
+// E7-2: which samples are in which dispatch. A row is removed (deleted_at) when
+// a sample is taken out of a dispatch that is still open.
+model DispatchSample {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id") @db.Uuid
+  createdBy      String    @map("created_by")
+  dispatchId     String    @map("dispatch_id") @db.Uuid
+  sampleId       String    @map("sample_id") @db.Uuid
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @map("updated_at") @db.Timestamptz(3)
+  version        Int
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  project  Project  @relation(fields: [projectId], references: [id])
+  dispatch Dispatch @relation(fields: [dispatchId], references: [id])
+  sample   Sample   @relation(fields: [sampleId], references: [id])
+
+  @@index([projectId])
+  @@index([dispatchId])
+  @@index([sampleId])
+  @@map("dispatch_samples")
 }
 
 model QcDismissal {
@@ -508,14 +600,14 @@ model Feedback {
   clientId   String?  @unique @map("client_id") @db.Uuid
   userId     String   @map("user_id")
   tier       String
-  source     String   // "android" or "web"
+  source     String // "android" or "web"
   appVersion String?  @map("app_version")
   device     String?
   screen     String?
-  category   String   // bug | idea | question
+  category   String // bug | idea | question
   message    String
   status     String   @default("new") // new | seen | planned | done
-  note       String?  // the admin's note, which the tester can see later
+  note       String? // the admin's note, which the tester can see later
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -17,6 +17,9 @@ const TABLES = [
   "samples",
   "qc_dismissals",
   "photos",
+  "custody_events",
+  "dispatches",
+  "dispatch_samples",
 ];
 
 async function main() {

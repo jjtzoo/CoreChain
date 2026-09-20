@@ -164,6 +164,88 @@ describe("prepareOperation", () => {
     });
   });
 
+  it("accepts a custody event and never lets it be changed (E7-1)", () => {
+    const custody = {
+      project_id: PROJECT,
+      sample_id: ID,
+      event_type: "handed_over",
+      occurred_at: NOW,
+      handled_by: "A. Geologist",
+      recipient: "Courier",
+      created_at: NOW,
+    };
+    const put = prepareOperation({
+      op: "PUT",
+      table: "custody_events",
+      id: ID,
+      data: custody,
+    });
+    expect(put.ok).toBe(true);
+    expect(
+      prepareOperation({
+        op: "PATCH",
+        table: "custody_events",
+        id: ID,
+        data: { note: "edited afterwards" },
+      }),
+    ).toEqual({ ok: false, reason: "append-only" });
+    expect(
+      prepareOperation({
+        op: "PUT",
+        table: "custody_events",
+        id: ID,
+        data: { ...custody, event_type: "lost" },
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("accepts a dispatch and its samples, and refuses moving a sample to another dispatch (E7-2)", () => {
+    const tracked = { created_at: NOW, updated_at: NOW, version: 1 };
+    expect(
+      prepareOperation({
+        op: "PUT",
+        table: "dispatches",
+        id: ID,
+        data: {
+          ...tracked,
+          project_id: PROJECT,
+          dispatch_number: "DSP-001",
+          laboratory: "Lab",
+          status: "open",
+        },
+      }).ok,
+    ).toBe(true);
+    expect(
+      prepareOperation({
+        op: "PUT",
+        table: "dispatch_samples",
+        id: ID,
+        data: {
+          ...tracked,
+          project_id: PROJECT,
+          dispatch_id: ID,
+          sample_id: ID,
+        },
+      }).ok,
+    ).toBe(true);
+    expect(
+      prepareOperation({
+        op: "PATCH",
+        table: "dispatch_samples",
+        id: ID,
+        data: { dispatch_id: PROJECT, version: 2 },
+      }),
+    ).toMatchObject({ reason: "immutable-column" });
+    expect(
+      prepareOperation({
+        op: "PATCH",
+        table: "dispatch_samples",
+        id: ID,
+        data: { deleted_at: NOW, version: 2 },
+      }).ok,
+    ).toBe(true);
+  });
+
   it("accepts a soft delete", () => {
     expect(
       prepareOperation({

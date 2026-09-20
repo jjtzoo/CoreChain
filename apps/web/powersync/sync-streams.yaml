@@ -34,6 +34,9 @@ streams:
       - SELECT * FROM samples WHERE project_id IN my_projects
       - SELECT * FROM qc_dismissals WHERE project_id IN my_projects
       - SELECT * FROM photos WHERE project_id IN my_projects
+      - SELECT * FROM custody_events WHERE project_id IN my_projects
+      - SELECT * FROM dispatches WHERE project_id IN my_projects
+      - SELECT * FROM dispatch_samples WHERE project_id IN my_projects
       # A phone learns its own sample-number blocks here, and learns when the
       # account removed it (revoked_at on the device row, story E1-5).
       - SELECT * FROM sample_number_blocks WHERE project_id IN my_projects
