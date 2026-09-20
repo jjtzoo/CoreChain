@@ -1,0 +1,40 @@
+# PowerSync Sync Streams for CoreChain (Sprint 4, E8-2).
+#
+# Paste this into the PowerSync dashboard: instance > Sync Streams > Deploy.
+# It decides which rows each phone downloads. PowerSync only reads from
+# Postgres here; the phone's changes go up through our own API, not through
+# this file.
+#
+# The MVP has one rule: a geologist gets the projects they created, plus
+# everything that hangs off those projects. When teams arrive (decision D9),
+# only `my_projects` below changes, to also include projects the person is a
+# member of. Nothing else in this file needs to move.
+#
+# Rows are synced including soft-deleted ones (deleted_at set), so a delete
+# made on one phone reaches the others. The phone hides them.
+#
+# Not synced on purpose: audit_events (server-side history only).
+
+config:
+  edition: 3
+
+streams:
+  my_workspace:
+    auto_subscribe: true
+    with:
+      my_projects: SELECT id FROM projects WHERE created_by = auth.user_id()
+    queries:
+      - SELECT * FROM projects WHERE created_by = auth.user_id()
+      - SELECT * FROM drillholes WHERE project_id IN my_projects
+      - SELECT * FROM drillhole_status_history WHERE project_id IN my_projects
+      - SELECT * FROM core_boxes WHERE project_id IN my_projects
+      - SELECT * FROM core_runs WHERE project_id IN my_projects
+      - SELECT * FROM code_library WHERE project_id IN my_projects
+      - SELECT * FROM log_intervals WHERE project_id IN my_projects
+      - SELECT * FROM samples WHERE project_id IN my_projects
+      - SELECT * FROM qc_dismissals WHERE project_id IN my_projects
+      - SELECT * FROM photos WHERE project_id IN my_projects
+      # A phone learns its own sample-number blocks here, and learns when the
+      # account removed it (revoked_at on the device row, story E1-5).
+      - SELECT * FROM sample_number_blocks WHERE project_id IN my_projects
+      - SELECT * FROM devices WHERE user_id = auth.user_id()

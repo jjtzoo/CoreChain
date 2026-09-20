@@ -641,6 +641,17 @@ I can't create accounts or handle credentials, so this step is the owner's. Ever
 
 **A design risk to settle first (a spike, before the phone's sync code):** the phone's tables are plain SQLite tables the repositories already read and write. PowerSync's default is to manage its own tables. The likely answer is PowerSync's "raw tables", which sync into existing tables, but it must be tried on a device before the sync stories are estimated. If raw tables don't fit, the repositories move onto PowerSync's own tables (more work, no data loss).
 
+### S4 cloud setup done (2026-09-20)
+
+The owner created the accounts, and the server side is standing:
+
+- **Neon Postgres** (`corechain`, AWS Singapore) holds the 13 tables from the first Prisma migration. Two rules Prisma can't express are enforced in SQL: sample-number blocks can never overlap within a project, and a sample number stays unique per project (case-insensitive, deleted rows included). Migrations use Neon's direct connection (`DIRECT_URL`); the running app uses the pooled one (`DATABASE_URL`).
+- **PowerSync Cloud** (`corechain` / Development, region **Japan**: it has no Singapore region, and Japan is the closest to both the database and the Philippines) is connected to Neon through a read-only `powersync_role` and a `powersync` publication. Logical replication is switched on in Neon (permanent).
+- **Sync Streams** are drafted in `apps/web/powersync/sync-streams.yaml`: a geologist gets the projects they created and everything under them; audit events stay on the server. It is not deployed yet; the owner pastes it into the dashboard.
+- Secrets live only in `apps/web/.env` (git-ignored); `.env.example` names the variables.
+
+Still to do in S4: the raw-tables spike on a device (PowerSync reading and writing the phone's existing encrypted tables), Client Auth with Better Auth sign-in, the upload API, and the phone's sign-in screens. Production instance: added before the field test.
+
 ---
 
 ## 8. Field-test plan
