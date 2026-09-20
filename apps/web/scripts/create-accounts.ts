@@ -4,7 +4,8 @@
 //   npm run accounts:create
 //
 // It is safe to run again: an email that already exists is left alone (its
-// password is never reset or shown again). New accounts get a random password,
+// password is never reset or shown again). `npm run accounts:create --
+// --reset-geologists` gives every geologist account a fresh password. New accounts get a random password,
 // and every password this script has made is kept in one private file that git
 // ignores. Send each tester their own line yourself; never commit the file.
 
@@ -29,13 +30,28 @@ const WANTED: Wanted[] = [
 
 const OUTPUT = resolve(process.cwd(), "tester-accounts.private.txt");
 
-// No 0/O/1/l/I: passwords get typed on a phone, often outdoors.
-const ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// Testers type their password on a phone, often outdoors, so theirs is three
+// short everyday words and three digits ("copper-ridge-gold-482"): easy to say
+// and spell, still far too many combinations to guess. The admin's is fully
+// random. Short, spellable words only.
+const WORDS = [
+  "copper", "gold", "silver", "nickel", "iron", "zinc", "lead", "tin", "cobalt",
+  "quartz", "granite", "basalt", "shale", "slate", "chalk", "flint", "jade",
+  "opal", "agate", "garnet", "mica", "talc", "coal", "sand", "clay", "ridge",
+  "valley", "river", "creek", "hill", "rock", "stone", "core", "drill", "camp",
+  "trail", "peak", "ledge", "cliff", "mesa", "dune", "reef", "delta", "spring",
+  "boulder", "pebble", "lava", "ash", "moss", "fern",
+];
+const RANDOM = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function makePassword(): string {
-  const group = () =>
-    Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
-  return `${group()}-${group()}-${group()}`;
+function makePassword(role: UserRole): string {
+  if (role === "admin") {
+    const group = () =>
+      Array.from({ length: 4 }, () => RANDOM[randomInt(RANDOM.length)]).join("");
+    return `${group()}-${group()}-${group()}`;
+  }
+  const words = Array.from({ length: 3 }, () => WORDS[randomInt(WORDS.length)]);
+  return `${words.join("-")}-${randomInt(100, 1000)}`;
 }
 
 function readKnownPasswords(): Map<string, string> {
@@ -56,15 +72,29 @@ async function main() {
   const { prisma } = await import("../lib/prisma");
 
   const passwords = readKnownPasswords();
+  const resetGeologists = process.argv.includes("--reset-geologists");
+  const context = await auth.$context;
   let created = 0;
 
   for (const wanted of WANTED) {
     const existing = await prisma.user.findUnique({ where: { email: wanted.email } });
+    if (existing && resetGeologists && wanted.role === "geologist") {
+      const fresh = makePassword(wanted.role);
+      await prisma.account.updateMany({
+        where: { userId: existing.id, providerId: "credential" },
+        data: { password: await context.password.hash(fresh) },
+      });
+      await prisma.session.deleteMany({ where: { userId: existing.id } });
+      passwords.set(wanted.email, fresh);
+      created += 1;
+      console.log(`reset    ${wanted.email}`);
+      continue;
+    }
     if (existing) {
       console.log(`exists   ${wanted.email}`);
       continue;
     }
-    const password = makePassword();
+    const password = makePassword(wanted.role);
     await auth.api.signUpEmail({
       body: { name: wanted.name, email: wanted.email, password },
     });
