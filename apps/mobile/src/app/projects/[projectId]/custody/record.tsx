@@ -5,7 +5,10 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
-import { DateTimeField } from '@/components/form/date-time-field';
+import {
+  DateTimeField,
+  describeMoment,
+} from '@/components/form/date-time-field';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
@@ -24,6 +27,12 @@ const HEADINGS: Record<RecordableEventType, string> = {
   bagged: 'Bagging',
   sealed: 'Sealing',
   handed_over: 'Handing over',
+};
+
+const DONE_TITLES: Record<RecordableEventType, string> = {
+  bagged: 'Bagging recorded',
+  sealed: 'Sealing recorded',
+  handed_over: 'Handover recorded',
 };
 
 const SAVE_LABELS: Record<RecordableEventType, string> = {
@@ -97,7 +106,11 @@ export default function RecordCustodyScreen() {
         );
         return;
       }
-      router.back();
+      Alert.alert(
+        DONE_TITLES[eventType],
+        `${result.recorded} ${result.recorded === 1 ? 'sample' : 'samples'} · ${describeMoment(occurredAt)} · ${handledBy.trim()}`,
+        [{ text: 'OK', onPress: () => router.back() }],
+      );
     } finally {
       setSaving(false);
     }

@@ -15,8 +15,14 @@ const JUST_NOW_MS = 2 * 60 * 1000;
  * where or to whom. A step that a later correction cancelled stays visible,
  * marked "Voided", so the record never hides a mistake.
  */
-export function CustodyTimeline({ lines }: { lines: readonly CustodyLine[] }) {
-  const now = Date.now();
+export function CustodyTimeline({
+  lines,
+  asOf,
+}: {
+  lines: readonly CustodyLine[];
+  /** When the record was loaded (ms), so "just recorded" needs no clock read while rendering. */
+  asOf: number;
+}) {
   if (lines.length === 0) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
@@ -37,7 +43,7 @@ export function CustodyTimeline({ lines }: { lines: readonly CustodyLine[] }) {
               {CUSTODY_LABELS[line.type]}
             </ThemedText>
             {line.voided ? <StatusPill label="Voided" tone="warning" /> : null}
-            {!line.voided && now - Date.parse(line.createdAt) < JUST_NOW_MS ? (
+            {!line.voided && asOf - Date.parse(line.createdAt) < JUST_NOW_MS ? (
               <StatusPill label="Just recorded" tone="success" />
             ) : null}
           </View>

@@ -57,6 +57,7 @@ export default function SampleTraceScreen() {
   const [intervals, setIntervals] = useState<LogInterval[]>([]);
   const [parent, setParent] = useState<FieldSample | null>(null);
   const [events, setEvents] = useState<FieldCustodyEvent[]>([]);
+  const [asOf, setAsOf] = useState(0);
 
   const load = useCallback(() => {
     (async () => {
@@ -65,7 +66,9 @@ export default function SampleTraceScreen() {
       if (!loaded) {
         return;
       }
-      setEvents(await listCustodyEvents(loaded.id));
+      const loadedEvents = await listCustodyEvents(loaded.id);
+      setAsOf(Date.now());
+      setEvents(loadedEvents);
       const [
         loadedHole,
         loadedBoxes,
@@ -213,7 +216,7 @@ export default function SampleTraceScreen() {
 
         <Card style={styles.chainCard}>
           <ThemedText type="heading">Chain of custody</ThemedText>
-          <CustodyTimeline lines={custodyLines} />
+          <CustodyTimeline lines={custodyLines} asOf={asOf} />
           {nextSteps.map((type, index) => (
             <PrimaryButton
               key={type}

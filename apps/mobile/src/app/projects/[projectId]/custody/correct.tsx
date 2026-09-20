@@ -45,7 +45,11 @@ export default function CorrectCustodyScreen() {
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        router.back();
+        Alert.alert(
+          'Correction recorded',
+          'The step is now marked Voided. It stays in the custody record.',
+          [{ text: 'OK', onPress: () => router.back() }],
+        );
       }
     } finally {
       setSaving(false);

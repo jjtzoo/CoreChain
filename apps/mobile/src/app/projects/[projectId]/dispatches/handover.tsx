@@ -81,7 +81,13 @@ export default function HandOverScreen() {
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        router.back();
+        Alert.alert(
+          `${number} handed over`,
+          `${count} ${count === 1 ? 'sample is' : 'samples are'} now recorded as dispatched to ${
+            recipient.trim() || laboratory
+          }.`,
+          [{ text: 'OK', onPress: () => router.back() }],
+        );
       }
     } finally {
       setSaving(false);
