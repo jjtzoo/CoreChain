@@ -13,7 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { syncTone } from '@/components/sync-status';
-import { listOpenIssues, type SyncIssue } from '@/sync/issues';
+import {
+  canResend,
+  listOpenIssues,
+  resendIssues,
+  type SyncIssue,
+} from '@/sync/issues';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 import { useSync } from '@/sync/sync-context';
 import { phoneHoldings, wipeDevice } from '@/sync/wipe';
@@ -44,6 +49,7 @@ export default function AccountScreen() {
   const { summary } = useSync();
   const [issues, setIssues] = useState<SyncIssue[]>([]);
   const [removing, setRemoving] = useState(false);
+  const [resending, setResending] = useState(false);
   const loadIssues = useCallback(() => {
     listOpenIssues()
       .then(setIssues)
@@ -62,6 +68,22 @@ export default function AccountScreen() {
       }, new Map<string, { issue: SyncIssue; count: number }>())
       .values(),
   ];
+
+  async function sendAgain() {
+    setResending(true);
+    try {
+      const queued = await resendIssues(issues);
+      loadIssues();
+      Alert.alert(
+        queued > 0 ? 'Sending again' : 'Nothing to send',
+        queued > 0
+          ? `${queued} ${queued === 1 ? 'record is' : 'records are'} back in the queue and go to the server by themselves. If it is refused again it will be listed here.`
+          : 'Those records are no longer on this phone.',
+      );
+    } finally {
+      setResending(false);
+    }
+  }
 
   const confirmSignOut = () => {
     Alert.alert(
@@ -183,8 +205,23 @@ export default function AccountScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   {describeSyncIssue(issue.status, issue.reason)}
                 </ThemedText>
+                {issue.reason ? (
+                  <ThemedText type="caption" themeColor="muted">
+                    Code: {issue.reason}
+                    {issue.detail ? ` · ${issue.detail}` : ''}
+                  </ThemedText>
+                ) : null}
               </View>
             ))}
+            {issues.some(canResend) ? (
+              <PrimaryButton
+                label="Send again"
+                icon="cloud-upload-outline"
+                variant="secondary"
+                loading={resending}
+                onPress={() => void sendAgain()}
+              />
+            ) : null}
           </Card>
         ) : null}
 

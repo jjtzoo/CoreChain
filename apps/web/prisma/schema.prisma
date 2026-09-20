@@ -340,7 +340,7 @@ model Dispatch {
   dispatchNumber     String         @map("dispatch_number")
   laboratory         String
   preparationRequest String?        @map("preparation_request")
-  handoverAt         DateTime?      @map("handover_at") @db.Date
+  handoverAt         String?        @map("handover_at")
   status             DispatchStatus
   note               String?
   createdAt          DateTime       @map("created_at") @db.Timestamptz(3)

@@ -26,4 +26,6 @@ export const SET_ONCE_COLUMNS = [
   'project_id',
   'drillhole_id',
   'sample_number',
+  'dispatch_id',
+  'sample_id',
 ] as const;
