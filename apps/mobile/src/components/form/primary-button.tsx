@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -15,11 +16,16 @@ export type PrimaryButtonProps = {
   icon?: IconName;
 };
 
+// A second tap this soon after the first is an accident (gloves, a bumpy
+// truck), not a second decision. Without this a quick double tap on a save
+// button runs the save twice before the screen has time to react.
+const DOUBLE_TAP_MS = 1000;
+
 /**
  * The app's button. Primary is a solid accent fill (the one main action on a
  * screen); secondary is an outlined button for everything else. Both are big
  * enough to hit with gloves on. Danger is outlined in red, for actions that
- * remove something.
+ * remove something. A second tap within a second is ignored.
  */
 export function PrimaryButton({
   label,
@@ -30,6 +36,13 @@ export function PrimaryButton({
   icon,
 }: PrimaryButtonProps) {
   const theme = useTheme();
+  const lastPressAt = useRef(0);
+  const handlePress = () => {
+    const now = Date.now();
+    if (now - lastPressAt.current < DOUBLE_TAP_MS) return;
+    lastPressAt.current = now;
+    onPress();
+  };
   const isDisabled = disabled || loading;
   const primary = variant === 'primary';
   const danger = variant === 'danger';
@@ -41,7 +54,7 @@ export function PrimaryButton({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}

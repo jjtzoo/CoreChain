@@ -159,7 +159,9 @@ export default function SampleTraceScreen() {
   const STEP_LABELS: Record<RecordableEventType, string> = {
     bagged: 'Bag sample',
     sealed: 'Seal sample',
-    handed_over: 'Hand over sample',
+    handed_over: counting.some((event) => event.type === 'handed_over')
+      ? 'Record another handover'
+      : 'Hand over sample',
   };
   const recordStep = (type: RecordableEventType) =>
     router.push(
