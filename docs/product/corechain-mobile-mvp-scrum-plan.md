@@ -468,6 +468,21 @@ As the admin, I want to see everything testers send, in one place, so that I can
 - Counts by screen and category, so the screens people struggle with stand out (this feeds the field-test metrics in section 8).
 - Web testers can send feedback from the admin and web pages with the same form.
 
+**E10-7 — Over-the-air patches (3)**
+As the Product Owner, I want to fix a screen, a wording or a bug on testers' phones without them reinstalling, so that a problem found in the field is fixed within a day, not a week.
+
+- Uses `expo-updates` (Expo's own update service to begin with; a self-hosted server is possible later). Patches change the app's screens, logic and images only. Anything native (a new permission, a new library, an Android or Expo upgrade) still needs a new build through Play.
+- The app checks when it opens, downloads quietly and applies the patch on the next start. If a patch fails to load, the app falls back to the version it shipped with.
+- Patches are signed, so the phone only accepts ours. The signing key is an owner-held secret, like the Play upload key.
+- A patch is only offered to builds it is compatible with (one runtime version per native build), and patches that touch the phone's database are forward-only and tested against a copy of an older database first.
+- Needs one new native build that includes `expo-updates`, so it must land in the **first tester build**, not after. The owner creates a free Expo account and signs in; free-plan limits are to be checked before relying on it.
+
+**E10-8 — Update prompt and minimum version (2)**
+As a field geologist, I want to be told when my app is too old to sync, so that I never lose work to a silent failure.
+
+- The server states the oldest app version it still accepts. Below it, the app says "Update CoreChain to keep syncing" and keeps working offline. It never locks anyone out of their own data.
+- A phone that was offline for weeks and missed patches still syncs, because the server keeps accepting older versions for as long as its database changes stay compatible.
+
 ### Team release (after the field test; tentative Sprints 7 and 8)
 
 The project-manager dashboard and the QA/QC interface are part of the product, not an afterthought: the landing page and the tiers (D15) already promise them. They wait until real field data is flowing and testers have shown what a manager and a QA/QC reviewer need first. Each brings its own guide (E10-1), written when its screens exist.
@@ -536,7 +551,7 @@ Sprints last 2 weeks (Sprint 0 is 1 week). Capacity starts at ~20 points per spr
 | **S3** Sample it — **internal alpha** | A full field day works offline end to end                       | E5-1, E5-2, E6-1, E6-2, E6-3, E9-1                                                                                                                                                  | 25           | Installable APK: log, photograph, sample with QC inserts and export CSV — shown to one friendly geologist          |
 | **S4** Accounts and backup            | Sign up, and data reaches the cloud                             | Backend: Postgres + Prisma schema, Better Auth, PowerSync service; E1-3, E1-4, E6-4, E8-2                                                                                           | 16 + backend | Sign up, and alpha projects attach to the account; a second device downloads them                                  |
 | **S5** Safe sync and custody          | Offline work always syncs safely; the custody chain is complete | E8-3, E8-4, E8-5, E5-3, E1-5, E7-1, E7-2, E7-3                                                                                                                                      | 32           | Two devices edit the same record offline, and the conflict is resolved; a dispatch is created and its sheet shared |
-| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4, E10-5, E10-6 + fixes from alpha feedback                                                                                                                              | 21 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
+| **S6** Field-test release             | Testers can install, learn and report                           | E10-1, E10-2, E10-3, E10-4, E10-5, E10-6, E10-7, E10-8 + fixes from alpha feedback                                                                                                                              | 26 + fixes   | A Play internal-testing build installed by testers. **The field test starts.**                                     |
 
 S2 and S5 are over capacity by design. At S2 planning, split E4-3 and move E4-5 or E4-2 to S3 if velocity is under 30. At S5 planning, E7-3 is the first story to slip to S6.
 
