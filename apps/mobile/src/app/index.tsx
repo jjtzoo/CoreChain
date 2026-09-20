@@ -1,6 +1,7 @@
 import {
   loggedLengthM,
   loggingProgress,
+  sessionMessage,
   type FieldDrillhole,
   type Project,
 } from '@corechain/domain';
@@ -9,8 +10,10 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
+import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
 import { BrandSymbol } from '@/components/brand-lockup';
 import { Icon } from '@/components/ui/icon';
@@ -72,6 +75,8 @@ async function summarise(project: Project): Promise<ProjectSummary> {
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { health } = useSession();
+  const sessionNote = health ? sessionMessage(health) : null;
   const [summaries, setSummaries] = useState<ProjectSummary[] | null>(null);
   const [recent, setRecent] = useState<Recent | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +118,15 @@ export default function HomeScreen() {
             </ThemedText>
           </View>
         </View>
+
+        {sessionNote ? (
+          <AlertRow
+            tone={health?.state === 'expired' ? 'danger' : 'warning'}
+            message={sessionNote}
+            actionLabel="Details"
+            onPress={() => router.push('/account')}
+          />
+        ) : null}
 
         {error ? (
           <ThemedText type="small" themeColor="danger">

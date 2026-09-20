@@ -3,7 +3,7 @@ import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { admin, jwt } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
-import { DEFAULT_ROLE } from "@corechain/domain";
+import { DEFAULT_ROLE, OFFLINE_SESSION_DAYS } from "@corechain/domain";
 import { prisma } from "./prisma";
 import { POWERSYNC_AUDIENCE, POWERSYNC_TOKEN_LIFETIME } from "./powersync";
 
@@ -19,6 +19,13 @@ const ac = createAccessControl(defaultStatements);
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+  // A phone signs in once and may then work for weeks with no signal (E1-4), so
+  // the server must still recognise it after that long. The app enforces the
+  // same 30 days on its side.
+  session: {
+    expiresIn: OFFLINE_SESSION_DAYS * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
+  },
   emailAndPassword: {
     enabled: true,
     disableSignUp: process.env.CORECHAIN_ALLOW_SIGN_UP !== "true",
