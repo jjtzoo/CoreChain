@@ -7,7 +7,12 @@ import {
   toUserRole,
   type UserRole,
 } from "@corechain/domain";
-import { useState, useTransition, type FormEvent } from "react";
+import {
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type FormEvent,
+} from "react";
 import {
   createUserAction,
   resetPasswordAction,
@@ -51,9 +56,11 @@ function formatDay(iso: string | null): string {
 function CredentialsCard({
   credentials,
   onDismiss,
+  onCopied,
 }: {
   credentials: Credentials;
   onDismiss: () => void;
+  onCopied: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const text = `CoreChain\nEmail: ${credentials.email}\nPassword: ${credentials.password}`;
@@ -62,6 +69,7 @@ function CredentialsCard({
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      onCopied();
     } catch {
       setCopied(false);
     }
@@ -102,6 +110,109 @@ function CredentialsCard({
       <button type="button" className="admin-button" onClick={copy}>
         {copied ? "Copied" : "Copy email and password"}
       </button>
+    </section>
+  );
+}
+
+// Per-browser only: whether the admin dismissed the checklist early, and
+// whether they've ever copied a set of credentials to send. Both are cheap
+// UI convenience, not data another admin or device needs to see.
+const DISMISSED_KEY = "corechain-admin-checklist-dismissed";
+const COPIED_KEY = "corechain-admin-checklist-login-copied";
+
+function readFlag(key: string): boolean {
+  try {
+    return window.localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string, value: boolean) {
+  try {
+    window.localStorage.setItem(key, String(value));
+  } catch {
+    // Private browsing or blocked storage: the checklist just won't remember.
+  }
+}
+
+function noSubscription() {
+  return () => {};
+}
+
+// The server has no localStorage, so the first render (and the client's
+// first, matching, hydration pass) always sees `false`; React re-renders
+// with the real value right after, without a manual effect + setState.
+function useStoredFlag(key: string): [boolean, (value: boolean) => void] {
+  const stored = useSyncExternalStore(
+    noSubscription,
+    () => readFlag(key),
+    () => false,
+  );
+  const [override, setOverride] = useState<boolean | null>(null);
+  return [
+    override ?? stored,
+    (value: boolean) => {
+      writeFlag(key, value);
+      setOverride(value);
+    },
+  ];
+}
+
+// E10-5: a short checklist so a first-time admin can set up their first
+// tester without help. It hides itself once a tester account exists and its
+// login has been copied at least once, or once dismissed early, but a link
+// stays available to bring it back for a refresher.
+function FirstRunChecklist({
+  hasTester,
+  everCopied,
+}: {
+  hasTester: boolean;
+  everCopied: boolean;
+}) {
+  const [dismissed, setDismissed] = useStoredFlag(DISMISSED_KEY);
+  const [forceShow, setForceShow] = useState(false);
+
+  const done = hasTester && everCopied;
+  const visible = forceShow || (!dismissed && !done);
+
+  if (!visible) {
+    return (
+      <button
+        type="button"
+        className="admin-link admin-checklist-reopen"
+        onClick={() => setForceShow(true)}
+      >
+        Show setup checklist
+      </button>
+    );
+  }
+
+  return (
+    <section className="admin-card admin-checklist" aria-labelledby="checklist-title">
+      <div className="admin-card-head">
+        <h2 id="checklist-title">Set up your first tester</h2>
+        <button
+          type="button"
+          className="admin-link"
+          onClick={() => {
+            setDismissed(true);
+            setForceShow(false);
+          }}
+        >
+          Hide
+        </button>
+      </div>
+      <ol className="admin-checklist-steps">
+        <li data-done={hasTester || undefined}>Add a user</li>
+        <li data-done={hasTester || undefined}>Choose their tier</li>
+        <li data-done={everCopied || undefined}>Send them the login</li>
+      </ol>
+      <p className="admin-hint">
+        Use the form to the right. Once you copy a set of credentials to send,
+        this checklist is done — it disappears, and you can bring it back from
+        here any time.
+      </p>
     </section>
   );
 }
@@ -439,14 +550,17 @@ export function UsersWorkspace({
   users,
   requests,
   currentUserId,
+  hasTester,
   initialSuggestion,
 }: {
   users: UserRow[];
   requests: RequestRow[];
   currentUserId: string;
+  hasTester: boolean;
   initialSuggestion: string;
 }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+  const [everCopied, setEverCopied] = useStoredFlag(COPIED_KEY);
   // Choosing a request fills the add form; the key makes the form start afresh.
   const [prefill, setPrefill] = useState<{
     name: string;
@@ -457,10 +571,13 @@ export function UsersWorkspace({
   return (
     <div className="admin-columns">
       <div className="admin-list-column">
+        <FirstRunChecklist hasTester={hasTester} everCopied={everCopied} />
+
         {credentials ? (
           <CredentialsCard
             credentials={credentials}
             onDismiss={() => setCredentials(null)}
+            onCopied={() => setEverCopied(true)}
           />
         ) : null}
 

@@ -2260,6 +2260,53 @@ h3 {
   border-color: var(--brand-copper);
 }
 
+.admin-checklist-reopen {
+  justify-self: start;
+}
+
+.admin-checklist-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-checklist-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.admin-checklist-steps li::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+}
+
+.admin-checklist-steps li[data-done] {
+  color: var(--text);
+  text-decoration: line-through;
+  text-decoration-color: var(--muted);
+}
+
+.admin-checklist-steps li[data-done]::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  color: var(--canvas);
+  background: var(--forest);
+  border-color: var(--forest);
+  font-size: 0.7rem;
+  text-decoration: none;
+}
+
 .admin-credentials-values {
   display: grid;
   gap: 10px;

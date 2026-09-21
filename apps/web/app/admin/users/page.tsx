@@ -54,6 +54,7 @@ export default async function UsersPage() {
       <UsersWorkspace
         users={rows}
         currentUserId={session.user.id}
+        hasTester={rows.some((user) => user.id !== session.user.id)}
         requests={requestRows.map((request) => ({
           id: request.id,
           name: request.name,
