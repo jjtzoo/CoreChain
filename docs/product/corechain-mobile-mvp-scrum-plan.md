@@ -445,6 +445,9 @@ As a field geologist, I want each record, and the app overall, to show synced / 
 As a field geologist, I want to see and resolve records the server rejected, so that nothing is silently lost.
 
 - Shows my version and the server version side by side; I pick one or merge the fields.
+- **Built 2026-09-21.** The server now returns its current values when a change conflicts (code only, no database change). The phone keeps both versions in its local issue list. Account shows "Review and choose"; the Review changes screen lists each field that really differs with "Mine (this phone)" and "On the server", plus "Use all mine" and "Use all the server's". The server's version is preselected, so nothing is overwritten by accident. Saving writes the choice as a new edit one version above the server's, which uploads and wins cleanly.
+- **Tested end to end on the real phone and server:** the phone was taken offline and a synthetic hole's status was changed to Complete; the same hole was set to Drilling on the server; on reconnect the phone showed the conflict, and choosing "mine" left the server on Complete at version 3. Not yet tried with two real phones.
+- Known limit: a conflict recorded before this build has no saved versions, so it shows only the old "kept for review" note.
 
 ### E9 — Export
 

@@ -206,6 +206,20 @@ function AppStack() {
   );
 }
 
+/**
+ * The glowing symbol stays up while the phone opens its data, then fades to
+ * the dashboard. It leaves once the stored sign-in is read and the local
+ * database is ready (or has failed, so the message under it can be read).
+ */
+function SplashGate() {
+  const { preparation } = useSync();
+  return (
+    <AnimatedSplashOverlay
+      ready={preparation === 'ready' || preparation === 'failed'}
+    />
+  );
+}
+
 // A drill-down stack (projects -> a project's drillholes -> one drillhole),
 // not a tab bar — the field workflow is a sequence of screens, not parallel
 // sections. See docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 1.
@@ -222,12 +236,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider
       value={navigationTheme(colorScheme === 'dark' ? 'dark' : 'light')}>
-      <AnimatedSplashOverlay />
       {/* Dark icons on the light theme, light icons on the dark one. */}
       <StatusBar style="auto" />
       <SessionProvider>
         <SyncProvider>
           <AppStack />
+          <SplashGate />
         </SyncProvider>
       </SessionProvider>
     </ThemeProvider>

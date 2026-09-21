@@ -73,7 +73,13 @@ export function conflictValueText(value: unknown): string {
   if (empty(value)) return "Empty";
   if (value === true) return "Yes";
   if (value === false) return "No";
-  return String(value);
+  const text = String(value);
+  // A code such as "handed_over" reads better as "Handed over".
+  if (/^[a-z]+(_[a-z]+)*$/.test(text)) {
+    const words = text.replace(/_/g, " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+  return text;
 }
 
 /** The fields where the phone's version and the server's version really differ. */

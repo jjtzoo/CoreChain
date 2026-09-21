@@ -165,9 +165,22 @@ const RECORD_NAMES: Record<string, string> = {
   code_library: 'SELECT code AS name FROM code_library WHERE id = ?',
 };
 
+const RECORD_KINDS: Record<string, string> = {
+  samples: 'sample',
+  drillholes: 'drillhole',
+  projects: 'project',
+  dispatches: 'dispatch',
+  core_boxes: 'core box',
+  core_runs: 'core run',
+  log_intervals: 'log interval',
+  code_library: 'code',
+  custody_events: 'custody step',
+};
+
 /** The record's own name (a hole ID, a sample number), so the screen says which one it is. */
 export async function describeRecord(issue: SyncIssue): Promise<string> {
-  const words = issue.tableName.replace(/_/g, ' ');
+  const words =
+    RECORD_KINDS[issue.tableName] ?? issue.tableName.replace(/_/g, ' ');
   const sql = RECORD_NAMES[issue.tableName];
   if (!sql || !issue.recordId) return words;
   const db = await getDatabase();

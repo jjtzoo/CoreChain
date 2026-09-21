@@ -111,4 +111,11 @@ describe("conflictValueText", () => {
     expect(conflictValueText(true)).toBe("Yes");
     expect(conflictValueText(12.5)).toBe("12.5");
   });
+
+  it("tidies a code into words but leaves other text alone", () => {
+    expect(conflictValueText("complete")).toBe("Complete");
+    expect(conflictValueText("handed_over")).toBe("Handed over");
+    expect(conflictValueText("Core lost at 12 m")).toBe("Core lost at 12 m");
+    expect(conflictValueText("AGS-00014")).toBe("AGS-00014");
+  });
 });
