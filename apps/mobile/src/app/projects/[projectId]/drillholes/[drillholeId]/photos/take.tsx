@@ -132,8 +132,8 @@ export default function TakePhotoScreen() {
             CoreChain Field needs the camera to photograph core.
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Photos stay on this device, filed against the box or interval you’re
-            photographing.
+            Photos are saved on this phone, filed against the box or interval
+            you’re photographing, and backed up when you have signal.
           </ThemedText>
           <PrimaryButton label="Allow camera" onPress={requestPermission} />
         </View>
@@ -178,8 +178,7 @@ export default function TakePhotoScreen() {
               styles.shutter,
               { borderColor: theme.accent },
               (!ready || !context) && styles.disabled,
-            ]}
-          >
+            ]}>
             <View
               style={[styles.shutterInner, { backgroundColor: theme.accent }]}
             />

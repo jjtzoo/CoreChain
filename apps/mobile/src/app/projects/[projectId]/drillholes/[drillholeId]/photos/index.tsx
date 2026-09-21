@@ -66,7 +66,7 @@ export default function PhotosScreen() {
   function confirmDelete(photo: FieldPhoto) {
     Alert.alert(
       'Delete this photo?',
-      `${photoLabel(photo)} will be removed from this device.`,
+      `${photoLabel(photo)} will be deleted from this phone and from your synced records.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {

@@ -372,7 +372,7 @@ As a field geologist, I want photos to upload when I'm connected, so that they'r
   - Each photo shows "Backed up", "Waiting to back up" or "Could not back up". The Account screen has a **Photo backup** card with a count line, the **Any connection / Wi-Fi only** choice (uses the new `expo-network` module, so it needs a new build), and **Back up now**.
   - The sign-out warning now counts only photos that are not backed up yet.
   - Known gap: deleting a photo on the phone does not yet remove its file from the storage (a small orphan; the 1 GB free allowance makes this minor for a pilot).
-  - To verify on the phone: take a photo, wait for it to change to "Backed up", and check the store shows one new file and one operation.
+  - **Verified on the test phone 2026-09-21:** a photo taken against CDL-001 Box 1 showed "Backed up" about four seconds after the shutter. The server row for that photo then held the storage location and a size of 267,162 bytes, matching the 261 KB on the phone, so the sign-in cookie is accepted on the upload and the file reached the private store. The test photo was then deleted on the phone (its stored copy stays in the store, see the known gap). Not yet tried: Wi-Fi-only on and off, a photo taken with no signal that goes up on reconnect, a refused file, and the "Back up now" button.
 
 ### E6 — Sampling
 
