@@ -186,6 +186,7 @@ export * from "./passwords";
 export * from "./depthLandmarks";
 export * from "./feedback";
 export * from "./syncStatus";
+export * from "./recordSync";
 export * from "./signOut";
 
 export * from "./custody";

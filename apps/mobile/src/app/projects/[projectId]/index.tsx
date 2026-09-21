@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Radius, Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
@@ -177,6 +178,7 @@ export default function ProjectDetailScreen() {
                         {' · '}
                         {Math.round(progress * 100)}% logged
                       </ThemedText>
+                      <SyncBadge kind="drillhole" id={hole.id} />
                     </View>
                     <StatusPill
                       label={statusLabel(hole.status)}

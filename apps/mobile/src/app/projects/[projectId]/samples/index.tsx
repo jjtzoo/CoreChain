@@ -23,6 +23,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -284,6 +285,7 @@ export default function SampleRegisterScreen() {
                       samples,
                     )}
                   </ThemedText>
+                  <SyncBadge kind="sample" id={sample.id} />
                 </View>
                 <StatusPill
                   label={capitalise(sample.status)}

@@ -452,6 +452,9 @@ As a field geologist, I want my changes to sync by themselves when I'm connected
 As a field geologist, I want each record, and the app overall, to show synced / pending / needs attention, so that I always know what's safe.
 
 - The header shows "last synced" time and the number of pending records.
+- **Built 2026-09-21 (the per-record part).** Home, the project's hole list, the samples list and the dispatch list show a small "Waiting to send" line under a record that has not reached the server, and "Needs attention" (in the warning colour) when the server refused a change to it. A sent record shows nothing, so the lists stay calm. A hole counts as waiting when it or anything filed under it is (a box, run, interval, photo, status change or sample); a sample when it or its custody steps or dispatch links are; a dispatch when it or its sample links are; a project when anything in it is. The rules are in `packages/domain/src/recordSync.ts` (tested); the query that finds the records is `apps/mobile/src/data/syncMarkersQuery.ts` (tested here against a scratch database for every one of those cases, not only on the phone). It refreshes every five seconds.
+  - **Verified on the test phone:** in airplane mode a photo taken on CDL-001 made CDL-001 show "Waiting to send" and the other holes stayed clean; after the signal returned the line disappeared within 25 seconds. The overall line ("Working offline", "Up to date") already existed.
+  - **Not yet checked on the phone:** the Home project row and the samples and dispatch lists while waiting, and the "Needs attention" colour (it needs a change the server refuses). Not built: a status line on a record's own screen (the wording exists as `recordSyncDetail`).
 
 **E8-5 — Resolve conflicts (5)** _(Sprint 5)_
 As a field geologist, I want to see and resolve records the server rejected, so that nothing is silently lost.

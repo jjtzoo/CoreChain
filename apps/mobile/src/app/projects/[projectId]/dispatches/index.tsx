@@ -8,6 +8,7 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 import {
@@ -75,6 +76,7 @@ export default function DispatchesScreen() {
                       ? ` · ${describeDay(dispatch.handoverAt)}`
                       : ''}
                   </ThemedText>
+                  <SyncBadge kind="dispatch" id={dispatch.id} />
                 </View>
                 <StatusPill
                   label={STATUS_LABEL[dispatch.status]}

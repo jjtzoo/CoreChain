@@ -1,4 +1,9 @@
-import { syncSummary, type SyncSummary } from '@corechain/domain';
+import {
+  recordSyncState,
+  syncSummary,
+  type RecordSyncState,
+  type SyncSummary,
+} from '@corechain/domain';
 import {
   createContext,
   useCallback,
@@ -12,6 +17,14 @@ import { Alert } from 'react-native';
 
 import { useSession } from '@/auth/session-context';
 import { getSyncDatabase, queueAllLocalRowsForUpload } from '@/data/database';
+import {
+  emptyMarkers,
+  loadAttentionMarkers,
+  loadWaitingMarkers,
+  markersKey,
+  type MarkerKind,
+  type MarkerSets,
+} from '@/data/syncMarkersRepository';
 import { CoreChainConnector } from './connector';
 import { countOpenIssues } from './issues';
 import { backUpPhotos } from './photoUploader';
@@ -39,7 +52,11 @@ type SyncContextValue = {
   photoBackupVersion: number;
   /** Sends every waiting photo now, for the person's "Back up now". */
   backUpPhotosNow: () => Promise<void>;
+  /** Has this record reached the server, is it waiting, or was something refused? */
+  recordSync: (kind: MarkerKind, id: string) => RecordSyncState;
 };
+
+type Markers = { waiting: MarkerSets; attention: MarkerSets };
 
 const SyncContext = createContext<SyncContextValue | null>(null);
 
@@ -55,6 +72,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [liveSummary, setSummary] = useState<SyncSummary | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [photoBackupVersion, setPhotoBackupVersion] = useState(0);
+  const [markers, setMarkers] = useState<Markers>({
+    waiting: emptyMarkers(),
+    attention: emptyMarkers(),
+  });
+  const markersSeen = useRef('');
 
   const userId = user?.id ?? null;
   const canSync = health?.canSync ?? false;
@@ -74,6 +96,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       if (changed > 0) setPhotoBackupVersion((version) => version + 1);
     },
     [canSync],
+  );
+  const recordSync = useCallback(
+    (kind: MarkerKind, id: string) =>
+      recordSyncState(id, {
+        waiting: markers.waiting[kind],
+        attention: markers.attention[kind],
+      }),
+    [markers],
   );
   const backUpPhotosNow = useCallback(
     () => sendPhotos(true).catch(() => {}),
@@ -148,6 +178,22 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           lastSyncStamp = syncStamp;
           if (syncStamp) setDataVersion((version) => version + 1);
         }
+        // Which records are still waiting to be sent, or were refused (E8-4). Only
+        // redrawn when the answer changes.
+        try {
+          const [waiting, attention] = await Promise.all([
+            loadWaitingMarkers(),
+            loadAttentionMarkers(),
+          ]);
+          if (cancelled) return;
+          const key = `${markersKey(waiting)}#${markersKey(attention)}`;
+          if (key !== markersSeen.current) {
+            markersSeen.current = key;
+            setMarkers({ waiting, attention });
+          }
+        } catch {
+          // The badges are a courtesy; never let them stop syncing.
+        }
         // Photo files go up after their records, and never hold a sync up. A
         // sync that just finished may have delivered a record a photo was
         // waiting on, so it sends them all; otherwise only the ones due.
@@ -216,6 +262,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         dataVersion,
         photoBackupVersion,
         backUpPhotosNow,
+        recordSync,
       }}>
       {children}
     </SyncContext.Provider>

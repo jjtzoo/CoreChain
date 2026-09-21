@@ -23,6 +23,7 @@ import { Card } from '@/components/ui/card';
 import { BrandSymbol } from '@/components/brand-lockup';
 import { Icon } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Radius, Spacing } from '@/constants/theme';
 import {
@@ -271,6 +272,7 @@ export default function HomeScreen() {
                       {' · '}
                       {Math.round(progress * 100)}% logged
                     </ThemedText>
+                    <SyncBadge kind="project" id={project.id} />
                   </View>
                   <Icon name="chevron-right" size={24} themeColor="muted" />
                 </View>
