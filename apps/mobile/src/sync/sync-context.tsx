@@ -1,8 +1,10 @@
 import {
   recordSyncState,
   syncSummary,
+  versionStatus,
   type RecordSyncState,
   type SyncSummary,
+  type VersionStatus,
 } from '@corechain/domain';
 import {
   createContext,
@@ -16,6 +18,7 @@ import {
 import { Alert } from 'react-native';
 
 import { useSession } from '@/auth/session-context';
+import { APP_VERSION } from '@/config';
 import { getSyncDatabase, queueAllLocalRowsForUpload } from '@/data/database';
 import {
   emptyMarkers,
@@ -26,6 +29,7 @@ import {
   type MarkerSets,
 } from '@/data/syncMarkersRepository';
 import { CoreChainConnector } from './connector';
+import { loadMinAppVersion, registerDevice } from './device';
 import { countOpenIssues } from './issues';
 import { backUpPhotos } from './photoUploader';
 import { getDataOwner, setDataOwner } from './owner';
@@ -43,6 +47,8 @@ type SyncContextValue = {
   /** The local database is open and belongs to the signed-in account. */
   preparation: Preparation;
   summary: SyncSummary | null;
+  /** Whether this build of the app is still accepted by the server (E10-8). */
+  version: VersionStatus;
   /**
    * Goes up each time a sync completes. Screens that list records reload when
    * it changes, so downloaded work appears without leaving the screen.
@@ -70,6 +76,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [preparedFor, setPreparedFor] = useState<string | null>(null);
   const [failedFor, setFailedFor] = useState<string | null>(null);
   const [liveSummary, setSummary] = useState<SyncSummary | null>(null);
+  const [minAppVersion, setMinAppVersion] = useState<string | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [photoBackupVersion, setPhotoBackupVersion] = useState(0);
   const [markers, setMarkers] = useState<Markers>({
@@ -79,7 +86,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const markersSeen = useRef('');
 
   const userId = user?.id ?? null;
-  const canSync = health?.canSync ?? false;
+  const version = versionStatus(APP_VERSION, minAppVersion);
+  const canSync = (health?.canSync ?? false) && version.canSync;
 
   // The connector reads the newest cookie on demand, so a refreshed session
   // never forces a reconnect.
@@ -87,6 +95,16 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     cookieRef.current = cookie;
   }, [cookie]);
+
+  // The last version the server accepted, learned at an earlier registration
+  // (E10-8): read once so a phone that has been offline for a while still
+  // shows the right message the moment it opens, before it can reach the
+  // server again.
+  useEffect(() => {
+    loadMinAppVersion()
+      .then(setMinAppVersion)
+      .catch(() => {});
+  }, []);
 
   const sendPhotos = useCallback(
     async (ignoreDelay: boolean) => {
@@ -215,6 +233,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           syncSummary(
             {
               canSync,
+              outdated: version.state === 'outdated',
               connected: status.connected,
               connecting: status.connecting,
               uploading: status.uploading,
@@ -228,6 +247,19 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           ),
         );
       };
+
+      // Learn whether the server has raised its minimum version, even for a
+      // phone with nothing new to upload (E10-8). Safe to repeat, and never
+      // holds up connecting.
+      const cookieNow = cookieRef.current;
+      if (cookieNow) {
+        void registerDevice(cookieNow)
+          .then(() => loadMinAppVersion())
+          .then((value) => {
+            if (!cancelled) setMinAppVersion(value);
+          })
+          .catch(() => {});
+      }
 
       stopListening = sync.registerListener({
         statusChanged: () => void refresh(),
@@ -252,13 +284,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         .then((sync) => sync.disconnect())
         .catch(() => {});
     };
-  }, [preparation, userId, canSync, sendPhotos]);
+  }, [preparation, userId, canSync, sendPhotos, minAppVersion, version.state]);
 
   return (
     <SyncContext.Provider
       value={{
         preparation,
         summary,
+        version,
         dataVersion,
         photoBackupVersion,
         backUpPhotosNow,

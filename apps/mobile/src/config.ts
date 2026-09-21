@@ -1,3 +1,10 @@
+import Constants from 'expo-constants';
+
+// This phone's own build of the app (E10-8), read from app.json. Compared
+// against the server's minimum accepted version to decide whether syncing
+// should pause.
+export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
+
 // Where the CoreChain server lives. The phone talks to it only to sign in and,
 // from Sprint 4 on, to sync; everything else works with no signal.
 //

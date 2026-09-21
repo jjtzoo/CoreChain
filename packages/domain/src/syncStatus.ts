@@ -6,6 +6,8 @@
 export type SyncFacts = {
   /** The session may sync (see sessionStatus). */
   canSync: boolean;
+  /** The app is below the oldest version the server still accepts (see versionStatus, E10-8). */
+  outdated: boolean;
   /** Connected to the sync service right now. */
   connected: boolean;
   connecting: boolean;
@@ -49,6 +51,14 @@ const changes = (count: number) =>
 
 export function syncSummary(facts: SyncFacts, now: Date): SyncSummary {
   if (!facts.canSync) {
+    if (facts.outdated) {
+      return {
+        tone: "off",
+        title: "Update CoreChain to keep syncing",
+        detail:
+          "Your data is safe on this phone and keeps saving here. Update the app to send it to the server.",
+      };
+    }
     return {
       tone: "off",
       title: "Not syncing",

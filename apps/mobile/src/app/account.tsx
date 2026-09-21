@@ -5,6 +5,7 @@ import {
   photoBackupSummary,
   sessionMessage,
   toUserRole,
+  versionMessage,
   wipeWarning,
   type PhotoBackupCounts,
   type Project,
@@ -80,7 +81,7 @@ export default function AccountScreen() {
     applyThemePreference(next);
     void saveThemePreference(next);
   }
-  const { summary, photoBackupVersion, backUpPhotosNow } = useSync();
+  const { summary, version, photoBackupVersion, backUpPhotosNow } = useSync();
   const [photoCounts, setPhotoCounts] = useState<PhotoBackupCounts | null>(
     null,
   );
@@ -257,6 +258,7 @@ export default function AccountScreen() {
   }
 
   const message = sessionMessage(health);
+  const updateMessage = versionMessage(version);
   const photoSummary = photoCounts
     ? photoBackupSummary(photoCounts, { wifiOnly, onWifi })
     : null;
@@ -294,6 +296,10 @@ export default function AccountScreen() {
             </View>
           </Card>
         )}
+
+        {updateMessage ? (
+          <AlertRow tone="warning" message={updateMessage} />
+        ) : null}
 
         {summary ? (
           <Card style={styles.status}>

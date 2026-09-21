@@ -10,6 +10,7 @@ const NOW = new Date("2026-09-20T10:00:00.000Z");
 
 const settled: SyncFacts = {
   canSync: true,
+  outdated: false,
   connected: true,
   connecting: false,
   uploading: false,
@@ -84,7 +85,19 @@ describe("syncSummary", () => {
   });
 
   it("says plainly when the sign-in has run out", () => {
-    expect(syncSummary({ ...settled, canSync: false }, NOW).tone).toBe("off");
+    const summary = syncSummary({ ...settled, canSync: false }, NOW);
+    expect(summary.tone).toBe("off");
+    expect(summary.title).toBe("Not syncing");
+  });
+
+  it("tells the geologist to update when the app is too old to sync", () => {
+    const summary = syncSummary(
+      { ...settled, canSync: false, outdated: true },
+      NOW,
+    );
+    expect(summary.tone).toBe("off");
+    expect(summary.title).toBe("Update CoreChain to keep syncing");
+    expect(summary.detail).toContain("safe on this phone");
   });
 });
 
