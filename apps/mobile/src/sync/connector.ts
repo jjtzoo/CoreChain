@@ -29,6 +29,8 @@ type WireResult = {
   status: 'applied' | 'duplicate' | 'conflict' | 'rejected';
   reason?: string;
   detail?: string;
+  /** For a conflict: the server's current values for the changed columns. */
+  serverValues?: Record<string, unknown>;
 };
 
 function toWireOperation(entry: CrudEntry): WireOperation {
@@ -72,14 +74,18 @@ export class CoreChainConnector implements PowerSyncBackendConnector {
       const results = ops.length > 0 ? await this.send(ops) : [];
       // Every change is answered, so the queue always moves on. One the server
       // cannot take is kept on the phone and reported, never retried forever.
-      for (const result of results) {
+      for (const [index, result] of results.entries()) {
         if (result.status === 'rejected' || result.status === 'conflict') {
+          const conflict = result.status === 'conflict';
           await recordIssue({
             tableName: result.table,
             recordId: result.id,
             status: result.status,
             reason: result.reason,
             detail: result.detail,
+            // A conflict keeps both versions so the person can choose (E8-5).
+            mine: conflict ? ops[index]?.data : undefined,
+            theirs: conflict ? result.serverValues : undefined,
           });
         }
       }

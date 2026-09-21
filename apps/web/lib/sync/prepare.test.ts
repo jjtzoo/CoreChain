@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { coerceValue } from "./coerce";
 import {
+  currentValuesStatement,
   insertStatement,
   matchStatement,
   prepareOperation,
@@ -333,6 +334,19 @@ describe("statements", () => {
       '"version" IS NOT DISTINCT FROM $4::integer',
     );
     expect(statement.params).toEqual([ID, "org-1", null, 2]);
+  });
+
+  it("reads back the server's values for the columns a change touched, for one organization", () => {
+    const statement = currentValuesStatement(
+      SYNC_TABLES.core_boxes,
+      ID,
+      ["note", "version"],
+      "org-1",
+    );
+    expect(statement.sql).toBe(
+      'SELECT "note", "version" FROM "core_boxes" WHERE "id" = $1::uuid AND "organization_id" = $2',
+    );
+    expect(statement.params).toEqual([ID, "org-1"]);
   });
 
   it("builds a parameterised insert that ignores a replay", () => {

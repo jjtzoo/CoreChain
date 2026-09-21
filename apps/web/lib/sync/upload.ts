@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { isUuid } from "./coerce";
 import {
+  currentValuesStatement,
   insertStatement,
   matchStatement,
   prepareOperation,
@@ -26,6 +27,8 @@ export type OpResult = {
   status: OpStatus;
   reason?: string;
   detail?: string;
+  /** For a conflict: what the server holds now for the columns that changed. */
+  serverValues?: Record<string, unknown>;
 };
 
 export type UploadOutcome =
@@ -237,7 +240,33 @@ async function applyPatch(
     table: spec.name,
     status: "conflict",
     reason: "newer-version-on-server",
+    ...(await serverValuesOf(tx, spec, id, values, ctx.orgId)),
   };
+}
+
+/** What the server holds now for the changed columns, or nothing if it cannot be read. */
+async function serverValuesOf(
+  tx: Tx,
+  spec: Parameters<typeof currentValuesStatement>[0],
+  id: string,
+  values: Record<string, unknown>,
+  orgId: string,
+): Promise<{ serverValues?: Record<string, unknown> }> {
+  try {
+    const statement = currentValuesStatement(
+      spec,
+      id,
+      Object.keys(values),
+      orgId,
+    );
+    const rows = await tx.$queryRawUnsafe<Record<string, unknown>[]>(
+      statement.sql,
+      ...statement.params,
+    );
+    return rows[0] ? { serverValues: rows[0] } : {};
+  } catch {
+    return {};
+  }
 }
 
 export async function applyUpload(

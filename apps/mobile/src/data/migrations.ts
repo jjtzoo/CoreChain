@@ -380,4 +380,13 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // E8-5: a conflict keeps both versions so the person can choose between
+    // them. Local only, like the rest of sync_issues.
+    version: 11,
+    commands: [
+      ['ALTER TABLE sync_issues ADD COLUMN mine TEXT'],
+      ['ALTER TABLE sync_issues ADD COLUMN theirs TEXT'],
+    ],
+  },
 ];

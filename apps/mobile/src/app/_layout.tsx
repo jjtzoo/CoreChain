@@ -96,6 +96,7 @@ function AppStack() {
         />
         <Stack.Screen name="account" options={{ title: 'Account' }} />
         <Stack.Screen name="work" options={{ title: 'My work' }} />
+        <Stack.Screen name="conflicts" options={{ title: 'Review changes' }} />
         <Stack.Screen
           name="feedback"
           options={{ title: 'Send feedback', presentation: 'modal' }}

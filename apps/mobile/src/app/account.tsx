@@ -5,7 +5,7 @@ import {
   toUserRole,
   wipeWarning,
 } from '@corechain/domain';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import {
   canResend,
   listOpenIssues,
   resendIssues,
+  reviewable,
   type SyncIssue,
 } from '@/sync/issues';
 import { useFocusReload } from '@/hooks/use-focus-reload';
@@ -232,6 +233,14 @@ export default function AccountScreen() {
                 ) : null}
               </View>
             ))}
+            {issues.some(reviewable) ? (
+              <PrimaryButton
+                label="Review and choose"
+                icon="call-split"
+                variant="secondary"
+                onPress={() => router.push('/conflicts' as Href)}
+              />
+            ) : null}
             {issues.some(canResend) ? (
               <PrimaryButton
                 label="Send again"

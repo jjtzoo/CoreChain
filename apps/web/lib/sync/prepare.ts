@@ -161,6 +161,23 @@ export function updateStatement(
 }
 
 /**
+ * The server's current values for the columns a change touched, so a phone whose
+ * change conflicted can show both versions side by side (E8-5).
+ */
+export function currentValuesStatement(
+  spec: TableSpec,
+  id: string,
+  names: readonly string[],
+  organizationId: string,
+): Statement {
+  const columns = names.map((name) => `"${name}"`).join(", ");
+  return {
+    sql: `SELECT ${columns} FROM "${spec.name}" WHERE "id" = $1::uuid AND "organization_id" = $2`,
+    params: [id, organizationId],
+  };
+}
+
+/**
  * Does the row already hold exactly these values? This tells a replay of the
  * same change (harmless) from a different change with the same version number
  * (two phones editing one record offline: a conflict, never a silent overwrite).
