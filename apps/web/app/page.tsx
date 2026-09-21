@@ -47,7 +47,6 @@ const chain = [
     n: "05",
     title: "Custody",
     text: "Every hand-over recorded and never edited, through dispatch to the laboratory.",
-    tag: "In development",
     icon: <path d="M4 12h18l-4-5M30 22H12l4 5" />,
   },
 ] as const;
@@ -79,20 +78,20 @@ const status = [
   {
     stage: "Field capture",
     what: "Holes, boxes, runs, logging, photographs, samples and QC, export to CSV",
-    state: "Available in the pilot build",
+    state: "Working in development testing",
     tone: "now",
   },
   {
     stage: "Accounts and backup",
-    what: "Sign-in, encrypted storage, cloud backup and sync between devices",
-    state: "Rolling out",
-    tone: "soon",
+    what: "Sign-in, encrypted storage, and cloud backup and sync of records and photos",
+    state: "Working in development testing",
+    tone: "now",
   },
   {
     stage: "Custody and dispatch",
-    what: "Recorded hand-overs, dispatch batches and sheets",
-    state: "Next",
-    tone: "soon",
+    what: "Recorded hand-overs, dispatch batches, and PDF or CSV dispatch sheets",
+    state: "Working in development testing",
+    tone: "now",
   },
   {
     stage: "Team workspace",
@@ -139,14 +138,14 @@ export default function Home() {
         <div className="lp-wrap lp-hero">
           <div>
             <p className="lp-kicker">
-              Core logging and sample custody for exploration teams
+              Core logging and sample custody for geology and mining teams
             </p>
             <h1>Core logging you can defend.</h1>
             <p className="lp-lede">
-              CoreChain is an offline-first field app and team workspace. Log,
-              photograph and sample core at the rig, keep the chain of custody
-              to the laboratory, and hold every record to its depth, its author
-              and its version.
+              CoreChain is an offline-first field app, with a team workspace to
+              follow. Log, photograph and sample core at the rig, keep the chain
+              of custody to the laboratory, and hold every record to its depth,
+              its author and its version.
             </p>
             <div className="lp-cta">
               <a className="lp-btn lp-btn-solid" href="#pilot">
@@ -251,12 +250,7 @@ export default function Home() {
                   >
                     {step.icon}
                   </svg>
-                  <h3>
-                    {step.title}
-                    {"tag" in step ? (
-                      <em className="lp-tag">{step.tag}</em>
-                    ) : null}
-                  </h3>
+                  <h3>{step.title}</h3>
                   <p>{step.text}</p>
                 </li>
               ))}
@@ -334,8 +328,8 @@ export default function Home() {
             <div className="lp-head">
               <h2>Where the pilot stands.</h2>
               <p>
-                We are building with a small group of exploration teams. This is
-                what works today and what is coming.
+                CoreChain is in development testing and has not been released
+                yet. This is what works in testing today and what is coming.
               </p>
             </div>
             <div className="lp-table-wrap">
@@ -369,9 +363,9 @@ export default function Home() {
               <div>
                 <h2>Join the pilot.</h2>
                 <p>
-                  The pilot is by invitation, with a small number of exploration
-                  teams. Tell us about your programme and we will set up
-                  accounts for your team.
+                  Pilot access is by invitation and starts with a small number
+                  of teams. Tell us about your programme and we will reply about
+                  setting up accounts for your team.
                 </p>
               </div>
               <div>
@@ -394,7 +388,7 @@ export default function Home() {
             width={110}
             height={31}
           />
-          <span>Traceability for exploration workflows</span>
+          <span>Traceability for geology and mining teams</span>
         </div>
       </footer>
     </div>
