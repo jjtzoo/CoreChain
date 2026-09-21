@@ -3,9 +3,12 @@ import {
   FEEDBACK_CATEGORY_LABELS,
   FEEDBACK_STATUSES,
   FEEDBACK_STATUS_LABELS,
+  ROLE_LABELS,
+  USER_ROLES,
   countBy,
   isFeedbackCategory,
   isFeedbackStatus,
+  isUserRole,
 } from "@corechain/domain";
 import type { Route } from "next";
 import Link from "next/link";
@@ -13,12 +16,19 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { FeedbackItem, type FeedbackRow } from "./feedback-item";
 
-type Search = { category?: string; status?: string };
+type Search = {
+  category?: string;
+  status?: string;
+  tier?: string;
+  appVersion?: string;
+};
 
 function href(search: Search): Route {
   const params = new URLSearchParams();
   if (search.category) params.set("category", search.category);
   if (search.status) params.set("status", search.status);
+  if (search.tier) params.set("tier", search.tier);
+  if (search.appVersion) params.set("appVersion", search.appVersion);
   const query = params.toString();
   return (query ? `/admin/feedback?${query}` : "/admin/feedback") as Route;
 }
@@ -32,18 +42,22 @@ export default async function FeedbackPage({
   const raw = await searchParams;
   const category = isFeedbackCategory(raw.category) ? raw.category : undefined;
   const status = isFeedbackStatus(raw.status) ? raw.status : undefined;
+  const tier = isUserRole(raw.tier) ? raw.tier : undefined;
+  const appVersion = raw.appVersion || undefined;
 
   const [rows, all] = await Promise.all([
     prisma.feedback.findMany({
       where: {
         ...(category ? { category } : {}),
         ...(status ? { status } : {}),
+        ...(tier ? { tier } : {}),
+        ...(appVersion ? { appVersion } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
     prisma.feedback.findMany({
-      select: { status: true, category: true, screen: true },
+      select: { status: true, category: true, screen: true, tier: true, appVersion: true },
     }),
   ]);
 
@@ -77,6 +91,13 @@ export default async function FeedbackPage({
     all.filter((row) => row.category === "bug"),
     (row) => row.screen,
   ).slice(0, 5);
+  const appVersions = [
+    ...new Set(
+      all
+        .map((row) => row.appVersion)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
   return (
     <>
@@ -125,7 +146,7 @@ export default async function FeedbackPage({
         <div className="fb-filter-group">
           <Link
             className={!category ? "fb-chip is-active" : "fb-chip"}
-            href={href({ status })}
+            href={href({ status, tier, appVersion })}
           >
             All kinds
           </Link>
@@ -133,7 +154,7 @@ export default async function FeedbackPage({
             <Link
               key={value}
               className={category === value ? "fb-chip is-active" : "fb-chip"}
-              href={href({ category: value, status })}
+              href={href({ category: value, status, tier, appVersion })}
             >
               {FEEDBACK_CATEGORY_LABELS[value]}
             </Link>
@@ -142,7 +163,7 @@ export default async function FeedbackPage({
         <div className="fb-filter-group">
           <Link
             className={!status ? "fb-chip is-active" : "fb-chip"}
-            href={href({ category })}
+            href={href({ category, tier, appVersion })}
           >
             Any status
           </Link>
@@ -150,12 +171,48 @@ export default async function FeedbackPage({
             <Link
               key={value}
               className={status === value ? "fb-chip is-active" : "fb-chip"}
-              href={href({ category, status: value })}
+              href={href({ category, status: value, tier, appVersion })}
             >
               {FEEDBACK_STATUS_LABELS[value]}
             </Link>
           ))}
         </div>
+        <div className="fb-filter-group">
+          <Link
+            className={!tier ? "fb-chip is-active" : "fb-chip"}
+            href={href({ category, status, appVersion })}
+          >
+            Any tier
+          </Link>
+          {USER_ROLES.map((value) => (
+            <Link
+              key={value}
+              className={tier === value ? "fb-chip is-active" : "fb-chip"}
+              href={href({ category, status, tier: value, appVersion })}
+            >
+              {ROLE_LABELS[value]}
+            </Link>
+          ))}
+        </div>
+        {appVersions.length > 0 ? (
+          <div className="fb-filter-group">
+            <Link
+              className={!appVersion ? "fb-chip is-active" : "fb-chip"}
+              href={href({ category, status, tier })}
+            >
+              Any version
+            </Link>
+            {appVersions.map((value) => (
+              <Link
+                key={value}
+                className={appVersion === value ? "fb-chip is-active" : "fb-chip"}
+                href={href({ category, status, tier, appVersion: value })}
+              >
+                v{value}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {items.length === 0 ? (
