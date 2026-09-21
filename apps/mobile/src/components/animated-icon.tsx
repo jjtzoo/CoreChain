@@ -8,6 +8,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -17,9 +18,12 @@ import { Brand } from '@/constants/theme';
 /** Must match `imageWidth` for expo-splash-screen in app.json, so the hand-off is seamless. */
 const SPLASH_IMAGE_SIZE = 160;
 const FADE_MS = 600;
-const PULSE_MS = 1500;
-/** The glow always shows for at least this long, so it never flickers past. */
-const MIN_SHOWN_MS = 900;
+// One blink: the glow brightens, dims, then rests a moment before the next.
+const BLINK_UP_MS = 380;
+const BLINK_DOWN_MS = 380;
+const BLINK_REST_MS = 260;
+/** At least one full blink is always seen before the overlay can fade away. */
+const MIN_SHOWN_MS = 1100;
 /** If the app is somehow never "ready", the overlay still leaves after this. */
 const MAX_SHOWN_MS = 8000;
 
@@ -46,16 +50,26 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   const [visible, setVisible] = useState(true);
   const startedAt = useRef(0);
 
-  const pulse = useSharedValue(0);
+  const pulse = useSharedValue(1);
   const opacity = useSharedValue(1);
 
   // The glow starts when the overlay appears.
   useEffect(() => {
     startedAt.current = Date.now();
     pulse.value = withRepeat(
-      withTiming(1, { duration: PULSE_MS, easing: Easing.inOut(Easing.sin) }),
+      withSequence(
+        withTiming(1, {
+          duration: BLINK_UP_MS,
+          easing: Easing.out(Easing.quad),
+        }),
+        withTiming(0, {
+          duration: BLINK_DOWN_MS,
+          easing: Easing.in(Easing.quad),
+        }),
+        withTiming(0, { duration: BLINK_REST_MS }),
+      ),
       -1,
-      true,
+      false,
     );
   }, [pulse]);
 
@@ -86,8 +100,8 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
 
   const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const symbolStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [0.88, 1]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [1, 1.04]) }],
+    opacity: interpolate(pulse.value, [0, 1], [0.3, 1]),
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.97, 1.05]) }],
   }));
 
   if (!visible) return null;
@@ -136,8 +150,8 @@ function GlowRing({
   pulse: SharedValue<number>;
 }) {
   const style = useAnimatedStyle(() => ({
-    opacity: strength * interpolate(pulse.value, [0, 1], [0.35, 1.5]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.9, 1.08]) }],
+    opacity: strength * interpolate(pulse.value, [0, 1], [0, 2.6]),
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.85, 1.12]) }],
   }));
   return (
     <Animated.View
