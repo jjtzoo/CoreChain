@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Sentry from '@sentry/react-native';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,11 +14,13 @@ import { BrandLockup } from '@/components/brand-lockup';
 import { FeedbackHeaderButton } from '@/components/feedback-header-button';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { initSentry, useSentryScreenTracking } from '@/crash/sentry';
 import { GuideProvider } from '@/guide/guide-context';
 import { SyncProvider, useSync } from '@/sync/sync-context';
 import { applyThemePreference, loadThemePreference } from '@/theme/appearance';
 
 SplashScreen.preventAutoHideAsync();
+initSentry();
 
 /** Navigation colours taken from the app's own tokens, so headers match the screens. */
 function navigationTheme(scheme: 'light' | 'dark') {
@@ -244,8 +247,9 @@ function SplashGate() {
 // A drill-down stack (projects -> a project's drillholes -> one drillhole),
 // not a tab bar — the field workflow is a sequence of screens, not parallel
 // sections. See docs/product/corechain-mobile-mvp-scrum-plan.md, Sprint 1.
-export default function RootLayout() {
+function RootLayout() {
   const colorScheme = useColorScheme();
+  useSentryScreenTracking();
   useEffect(() => {
     void loadThemePreference().then(applyThemePreference);
   }, []);
@@ -268,3 +272,5 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

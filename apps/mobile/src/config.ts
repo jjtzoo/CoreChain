@@ -11,3 +11,9 @@ export const SERVER_URL = (
 export const POWERSYNC_URL =
   process.env.EXPO_PUBLIC_POWERSYNC_URL ??
   'https://6aaf4b9902481fb31b97fabf.powersync.journeyapps.com';
+
+// Where crash and error reports go (E10-3). A Sentry DSN is not a secret —
+// it is meant to ship inside client apps — so it is safe to default here.
+export const SENTRY_DSN =
+  process.env.EXPO_PUBLIC_SENTRY_DSN ??
+  'https://674afa3534426644d17effdd3f648adf@o4512125496983552.ingest.us.sentry.io/4512125505568768';
