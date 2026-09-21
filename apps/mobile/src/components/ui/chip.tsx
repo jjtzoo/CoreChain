@@ -6,7 +6,11 @@ import { useTheme } from '@/hooks/use-theme';
 
 /**
  * One option in a row of single-select chips. Selected = solid accent fill
- * with a bold label, so the choice stays obvious in direct sunlight.
+ * with inverted text, which stays obvious in direct sunlight.
+ *
+ * The label keeps the same weight whether or not the chip is selected. Android
+ * measured a bold label as if it were regular, so a chip that turned bold when
+ * chosen cut its own text short ("Wi-Fi only" showed as "Wi-Fi").
  */
 export function Chip({
   label,
@@ -34,7 +38,7 @@ export function Chip({
         },
       ]}>
       <ThemedText
-        type={selected ? 'smallBold' : 'small'}
+        type="small"
         style={selected ? { color: theme.onAccent } : undefined}>
         {label}
       </ThemedText>

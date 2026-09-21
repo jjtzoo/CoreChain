@@ -21,6 +21,12 @@ import { isOnWifi, loadWifiOnly } from './photoBackupSettings';
 // A few at a time keeps one run short on a weak connection.
 const PER_RUN = 5;
 
+// One upload that gets no answer is given up on and tried again later. Without
+// this, a request left hanging when the phone moves between mobile data and
+// Wi-Fi would hold every later pass behind it. Long enough for a photo over a
+// weak connection.
+const UPLOAD_TIMEOUT_MS = 90_000;
+
 export type BackupRun = {
   /** How many photos changed state (sent, failed, or found to have no file). */
   changed: number;
@@ -70,6 +76,8 @@ async function run(
 
     let status: number | null = null;
     let code: string | null = null;
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), UPLOAD_TIMEOUT_MS);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const response = await fetch(
@@ -78,6 +86,7 @@ async function run(
           method: 'PUT',
           headers: { Cookie: cookie, 'Content-Type': 'image/jpeg' },
           body: bytes,
+          signal: abort.signal,
         },
       );
       status = response.status;
@@ -90,7 +99,10 @@ async function run(
           )?.error ?? null;
       }
     } catch {
-      // No answer: no signal or a dropped connection. Not the photo's fault.
+      // No answer: no signal, a dropped connection or a timeout. Not the
+      // photo's fault.
+    } finally {
+      clearTimeout(timer);
     }
 
     const outcome = classifyUploadResponse(status, code);
