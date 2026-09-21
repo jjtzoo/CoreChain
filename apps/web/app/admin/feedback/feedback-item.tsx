@@ -24,6 +24,7 @@ export type FeedbackRow = {
   message: string;
   status: string;
   note: string | null;
+  hasScreenshot: boolean;
   createdAt: string;
 };
 
@@ -71,6 +72,16 @@ export function FeedbackItem({ item }: { item: FeedbackRow }) {
       </div>
 
       <p className="fb-message">{item.message}</p>
+
+      {item.hasScreenshot ? (
+        // A private, cookie-authenticated route; next/image can't proxy that.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="fb-screenshot"
+          src={`/api/feedback/${item.id}/screenshot`}
+          alt={`Screenshot from ${item.who}'s message`}
+        />
+      ) : null}
 
       <p className="fb-context fb-muted">
         {[

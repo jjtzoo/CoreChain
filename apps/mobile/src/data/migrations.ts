@@ -407,4 +407,32 @@ export const MIGRATIONS: readonly Migration[] = [
       ],
     ],
   },
+  {
+    // Sprint 6, E10-1: the first-run guide's own progress, one row per tier
+    // that has a guide (only the field geologist today). Local only, never
+    // synced — replaying the guide never touches server data.
+    version: 13,
+    commands: [
+      [
+        `CREATE TABLE guide_progress (
+          guide_key TEXT PRIMARY KEY NOT NULL,
+          practice_project_id TEXT,
+          current_step TEXT,
+          started_at TEXT NOT NULL,
+          completed_at TEXT,
+          dismissed_at TEXT
+        )`,
+      ],
+    ],
+  },
+  {
+    // Sprint 6, E10-2: a screenshot of the screen a message was sent from, kept
+    // on the phone until it has been offered to the server once (best-effort —
+    // unlike the message itself, a screenshot that fails to upload is not
+    // retried, since it is an optional extra, never the report itself).
+    version: 14,
+    commands: [
+      ['ALTER TABLE feedback_outbox ADD COLUMN screenshot_uri TEXT'],
+    ],
+  },
 ];

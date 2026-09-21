@@ -14,12 +14,14 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Radius, Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { listIntervalRangesByProject } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { useTheme } from '@/hooks/use-theme';
@@ -41,6 +43,7 @@ export default function ProjectDetailScreen() {
     new Map(),
   );
   const [query, setQuery] = useState('');
+  const guide = useGuideStep('open-hole-list', projectId ?? null);
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
@@ -122,7 +125,12 @@ export default function ProjectDetailScreen() {
         <PrimaryButton
           label="New drillhole"
           icon="plus"
-          onPress={() => router.push(`/projects/${projectId}/drillholes/new`)}
+          onPress={() => {
+            void (async () => {
+              if ('step' in guide) await guide.advance();
+              router.push(`/projects/${projectId}/drillholes/new`);
+            })();
+          }}
         />
 
         <View style={styles.section}>
@@ -195,6 +203,15 @@ export default function ProjectDetailScreen() {
           )}
         </View>
       </ScrollView>
+      {'step' in guide && guide.visible ? (
+        <CoachmarkOverlay
+          step={guide.step}
+          stepNumber={guide.stepNumber}
+          totalSteps={guide.totalSteps}
+          onNext={guide.hide}
+          onSkip={() => void guide.skip()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

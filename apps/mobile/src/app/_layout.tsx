@@ -10,8 +10,10 @@ import { SessionProvider, useSession } from '@/auth/session-context';
 import { AccountButton } from '@/components/account-button';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { BrandLockup } from '@/components/brand-lockup';
+import { FeedbackHeaderButton } from '@/components/feedback-header-button';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { GuideProvider } from '@/guide/guide-context';
 import { SyncProvider, useSync } from '@/sync/sync-context';
 import { applyThemePreference, loadThemePreference } from '@/theme/appearance';
 
@@ -75,12 +77,22 @@ function AppStack() {
   if (signedIn && preparation !== 'ready') {
     return <OpeningData failed={preparation === 'failed'} />;
   }
+  const stack = <AppStackScreens signedIn={signedIn} />;
+  // The guide only applies once signed in, and it opens the local database
+  // (lazily, like every repository) — so it stays out of the sign-in screen.
+  return signedIn ? <GuideProvider>{stack}</GuideProvider> : stack;
+}
+
+function AppStackScreens({ signedIn }: { signedIn: boolean }) {
   return (
     <Stack
       screenOptions={{
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: '700' },
         headerBackButtonDisplayMode: 'minimal',
+        // E10-2: a feedback entry point on every screen's header, not only
+        // Home and Account. The two screens below override or suppress it.
+        headerRight: () => <FeedbackHeaderButton />,
       }}>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
@@ -91,7 +103,12 @@ function AppStack() {
           options={{
             title: 'CoreChain',
             headerTitle: () => <BrandLockup height={28} />,
-            headerRight: () => <AccountButton />,
+            headerRight: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
+                <FeedbackHeaderButton />
+                <AccountButton />
+              </View>
+            ),
           }}
         />
         <Stack.Screen name="account" options={{ title: 'Account' }} />
@@ -99,7 +116,11 @@ function AppStack() {
         <Stack.Screen name="conflicts" options={{ title: 'Review changes' }} />
         <Stack.Screen
           name="feedback"
-          options={{ title: 'Send feedback', presentation: 'modal' }}
+          options={{
+            title: 'Send feedback',
+            presentation: 'modal',
+            headerRight: () => null,
+          }}
         />
         <Stack.Screen
           name="projects/new"

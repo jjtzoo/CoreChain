@@ -11,9 +11,10 @@ import {
 } from '@corechain/domain';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { toUserRole } from '@corechain/domain';
 import { useSession } from '@/auth/session-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { SyncStatusLine } from '@/components/sync-status';
@@ -30,8 +31,10 @@ import {
   getMostRecentDrillhole,
   listDrillholes,
 } from '@/data/drillholesRepository';
+import { dismissGuide, startGuide } from '@/data/guideRepository';
+import { useGuide } from '@/guide/guide-context';
 import { listIntervalRangesByProject } from '@/data/intervalsRepository';
-import { listProjects } from '@/data/projectsRepository';
+import { createPracticeProject, listProjects } from '@/data/projectsRepository';
 import { loadWorkInput } from '@/data/workRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
@@ -83,12 +86,42 @@ async function summarise(project: Project): Promise<ProjectSummary> {
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { health } = useSession();
+  const { health, user } = useSession();
   const sessionNote = health ? sessionMessage(health) : null;
   const [summaries, setSummaries] = useState<ProjectSummary[] | null>(null);
   const [recent, setRecent] = useState<Recent | null>(null);
   const [today, setToday] = useState<WorkSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // E10-1: the first-run guide is only offered to the field geologist tier
+  // (the only tier with real screens built), and only until it has been
+  // started or dismissed once — after that, Account offers to start it again.
+  const { progress: guideProgress, loaded: guideLoaded, reload: reloadGuide } =
+    useGuide();
+  const [startingGuide, setStartingGuide] = useState(false);
+  const showGuidePrompt =
+    guideLoaded &&
+    toUserRole(user?.role) === 'geologist' &&
+    guideProgress === null;
+
+  async function startFieldGuide() {
+    setStartingGuide(true);
+    try {
+      const project = await createPracticeProject(
+        guideProgress?.practiceProjectId,
+      );
+      await startGuide(project.id, 'open-hole-list');
+      reloadGuide();
+      router.push(`/projects/${project.id}`);
+    } finally {
+      setStartingGuide(false);
+    }
+  }
+
+  async function dismissFieldGuide() {
+    await dismissGuide();
+    reloadGuide();
+  }
 
   const reload = useCallback(() => {
     (async () => {
@@ -141,6 +174,36 @@ export default function HomeScreen() {
           <ThemedText type="small" themeColor="danger">
             Couldn&apos;t load your projects: {error}
           </ThemedText>
+        ) : null}
+
+        {showGuidePrompt ? (
+          <Card style={styles.guideCard}>
+            <ThemedText type="caption" themeColor="brand">
+              NEW HERE
+            </ThemedText>
+            <ThemedText type="heading">
+              Try a short guided walkthrough
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              See the whole field flow — a hole, a box, a logged interval, a
+              sample and the export — on a practice project you can delete
+              afterwards. Works with no signal.
+            </ThemedText>
+            <View style={styles.guideActions}>
+              <PrimaryButton
+                label="Not now"
+                variant="secondary"
+                onPress={() => void dismissFieldGuide()}
+              />
+              <View style={styles.guideStart}>
+                <PrimaryButton
+                  label="Start guide"
+                  loading={startingGuide}
+                  onPress={() => void startFieldGuide()}
+                />
+              </View>
+            </View>
+          </Card>
         ) : null}
 
         {today ? (
@@ -293,28 +356,23 @@ export default function HomeScreen() {
             onPress={() => router.push('/projects/new')}
           />
         </View>
-
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: '/feedback', params: { from: 'Home' } })
-          }
-          accessibilityRole="button"
-          style={styles.feedbackLink}>
-          <Icon
-            name="message-text-outline"
-            size={18}
-            themeColor="textSecondary"
-          />
-          <ThemedText type="small" themeColor="textSecondary">
-            Something not right, or an idea? Send feedback
-          </ThemedText>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  guideCard: {
+    gap: Spacing.two,
+  },
+  guideActions: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  guideStart: {
+    flex: 1,
+  },
   todayTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -343,13 +401,6 @@ const styles = StyleSheet.create({
   hello: {
     gap: Spacing.one,
     paddingTop: Spacing.two,
-  },
-  feedbackLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.three,
   },
   section: {
     gap: Spacing.two + 2,

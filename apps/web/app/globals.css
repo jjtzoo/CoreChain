@@ -2713,6 +2713,13 @@ h3 {
   margin: 0;
 }
 
+.fb-screenshot {
+  max-width: 220px;
+  max-height: 400px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
 .fb-triage {
   display: flex;
   flex-wrap: wrap;

@@ -12,6 +12,7 @@ import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { Spacing } from '@/constants/theme';
 import { createBox, listBoxes } from '@/data/coreRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { parseRequiredNumber } from '@/utils/numbers';
 
@@ -21,8 +22,12 @@ import { parseRequiredNumber } from '@/utils/numbers';
  * tap ("Save anyway") — they don't block saving.
  */
 export default function NewCoreBoxScreen() {
-  const { drillholeId } = useLocalSearchParams<{ drillholeId: string }>();
+  const { projectId, drillholeId } = useLocalSearchParams<{
+    projectId: string;
+    drillholeId: string;
+  }>();
   const router = useRouter();
+  const guide = useGuideStep('add-box', projectId ?? null);
 
   const [boxNumber, setBoxNumber] = useState('');
   const [fromM, setFromM] = useState('');
@@ -79,6 +84,7 @@ export default function NewCoreBoxScreen() {
         Keyboard.dismiss();
         return;
       }
+      if ('step' in guide) await guide.advance();
       router.back();
     } finally {
       setSaving(false);

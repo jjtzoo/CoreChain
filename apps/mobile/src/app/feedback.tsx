@@ -12,9 +12,10 @@ import {
 } from '@corechain/domain';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSession } from '@/auth/session-context';
@@ -27,8 +28,10 @@ import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { enqueueFeedback } from '@/data/feedbackRepository';
+import { deleteScreenshot } from '@/feedback/screenshot';
 import {
   fetchMyFeedback,
   flushFeedback,
@@ -44,7 +47,11 @@ import {
 export default function FeedbackScreen() {
   const router = useRouter();
   const { cookie } = useSession();
-  const { from } = useLocalSearchParams<{ from?: string }>();
+  const { from, screenshot } = useLocalSearchParams<{
+    from?: string;
+    screenshot?: string;
+  }>();
+  const capturedScreenshot = screenshot ? screenshot : null;
 
   const [category, setCategory] = useState<FeedbackCategory | null>(null);
   const [message, setMessage] = useState('');
@@ -52,6 +59,28 @@ export default function FeedbackScreen() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [mine, setMine] = useState<SentFeedback[]>([]);
+  const [screenshotUri, setScreenshotUri] = useState(capturedScreenshot);
+  // Tracks whether the captured file was handed off to a queued message, so
+  // it isn't deleted out from under it when this screen unmounts.
+  const keptScreenshot = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (screenshotUri && !keptScreenshot.current) {
+        deleteScreenshot(screenshotUri);
+      }
+    };
+    // Only ever runs the capture this screen was opened with; screenshotUri
+    // changing (removed by the person) is handled where it's set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function removeScreenshot() {
+    if (screenshotUri) {
+      deleteScreenshot(screenshotUri);
+    }
+    setScreenshotUri(null);
+  }
 
   useEffect(() => {
     if (!cookie) return;
@@ -71,12 +100,16 @@ export default function FeedbackScreen() {
 
     setBusy(true);
     try {
+      if (screenshotUri) {
+        keptScreenshot.current = true;
+      }
       await enqueueFeedback({
         category,
         message,
         screen: from ?? null,
         appVersion: Constants.expoConfig?.version ?? null,
         device: Device.modelName ?? null,
+        screenshotUri,
       });
       const waiting = cookie ? await flushFeedback(cookie) : 1;
       setDone(
@@ -86,6 +119,7 @@ export default function FeedbackScreen() {
       );
       setMessage('');
       setCategory(null);
+      setScreenshotUri(null);
     } catch {
       setErrors({ message: 'Could not save that. Please try again.' });
     } finally {
@@ -149,6 +183,32 @@ export default function FeedbackScreen() {
           </ThemedText>
         </FormSection>
 
+        {screenshotUri ? (
+          <Card style={styles.screenshot}>
+            <Image
+              source={{ uri: screenshotUri }}
+              style={styles.screenshotThumb}
+              contentFit="cover"
+            />
+            <View style={styles.screenshotText}>
+              <ThemedText type="smallBold">Screenshot attached</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                A picture of the screen you came from.
+              </ThemedText>
+              <Pressable
+                onPress={removeScreenshot}
+                accessibilityRole="button"
+                accessibilityLabel="Remove screenshot"
+                style={styles.screenshotRemove}>
+                <Icon name="close" size={16} themeColor="textSecondary" />
+                <ThemedText type="small" themeColor="textSecondary">
+                  Remove
+                </ThemedText>
+              </Pressable>
+            </View>
+          </Card>
+        ) : null}
+
         {mine.length > 0 ? (
           <View style={styles.history}>
             <ThemedText type="caption" themeColor="textSecondary">
@@ -204,6 +264,27 @@ const styles = StyleSheet.create({
   message: {
     minHeight: 140,
     paddingTop: Spacing.two,
+  },
+  screenshot: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  screenshotThumb: {
+    width: 64,
+    height: 114,
+    borderRadius: Spacing.one,
+    backgroundColor: '#00000010',
+  },
+  screenshotText: {
+    flex: 1,
+    gap: Spacing.half,
+    justifyContent: 'center',
+  },
+  screenshotRemove: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    marginTop: Spacing.one,
   },
   history: {
     gap: Spacing.two,

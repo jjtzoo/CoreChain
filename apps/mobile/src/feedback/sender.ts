@@ -3,6 +3,7 @@ import {
   listPendingFeedback,
   markFeedbackSent,
 } from '@/data/feedbackRepository';
+import { deleteScreenshot, uploadScreenshot } from '@/feedback/screenshot';
 
 // Sends queued feedback to the server. Safe to call at any time and as often
 // as you like: it stops quietly when there is no signal or no sign-in, and each
@@ -37,6 +38,17 @@ export async function flushFeedback(cookie: string): Promise<number> {
       }
       if (response.ok || response.status === 400) {
         // Stored, already stored, or refused as invalid (retrying can't fix it).
+        if (response.ok && item.screenshotUri) {
+          const body = (await response.json().catch(() => null)) as {
+            id?: string;
+          } | null;
+          if (body?.id) {
+            await uploadScreenshot(cookie, body.id, item.screenshotUri);
+          }
+        }
+        if (item.screenshotUri) {
+          deleteScreenshot(item.screenshotUri);
+        }
         await markFeedbackSent(item.id);
       } else {
         break; // signed out (401), rate limited (429) or a server hiccup: keep it

@@ -1,5 +1,5 @@
 import type { ExportTable } from '@corechain/domain';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,8 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { Spacing } from '@/constants/theme';
 import { loadExportTables, shareTable } from '@/data/exportRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 
 /**
@@ -17,9 +19,17 @@ import { useFocusReload } from '@/hooks/use-focus-reload';
  */
 export default function ExportScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
+  const router = useRouter();
+  const guide = useGuideStep('export', projectId ?? null);
   const [tables, setTables] = useState<ExportTable[] | null>(null);
   const [sharing, setSharing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function finishGuide() {
+    if (!('step' in guide)) return;
+    await guide.advance();
+    router.push('/account');
+  }
 
   const load = useCallback(() => {
     loadExportTables(projectId)
@@ -81,6 +91,16 @@ export default function ExportScreen() {
           Dispatch sheets will be added when custody and dispatch land.
         </ThemedText>
       </ScrollView>
+      {'step' in guide && guide.visible ? (
+        <CoachmarkOverlay
+          step={guide.step}
+          stepNumber={guide.stepNumber}
+          totalSteps={guide.totalSteps}
+          nextLabel="Finish guide"
+          onNext={() => void finishGuide()}
+          onSkip={() => void guide.skip()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

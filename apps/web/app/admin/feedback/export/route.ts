@@ -34,6 +34,7 @@ export async function GET() {
     "status",
     "message",
     "note",
+    "has_screenshot",
   ];
   const lines = rows.map((row) =>
     [
@@ -49,6 +50,7 @@ export async function GET() {
       row.status,
       row.message,
       row.note,
+      row.storageKey !== null ? "yes" : "no",
     ]
       .map(cell)
       .join(","),

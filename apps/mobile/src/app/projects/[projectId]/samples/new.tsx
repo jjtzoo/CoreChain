@@ -20,6 +20,7 @@ import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
+import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { QcReminders } from '@/components/qc-reminders';
 import { ThemedText } from '@/components/themed-text';
 import { AlertRow } from '@/components/ui/alert-row';
@@ -33,6 +34,7 @@ import {
   listQcEvents,
   suggestNextSampleNumber,
 } from '@/data/samplesRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { parseOptionalNumber } from '@/utils/numbers';
 
 function capitalise(text: string): string {
@@ -71,6 +73,7 @@ export default function NewSampleScreen() {
   }>();
   const { projectId } = params;
   const router = useRouter();
+  const guide = useGuideStep('add-sample', projectId ?? null);
 
   const [project, setProject] = useState<Project | null>(null);
   const [holes, setHoles] = useState<FieldDrillhole[]>([]);
@@ -181,6 +184,7 @@ export default function NewSampleScreen() {
         setErrors(fieldErrors);
         return;
       }
+      if ('step' in guide) await guide.advance();
       router.back();
     } finally {
       setSaving(false);
@@ -370,6 +374,15 @@ export default function NewSampleScreen() {
           />
         </FormSection>
       </FormScrollView>
+      {'step' in guide && guide.visible ? (
+        <CoachmarkOverlay
+          step={guide.step}
+          stepNumber={guide.stepNumber}
+          totalSteps={guide.totalSteps}
+          onNext={guide.hide}
+          onSkip={() => void guide.skip()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

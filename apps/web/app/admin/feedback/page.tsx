@@ -66,6 +66,7 @@ export default async function FeedbackPage({
     message: row.message,
     status: row.status,
     note: row.note,
+    hasScreenshot: row.storageKey !== null,
     createdAt: row.createdAt.toISOString(),
   }));
 

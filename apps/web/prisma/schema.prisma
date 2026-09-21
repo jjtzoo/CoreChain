@@ -594,7 +594,9 @@ model AccessRequest {
 
 // E10-2 / E10-6: feedback sent by testers (phone or web). The admin triages it
 // on /admin/feedback. `client_id` is made on the phone so a message queued
-// offline and retried is stored once. Screenshots come later, with file storage.
+// offline and retried is stored once. A screenshot is optional and offered by
+// the phone only once it has this row's real id (see the screenshot route) —
+// `storage_key` stays null until (and unless) that upload lands.
 model Feedback {
   id         String   @id @default(uuid()) @db.Uuid
   clientId   String?  @unique @map("client_id") @db.Uuid
@@ -608,6 +610,7 @@ model Feedback {
   message    String
   status     String   @default("new") // new | seen | planned | done
   note       String? // the admin's note, which the tester can see later
+  storageKey String?  @map("storage_key") // the screenshot's file, if one was sent
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -31,6 +31,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ActionTile } from '@/components/ui/action-tile';
 import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
+import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { Icon } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { StatusPill } from '@/components/ui/status-pill';
@@ -44,6 +45,7 @@ import {
 import { listIntervals } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { listHoleSamples } from '@/data/samplesRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { statusLabel, statusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 
@@ -61,6 +63,8 @@ export default function DrillholeDetailScreen() {
     router.push(
       `/projects/${projectId}/drillholes/${drillholeId}${path}` as Href,
     );
+  const addBoxGuide = useGuideStep('add-box', projectId ?? null);
+  const logIntervalGuide = useGuideStep('log-interval', projectId ?? null);
 
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -367,6 +371,24 @@ export default function DrillholeDetailScreen() {
           />
         </Card>
       </FormScrollView>
+      {'step' in addBoxGuide && addBoxGuide.visible ? (
+        <CoachmarkOverlay
+          step={addBoxGuide.step}
+          stepNumber={addBoxGuide.stepNumber}
+          totalSteps={addBoxGuide.totalSteps}
+          onNext={addBoxGuide.hide}
+          onSkip={() => void addBoxGuide.skip()}
+        />
+      ) : null}
+      {'step' in logIntervalGuide && logIntervalGuide.visible ? (
+        <CoachmarkOverlay
+          step={logIntervalGuide.step}
+          stepNumber={logIntervalGuide.stepNumber}
+          totalSteps={logIntervalGuide.totalSteps}
+          onNext={logIntervalGuide.hide}
+          onSkip={() => void logIntervalGuide.skip()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

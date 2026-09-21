@@ -7,6 +7,7 @@ import {
   toUserRole,
   wipeWarning,
   type PhotoBackupCounts,
+  type Project,
 } from '@corechain/domain';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -25,6 +26,10 @@ import {
   type SyncIssue,
 } from '@/sync/issues';
 import { photoBackupStates } from '@/data/photoUploadsRepository';
+import { startGuide } from '@/data/guideRepository';
+import { createPracticeProject, deleteProject, getProject } from '@/data/projectsRepository';
+import { captureCurrentScreen } from '@/feedback/screenshot';
+import { useGuide } from '@/guide/guide-context';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 import {
   isOnWifi,
@@ -104,6 +109,60 @@ export default function AccountScreen() {
       setBackingUp(false);
     }
   }
+  // E10-1: the field-geologist first-run guide. Only that tier has one today.
+  const { progress: guideProgress, reload: reloadGuide } = useGuide();
+  const [practiceProject, setPracticeProject] = useState<Project | null>(
+    null,
+  );
+  const [startingGuide, setStartingGuide] = useState(false);
+  const [deletingPractice, setDeletingPractice] = useState(false);
+  const loadPracticeProject = useCallback(() => {
+    const id = guideProgress?.practiceProjectId ?? null;
+    if (!id) {
+      setPracticeProject(null);
+      return;
+    }
+    void getProject(id).then(setPracticeProject);
+  }, [guideProgress?.practiceProjectId]);
+  useFocusReload(loadPracticeProject);
+
+  async function startOrReplayGuide() {
+    setStartingGuide(true);
+    try {
+      const project = await createPracticeProject(
+        guideProgress?.practiceProjectId,
+      );
+      await startGuide(project.id, 'open-hole-list');
+      reloadGuide();
+      router.push(`/projects/${project.id}`);
+    } finally {
+      setStartingGuide(false);
+    }
+  }
+
+  function confirmDeletePracticeProject() {
+    if (!practiceProject) return;
+    Alert.alert(
+      'Delete practice project?',
+      'Its hole, boxes, log, samples and photos are removed from this phone. This does not affect any real project.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setDeletingPractice(true);
+            deleteProject(practiceProject.id)
+              .then(() => {
+                setPracticeProject(null);
+              })
+              .finally(() => setDeletingPractice(false));
+          },
+        },
+      ],
+    );
+  }
+
   const [issues, setIssues] = useState<SyncIssue[]>([]);
   const [removing, setRemoving] = useState(false);
   const [resending, setResending] = useState(false);
@@ -341,6 +400,51 @@ export default function AccountScreen() {
           </Card>
         ) : null}
 
+        {toUserRole(user.role) === 'geologist' ? (
+          <Card style={styles.issues}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              GUIDE
+            </ThemedText>
+            <View style={styles.personText}>
+              <ThemedText type="smallBold">
+                Field geologist walkthrough
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {guideProgress?.completedAt
+                  ? `Completed ${formatDate(guideProgress.completedAt)}`
+                  : 'Not completed yet'}
+              </ThemedText>
+            </View>
+            <PrimaryButton
+              label={guideProgress?.completedAt ? 'Replay guide' : 'Start guide'}
+              variant="secondary"
+              loading={startingGuide}
+              onPress={() => void startOrReplayGuide()}
+            />
+          </Card>
+        ) : null}
+
+        {practiceProject ? (
+          <Card style={styles.issues}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              PRACTICE PROJECT
+            </ThemedText>
+            <View style={styles.personText}>
+              <ThemedText type="smallBold">{practiceProject.name}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Made by the guide. Delete it once you are done practising.
+              </ThemedText>
+            </View>
+            <PrimaryButton
+              label="Delete practice project"
+              icon="trash-can-outline"
+              variant="danger"
+              loading={deletingPractice}
+              onPress={confirmDeletePracticeProject}
+            />
+          </Card>
+        ) : null}
+
         <Card style={styles.appearance}>
           <ChipSelect
             label="Appearance"
@@ -359,7 +463,13 @@ export default function AccountScreen() {
           icon="message-text-outline"
           variant="secondary"
           onPress={() =>
-            router.push({ pathname: '/feedback', params: { from: 'Account' } })
+            void (async () => {
+              const screenshot = await captureCurrentScreen();
+              router.push({
+                pathname: '/feedback',
+                params: { from: 'Account', screenshot: screenshot ?? '' },
+              });
+            })()
           }
         />
 

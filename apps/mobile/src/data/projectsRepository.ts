@@ -176,3 +176,74 @@ export async function updateProjectPhotoMaxMb(
     [photoMaxMb, nowIso(), id],
   );
 }
+
+const PRACTICE_PROJECT_NAME = 'Practice project';
+
+/**
+ * E10-1: the guide's own project — a real project, made the normal way.
+ * `previousPracticeProjectId` is deleted first (if it still exists), so
+ * starting or replaying the guide more than once never leaves an earlier
+ * practice project behind with nothing on Account pointing back at it.
+ */
+export async function createPracticeProject(
+  previousPracticeProjectId?: string | null,
+): Promise<Project> {
+  if (previousPracticeProjectId) {
+    await deleteProject(previousPracticeProjectId);
+  }
+  const result = await createProject({
+    name: PRACTICE_PROJECT_NAME,
+    coordinateSystem: 'WGS84',
+  });
+  if (result.outcome === 'invalid') {
+    // Unreachable: the practice project's own input always validates.
+    throw new Error('Could not create the practice project.');
+  }
+  return result.project;
+}
+
+/**
+ * E10-1: "Delete practice project". Soft-deletes the project and everything
+ * under it — every one of these tables already carries `deleted_at` for sync
+ * (D6-D8), so this needs no migration and no PowerSync grant. Custody events
+ * are append-only by design (never deleted, even here) and dispatches/samples
+ * reference them only by id, so they are left as they are; only the records a
+ * geologist can otherwise delete are soft-deleted.
+ */
+export async function deleteProject(id: string): Promise<void> {
+  const db = await getDatabase();
+  const timestamp = nowIso();
+  const softDelete = (table: string, whereSql: string, params: Scalar[]) =>
+    db.execute(
+      `UPDATE ${table} SET deleted_at = ?, updated_at = ?, version = version + 1
+       WHERE deleted_at IS NULL AND ${whereSql}`,
+      [timestamp, timestamp, ...params],
+    );
+
+  await softDelete(
+    'photos',
+    'drillhole_id IN (SELECT id FROM drillholes WHERE project_id = ?)',
+    [id],
+  );
+  await softDelete(
+    'log_intervals',
+    'drillhole_id IN (SELECT id FROM drillholes WHERE project_id = ?)',
+    [id],
+  );
+  await softDelete(
+    'core_runs',
+    'drillhole_id IN (SELECT id FROM drillholes WHERE project_id = ?)',
+    [id],
+  );
+  await softDelete(
+    'core_boxes',
+    'drillhole_id IN (SELECT id FROM drillholes WHERE project_id = ?)',
+    [id],
+  );
+  await softDelete('dispatch_samples', 'project_id = ?', [id]);
+  await softDelete('dispatches', 'project_id = ?', [id]);
+  await softDelete('samples', 'project_id = ?', [id]);
+  await softDelete('code_library', 'project_id = ?', [id]);
+  await softDelete('drillholes', 'project_id = ?', [id]);
+  await softDelete('projects', 'id = ?', [id]);
+}

@@ -27,6 +27,7 @@ import {
   loadDraft,
   saveDraft,
 } from '@/data/intervalsRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
 import { parseOptionalNumber, parseRequiredNumber } from '@/utils/numbers';
 
 type Form = {
@@ -72,6 +73,7 @@ export default function NewIntervalScreen() {
     drillholeId: string;
   }>();
   const router = useRouter();
+  const guide = useGuideStep('log-interval', projectId ?? null);
 
   const [form, setForm] = useState<Form>(EMPTY_FORM);
   const landmarks = useDepthLandmarks(drillholeId, form.fromM, 'interval');
@@ -201,6 +203,7 @@ export default function NewIntervalScreen() {
 
       saved.current = true;
       await clearDraft(drillholeId);
+      if ('step' in guide) await guide.advance();
       router.back();
     } finally {
       setSaving(false);

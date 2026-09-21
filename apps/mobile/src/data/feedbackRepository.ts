@@ -13,6 +13,8 @@ export type PendingFeedback = {
   screen: string | null;
   appVersion: string | null;
   device: string | null;
+  /** A local file URI, offered to the server once (best-effort) when sent. */
+  screenshotUri: string | null;
   createdAt: string;
 };
 
@@ -23,6 +25,7 @@ type Row = {
   screen: string | null;
   app_version: string | null;
   device: string | null;
+  screenshot_uri: string | null;
   created_at: string;
 };
 
@@ -32,12 +35,13 @@ export async function enqueueFeedback(input: {
   screen: string | null;
   appVersion: string | null;
   device: string | null;
+  screenshotUri: string | null;
 }): Promise<string> {
   const db = await getDatabase();
   const id = newId();
   await db.execute(
-    `INSERT INTO feedback_outbox (id, category, message, screen, app_version, device, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO feedback_outbox (id, category, message, screen, app_version, device, screenshot_uri, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.category,
@@ -45,6 +49,7 @@ export async function enqueueFeedback(input: {
       input.screen,
       input.appVersion,
       input.device,
+      input.screenshotUri,
       nowIso(),
     ],
   );
@@ -63,6 +68,7 @@ export async function listPendingFeedback(): Promise<PendingFeedback[]> {
     screen: row.screen,
     appVersion: row.app_version,
     device: row.device,
+    screenshotUri: row.screenshot_uri,
     createdAt: row.created_at,
   }));
 }

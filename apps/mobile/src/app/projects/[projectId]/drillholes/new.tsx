@@ -11,9 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
+import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { Spacing } from '@/constants/theme';
 import { createDrillhole } from '@/data/drillholesRepository';
 import { nowIso } from '@/data/ids';
+import { useGuideStep } from '@/guide/use-guide-step';
 
 function parseOptionalNumber(text: string): number | null {
   const trimmed = text.trim();
@@ -31,6 +33,7 @@ function parseOptionalNumber(text: string): number | null {
 export default function NewDrillholeScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const router = useRouter();
+  const guide = useGuideStep('new-drillhole', projectId ?? null);
 
   const [holeId, setHoleId] = useState('');
   const [plannedDepthM, setPlannedDepthM] = useState('');
@@ -110,6 +113,7 @@ export default function NewDrillholeScreen() {
         return;
       }
 
+      if ('step' in guide) await guide.advance();
       router.replace(
         `/projects/${projectId}/drillholes/${result.drillhole.id}`,
       );
@@ -222,6 +226,15 @@ export default function NewDrillholeScreen() {
           )}
         </FormSection>
       </FormScrollView>
+      {'step' in guide && guide.visible ? (
+        <CoachmarkOverlay
+          step={guide.step}
+          stepNumber={guide.stepNumber}
+          totalSteps={guide.totalSteps}
+          onNext={guide.hide}
+          onSkip={() => void guide.skip()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
