@@ -363,6 +363,9 @@ As a field geologist, I want photos to upload when I'm connected, so that they'r
 - Uploads happen separately from records; each photo shows its own pending/synced state.
 - Uploads resume after failures and don't block record sync.
 - Optional setting: sync photos only on Wi-Fi.
+- **Storage decision (2026-09-21):** photo files are kept in a private Vercel Blob store named `corechain-photos` (Washington region, free Hobby plan; nothing is reachable by link). Free-plan limits: 1 GB of storage (about 650 photos at 1.5 MB), 2,000 uploads a month, and if a limit is reached, uploads pause for up to 30 days without any charge. Fine for a small pilot; a paid plan is needed for the full field test. Before a paid pilot, check Vercel's terms on commercial use of the free plan.
+- **Server half built and deployed 2026-09-21:** `PUT /api/photos/{id}/file` accepts the image after the photo's record has synced (type, 4 MB limit, truncated-upload and ownership checks) and records where it is kept in the existing `photos.storage_key` column, so no database change was needed; `GET` returns it to the owning account only. Sending the same photo again replaces it. If storage is not connected the answer is a clear "storage-not-configured". Not yet exercised with a real upload.
+- **Phone half not built:** the local "sent / waiting" marker per photo, the background upload with retry, and the Wi-Fi-only option.
 
 ### E6 — Sampling
 
