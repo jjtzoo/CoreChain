@@ -1,6 +1,7 @@
 import { syncSummary, type SyncSummary } from '@corechain/domain';
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -13,6 +14,7 @@ import { useSession } from '@/auth/session-context';
 import { getSyncDatabase, queueAllLocalRowsForUpload } from '@/data/database';
 import { CoreChainConnector } from './connector';
 import { countOpenIssues } from './issues';
+import { backUpPhotos } from './photoUploader';
 import { getDataOwner, setDataOwner } from './owner';
 import { topUpSampleBlocks } from './sampleBlocks';
 import { wipeDevice } from './wipe';
@@ -33,6 +35,10 @@ type SyncContextValue = {
    * it changes, so downloaded work appears without leaving the screen.
    */
   dataVersion: number;
+  /** Goes up each time photo files are sent (or found unsendable). */
+  photoBackupVersion: number;
+  /** Sends every waiting photo now, for the person's "Back up now". */
+  backUpPhotosNow: () => Promise<void>;
 };
 
 const SyncContext = createContext<SyncContextValue | null>(null);
@@ -48,6 +54,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [failedFor, setFailedFor] = useState<string | null>(null);
   const [liveSummary, setSummary] = useState<SyncSummary | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
+  const [photoBackupVersion, setPhotoBackupVersion] = useState(0);
 
   const userId = user?.id ?? null;
   const canSync = health?.canSync ?? false;
@@ -58,6 +65,20 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     cookieRef.current = cookie;
   }, [cookie]);
+
+  const sendPhotos = useCallback(
+    async (ignoreDelay: boolean) => {
+      const cookieNow = cookieRef.current;
+      if (!canSync || !cookieNow) return;
+      const { changed } = await backUpPhotos(cookieNow, { ignoreDelay });
+      if (changed > 0) setPhotoBackupVersion((version) => version + 1);
+    },
+    [canSync],
+  );
+  const backUpPhotosNow = useCallback(
+    () => sendPhotos(true).catch(() => {}),
+    [sendPhotos],
+  );
 
   let preparation: Preparation = 'preparing';
   if (!userId) preparation = phase === 'loading' ? 'preparing' : 'ready';
@@ -122,9 +143,16 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         const status = sync.currentStatus;
         const syncStamp = status.lastSyncedAt?.getTime() ?? 0;
-        if (syncStamp !== lastSyncStamp) {
+        const justSynced = syncStamp !== lastSyncStamp;
+        if (justSynced) {
           lastSyncStamp = syncStamp;
           if (syncStamp) setDataVersion((version) => version + 1);
+        }
+        // Photo files go up after their records, and never hold a sync up. A
+        // sync that just finished may have delivered a record a photo was
+        // waiting on, so it sends them all; otherwise only the ones due.
+        if (canSync && status.connected && status.hasSynced) {
+          void sendPhotos(justSynced).catch(() => {});
         }
         // Everything sent and the first download done: the server knows the
         // projects as they are, so it can hand out sample numbers for them.
@@ -178,10 +206,17 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         .then((sync) => sync.disconnect())
         .catch(() => {});
     };
-  }, [preparation, userId, canSync]);
+  }, [preparation, userId, canSync, sendPhotos]);
 
   return (
-    <SyncContext.Provider value={{ preparation, summary, dataVersion }}>
+    <SyncContext.Provider
+      value={{
+        preparation,
+        summary,
+        dataVersion,
+        photoBackupVersion,
+        backUpPhotosNow,
+      }}>
       {children}
     </SyncContext.Provider>
   );

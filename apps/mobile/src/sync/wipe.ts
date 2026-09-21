@@ -3,13 +3,13 @@ import type { PhoneHoldings } from '@corechain/domain';
 import { getSyncDatabase, wipeSyncedData } from '@/data/database';
 import { listPendingFeedback } from '@/data/feedbackRepository';
 import { deleteAllPhotoFiles, photoFile } from '@/data/photoFiles';
-import { listPhotoFileNames } from '@/data/photosRepository';
+import { listUnbackedFileNames } from '@/data/photoUploadsRepository';
 import { countOpenIssues } from './issues';
 import { clearDataOwner } from './owner';
 
 // E1-5: taking a person's data off the phone, and telling them first what would
-// be lost. Photo image files are not backed up yet (E5-3), so every photo on the
-// phone counts as work that exists only here.
+// be lost. A photo's image file counts as work that exists only here until it has
+// been backed up (E5-3).
 
 /** What this phone holds that the server does not. */
 export async function phoneHoldings(): Promise<PhoneHoldings> {
@@ -18,7 +18,7 @@ export async function phoneHoldings(): Promise<PhoneHoldings> {
     sync.getUploadQueueStats(),
     countOpenIssues(),
     listPendingFeedback(),
-    listPhotoFileNames(),
+    listUnbackedFileNames(),
   ]);
   return {
     unsent: queue.count,

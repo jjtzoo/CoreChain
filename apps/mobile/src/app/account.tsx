@@ -1,9 +1,12 @@
 import {
   ROLE_LABELS,
+  countBackupStates,
   describeSyncIssue,
+  photoBackupSummary,
   sessionMessage,
   toUserRole,
   wipeWarning,
+  type PhotoBackupCounts,
 } from '@corechain/domain';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -21,7 +24,13 @@ import {
   reviewable,
   type SyncIssue,
 } from '@/sync/issues';
+import { photoBackupStates } from '@/data/photoUploadsRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import {
+  isOnWifi,
+  loadWifiOnly,
+  saveWifiOnly,
+} from '@/sync/photoBackupSettings';
 import { useSync } from '@/sync/sync-context';
 import { phoneHoldings, wipeDevice } from '@/sync/wipe';
 import { ThemedText } from '@/components/themed-text';
@@ -66,7 +75,35 @@ export default function AccountScreen() {
     applyThemePreference(next);
     void saveThemePreference(next);
   }
-  const { summary } = useSync();
+  const { summary, photoBackupVersion, backUpPhotosNow } = useSync();
+  const [photoCounts, setPhotoCounts] = useState<PhotoBackupCounts | null>(
+    null,
+  );
+  const [wifiOnly, setWifiOnly] = useState(false);
+  const [onWifi, setOnWifi] = useState<boolean | null>(null);
+  const [backingUp, setBackingUp] = useState(false);
+  const loadPhotoBackup = useCallback(() => {
+    void photoBackupVersion;
+    photoBackupStates()
+      .then((states) => setPhotoCounts(countBackupStates([...states.values()])))
+      .catch(() => {});
+    void loadWifiOnly().then(setWifiOnly);
+    void isOnWifi().then(setOnWifi);
+  }, [photoBackupVersion]);
+  useFocusReload(loadPhotoBackup);
+  function chooseWifiOnly(next: 'any' | 'wifi') {
+    setWifiOnly(next === 'wifi');
+    void saveWifiOnly(next === 'wifi');
+  }
+  async function backUpNow() {
+    setBackingUp(true);
+    try {
+      await backUpPhotosNow();
+      loadPhotoBackup();
+    } finally {
+      setBackingUp(false);
+    }
+  }
   const [issues, setIssues] = useState<SyncIssue[]>([]);
   const [removing, setRemoving] = useState(false);
   const [resending, setResending] = useState(false);
@@ -161,6 +198,9 @@ export default function AccountScreen() {
   }
 
   const message = sessionMessage(health);
+  const photoSummary = photoCounts
+    ? photoBackupSummary(photoCounts, { wifiOnly, onWifi })
+    : null;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -209,6 +249,54 @@ export default function AccountScreen() {
                 {summary.detail}
               </ThemedText>
             </View>
+          </Card>
+        ) : null}
+
+        {photoCounts && photoSummary ? (
+          <Card style={styles.issues}>
+            <View style={styles.status}>
+              <Icon
+                name={
+                  photoSummary.allSafe
+                    ? 'cloud-check-outline'
+                    : photoCounts.failed > 0
+                      ? 'cloud-alert-outline'
+                      : 'cloud-upload-outline'
+                }
+                size={24}
+                themeColor={
+                  photoCounts.failed > 0
+                    ? 'danger'
+                    : photoSummary.allSafe
+                      ? 'success'
+                      : 'warning'
+                }
+              />
+              <View style={styles.personText}>
+                <ThemedText type="smallBold">{photoSummary.title}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {photoSummary.detail}
+                </ThemedText>
+              </View>
+            </View>
+            <ChipSelect
+              label="Back up photos on"
+              options={['any', 'wifi'] as const}
+              value={wifiOnly ? 'wifi' : 'any'}
+              onChange={chooseWifiOnly}
+              formatOption={(option) =>
+                option === 'wifi' ? 'Wi-Fi only' : 'Any connection'
+              }
+            />
+            {photoCounts.waiting > 0 ? (
+              <PrimaryButton
+                label="Back up now"
+                icon="cloud-upload-outline"
+                variant="secondary"
+                loading={backingUp}
+                onPress={() => void backUpNow()}
+              />
+            ) : null}
           </Card>
         ) : null}
 

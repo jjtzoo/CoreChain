@@ -389,4 +389,22 @@ export const MIGRATIONS: readonly Migration[] = [
       ['ALTER TABLE sync_issues ADD COLUMN theirs TEXT'],
     ],
   },
+  {
+    // E5-3: where each photo's image file stands. A photo with no row here has
+    // not been tried yet. Local only: a photo's record syncs, its file goes up
+    // separately and this phone keeps the score.
+    version: 12,
+    commands: [
+      [
+        `CREATE TABLE photo_uploads (
+          photo_id TEXT PRIMARY KEY NOT NULL,
+          status TEXT NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0,
+          last_attempt_at TEXT,
+          last_error TEXT,
+          sent_at TEXT
+        )`,
+      ],
+    ],
+  },
 ];

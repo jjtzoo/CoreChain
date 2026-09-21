@@ -1,6 +1,8 @@
 import {
+  photoBackupLabel,
   photoLabel,
   type FieldPhoto,
+  type PhotoBackupState,
   type PhotoSubjectType,
 } from '@corechain/domain';
 import { Image } from 'expo-image';
@@ -13,10 +15,20 @@ import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { RowAction } from '@/components/ui/row-action';
+import { StatusPill, type Tone } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 import { deletePhotoFile, photoFile } from '@/data/photoFiles';
+import { photoBackupStates } from '@/data/photoUploadsRepository';
 import { deletePhotoRecord, listPhotos } from '@/data/photosRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { useSync } from '@/sync/sync-context';
+
+const BACKUP_TONE: Record<PhotoBackupState, Tone> = {
+  sent: 'success',
+  waiting: 'neutral',
+  failed: 'danger',
+  'no-file': 'neutral',
+};
 
 function describeSize(bytes: number): string {
   return bytes >= 1024 * 1024
@@ -35,10 +47,19 @@ export default function PhotosScreen() {
     }>();
   const router = useRouter();
   const [photos, setPhotos] = useState<FieldPhoto[] | null>(null);
+  const [backup, setBackup] = useState<Map<string, PhotoBackupState>>(
+    new Map(),
+  );
+  // Reloads when photo files go up, so a photo's badge turns to "Backed up".
+  const { photoBackupVersion } = useSync();
 
   const reload = useCallback(() => {
+    void photoBackupVersion;
     listPhotos(subjectType, subjectId).then(setPhotos);
-  }, [subjectType, subjectId]);
+    photoBackupStates()
+      .then(setBackup)
+      .catch(() => {});
+  }, [subjectType, subjectId, photoBackupVersion]);
 
   useFocusReload(reload);
 
@@ -88,6 +109,10 @@ export default function PhotosScreen() {
               />
               <View style={styles.row}>
                 <View style={styles.rowText}>
+                  <StatusPill
+                    label={photoBackupLabel(backup.get(photo.id) ?? 'waiting')}
+                    tone={BACKUP_TONE[backup.get(photo.id) ?? 'waiting']}
+                  />
                   <ThemedText type="small">{photoLabel(photo)}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {new Date(photo.capturedAt).toLocaleString()} ·{' '}

@@ -47,7 +47,7 @@ describe("wipeWarning", () => {
     expect(unsentItems(nothing)).toEqual([]);
   });
 
-  it("warns for photos alone, because photo files are not backed up yet", () => {
+  it("warns for photos alone while their files are not backed up", () => {
     expect(wipeWarning({ ...nothing, photos: 4 }).losesWork).toBe(true);
   });
 });

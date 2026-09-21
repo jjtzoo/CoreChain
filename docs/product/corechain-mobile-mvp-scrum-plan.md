@@ -365,7 +365,14 @@ As a field geologist, I want photos to upload when I'm connected, so that they'r
 - Optional setting: sync photos only on Wi-Fi.
 - **Storage decision (2026-09-21):** photo files are kept in a private Vercel Blob store named `corechain-photos` (Washington region, free Hobby plan; nothing is reachable by link). Free-plan limits: 1 GB of storage (about 650 photos at 1.5 MB), 2,000 uploads a month, and if a limit is reached, uploads pause for up to 30 days without any charge. Fine for a small pilot; a paid plan is needed for the full field test. Before a paid pilot, check Vercel's terms on commercial use of the free plan.
 - **Server half built and deployed 2026-09-21:** `PUT /api/photos/{id}/file` accepts the image after the photo's record has synced (type, 4 MB limit, truncated-upload and ownership checks) and records where it is kept in the existing `photos.storage_key` column, so no database change was needed; `GET` returns it to the owning account only. Sending the same photo again replaces it. If storage is not connected the answer is a clear "storage-not-configured". Not yet exercised with a real upload.
-- **Phone half not built:** the local "sent / waiting" marker per photo, the background upload with retry, and the Wi-Fi-only option.
+- **Phone half built 2026-09-21, not yet run on the phone.**
+  - A local-only table `photo_uploads` (phone database version 12) keeps each photo's score: not tried, waiting, sent, failed, or no file on this phone. It is cleared by a wipe.
+  - `sync/photoUploader.ts` sends up to five photos per pass with `PUT /api/photos/{id}/file`, after the photo's record has synced. The server answers "not found" until then and the phone tries again. It runs whenever the phone is connected and has finished its first download, right after each sync completes (ignoring any wait), and otherwise only for photos whose wait is over. Waits grow 20 s, 1 min, 5 min, 15 min, then 30 min.
+  - The rules (what each server answer means, the waits, the plain-words summary) are in `packages/domain/src/photoBackup.ts` with tests. A refused file (wrong type or over 4 MB) is marked "Could not back up" and never retried; no answer at all is never held against the photo.
+  - Each photo shows "Backed up", "Waiting to back up" or "Could not back up". The Account screen has a **Photo backup** card with a count line, the **Any connection / Wi-Fi only** choice (uses the new `expo-network` module, so it needs a new build), and **Back up now**.
+  - The sign-out warning now counts only photos that are not backed up yet.
+  - Known gap: deleting a photo on the phone does not yet remove its file from the storage (a small orphan; the 1 GB free allowance makes this minor for a pilot).
+  - To verify on the phone: take a photo, wait for it to change to "Backed up", and check the store shows one new file and one operation.
 
 ### E6 — Sampling
 
@@ -804,7 +811,7 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 ### S5 started: sign out and remove data (E1-5, 2026-09-20)
 
 - **What it does.** The Account screen has a red "Sign out and remove my data" button below the normal "Sign out". Before removing anything it counts what exists only on the phone (changes not sent, changes the server refused, photos, unsent feedback) and lists them in plain numbers (`packages/domain/src/signOut.ts`, tested). If nothing is at risk it says so and that everything comes back at the next sign-in; otherwise it defaults to Cancel and the button reads "Remove anyway". The wipe removes the records, queued changes, unsent feedback, photo files, the data-owner marker and the sign-in, and tells the file to give back the freed space.
-- **Photos.** Photo image files are not backed up yet (E5-3), so until that lands every photo on the phone counts as "only on this phone".
+- **Photos.** A photo counts as "only on this phone" until its file has been backed up (E5-3, phone half built 2026-09-21).
 - **The same wipe now runs when a phone changes account**, so a second account never inherits the first one's photos or unsent feedback.
 - **Verified on the test phone:** after the wipe and a fresh sign-in the Alberta sample project came back from the server, and the server's counts were unchanged (one project, six holes, 27 intervals, 15 samples), so nothing was duplicated.
 - **Found and fixed:** after that sign-in Home kept showing "Start your first project" until the app was restarted, because screens loaded their lists once, on opening. The sync layer now counts each completed sync and every list screen reloads when it changes (`useFocusReload`). Verified on the test phone with a second wipe and sign-in: the project appeared on Home by itself, with no restart.

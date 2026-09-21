@@ -175,6 +175,7 @@ export * from "./conflicts";
 export * from "./sampling";
 export * from "./export";
 export * from "./photos";
+export * from "./photoBackup";
 export * from "./dates";
 export * from "./overview";
 export * from "./session";

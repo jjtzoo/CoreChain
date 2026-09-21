@@ -12,7 +12,7 @@ export type PhoneHoldings = {
   unsent: number;
   /** Changes the server refused and the geologist has not resolved. */
   refused: number;
-  /** Photos whose image file exists only on this phone. */
+  /** Photos whose image file has not been backed up, so it exists only on this phone. */
   photos: number;
   /** Feedback messages written offline and not yet sent. */
   feedback: number;
