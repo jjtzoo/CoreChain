@@ -1,16 +1,12 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme, View } from 'react-native';
 import Animated, {
   Easing,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
 
 import { Brand } from '@/constants/theme';
@@ -18,31 +14,24 @@ import { Brand } from '@/constants/theme';
 /** Must match `imageWidth` for expo-splash-screen in app.json, so the hand-off is seamless. */
 const SPLASH_IMAGE_SIZE = 160;
 const FADE_MS = 600;
-// One blink: the glow brightens, dims, then rests a moment before the next.
-const BLINK_UP_MS = 380;
-const BLINK_DOWN_MS = 380;
-const BLINK_REST_MS = 260;
-/** At least one full blink is always seen before the overlay can fade away. */
-const MIN_SHOWN_MS = 1100;
+/** How far the fill creeps while the app opens, and how long that takes. */
+const CREEP_TO = 0.85;
+const CREEP_MS = 2400;
+/** The last stretch, once the app is ready, and a beat to see it full. */
+const FINISH_MS = 240;
+const FULL_HOLD_MS = 160;
+/** The fill is always on show for at least this long, so it never flickers past. */
+const MIN_SHOWN_MS = 1000;
 /** If the app is somehow never "ready", the overlay still leaves after this. */
 const MAX_SHOWN_MS = 8000;
-
-// Soft halo behind the symbol: concentric copper circles that breathe together.
-const RINGS = [
-  { size: 360, strength: 0.03 },
-  { size: 325, strength: 0.035 },
-  { size: 292, strength: 0.04 },
-  { size: 262, strength: 0.045 },
-  { size: 234, strength: 0.05 },
-  { size: 208, strength: 0.055 },
-  { size: 184, strength: 0.06 },
-] as const;
+/** How faint the empty symbol is before it fills. */
+const GHOST_OPACITY = 0.14;
 
 /**
- * Drawn over the app while it opens, exactly where the native splash was (brand
- * symbol centred on limestone or graphite). The symbol glows while the phone
- * opens its data, then the whole overlay fades away to the dashboard as soon as
- * `ready` is true (and not before the glow has been seen for a moment).
+ * Drawn over the app while it opens, exactly where the native splash was. The
+ * CoreChain "C" is the loading bar: it starts as a faint outline and fills from
+ * left to right while the phone opens its data, completes when the app is
+ * ready, then the whole overlay fades away to the dashboard.
  */
 export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   const dark = useColorScheme() === 'dark';
@@ -50,36 +39,36 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   const [visible, setVisible] = useState(true);
   const startedAt = useRef(0);
 
-  const pulse = useSharedValue(1);
+  const progress = useSharedValue(0);
   const opacity = useSharedValue(1);
 
-  // The glow starts when the overlay appears.
+  // The fill starts creeping as soon as the overlay appears.
   useEffect(() => {
     startedAt.current = Date.now();
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1, {
-          duration: BLINK_UP_MS,
-          easing: Easing.out(Easing.quad),
-        }),
-        withTiming(0, {
-          duration: BLINK_DOWN_MS,
-          easing: Easing.in(Easing.quad),
-        }),
-        withTiming(0, { duration: BLINK_REST_MS }),
-      ),
-      -1,
-      false,
-    );
-  }, [pulse]);
+    progress.value = withTiming(CREEP_TO, {
+      duration: CREEP_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progress]);
 
-  // Fade out once the app is ready, after the glow has been on show a moment.
+  // Once the app is ready (and the fill has been seen for a moment), complete
+  // the fill, hold a beat, then fade to the dashboard.
   useEffect(() => {
     if (!ready) return;
     const wait = Math.max(0, MIN_SHOWN_MS - (Date.now() - startedAt.current));
-    const timer = setTimeout(() => setFading(true), wait);
-    return () => clearTimeout(timer);
-  }, [ready]);
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+    const finishTimer = setTimeout(() => {
+      progress.value = withTiming(1, {
+        duration: FINISH_MS,
+        easing: Easing.out(Easing.quad),
+      });
+      fadeTimer = setTimeout(() => setFading(true), FINISH_MS + FULL_HOLD_MS);
+    }, wait);
+    return () => {
+      clearTimeout(finishTimer);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
+  }, [ready, progress]);
 
   // Never stay for good, whatever happens (a reopened app once kept this on screen).
   useEffect(() => {
@@ -99,12 +88,15 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   }, [fading, opacity]);
 
   const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const symbolStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [0.3, 1]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.97, 1.05]) }],
+  const fillStyle = useAnimatedStyle(() => ({
+    width: SPLASH_IMAGE_SIZE * progress.value,
   }));
 
   if (!visible) return null;
+
+  const source = dark
+    ? require('@/assets/images/corechain/splash-icon-dark.png')
+    : require('@/assets/images/corechain/splash-icon.png');
 
   return (
     <Animated.View
@@ -118,60 +110,38 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
         { backgroundColor: dark ? Brand.graphite : Brand.limestone },
         overlayStyle,
       ]}>
-      {RINGS.map((ring) => (
-        <GlowRing
-          key={ring.size}
-          size={ring.size}
-          strength={ring.strength}
-          pulse={pulse}
-        />
-      ))}
-      <Animated.View style={symbolStyle}>
+      <View
+        style={styles.symbol}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Opening CoreChain">
         <Image
-          style={styles.image}
-          source={
-            dark
-              ? require('@/assets/images/corechain/splash-icon-dark.png')
-              : require('@/assets/images/corechain/splash-icon.png')
-          }
+          style={[styles.image, { opacity: GHOST_OPACITY }]}
+          source={source}
         />
-      </Animated.View>
+        <Animated.View style={[styles.fill, fillStyle]}>
+          <Image style={styles.image} source={source} />
+        </Animated.View>
+      </View>
     </Animated.View>
   );
 }
 
-function GlowRing({
-  size,
-  strength,
-  pulse,
-}: {
-  size: number;
-  strength: number;
-  pulse: SharedValue<number>;
-}) {
-  const style = useAnimatedStyle(() => ({
-    opacity: strength * interpolate(pulse.value, [0, 1], [0, 2.6]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.85, 1.12]) }],
-  }));
-  return (
-    <Animated.View
-      style={[
-        styles.ring,
-        { width: size, height: size, borderRadius: size / 2 },
-        style,
-      ]}
-    />
-  );
-}
-
 const styles = StyleSheet.create({
+  symbol: {
+    width: SPLASH_IMAGE_SIZE,
+    height: SPLASH_IMAGE_SIZE,
+  },
   image: {
     width: SPLASH_IMAGE_SIZE,
     height: SPLASH_IMAGE_SIZE,
   },
-  ring: {
+  // Shows only the left part of the full symbol, so it fills like a bar.
+  fill: {
     position: 'absolute',
-    backgroundColor: Brand.copper,
+    top: 0,
+    left: 0,
+    height: SPLASH_IMAGE_SIZE,
+    overflow: 'hidden',
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
