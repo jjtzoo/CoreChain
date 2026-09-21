@@ -18,6 +18,7 @@ import {
   listDispatchableSamples,
   removeSampleFromDispatch,
   shareDispatchSheet,
+  shareDispatchSheetPdf,
   type DispatchMember,
 } from '@/data/dispatchRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
@@ -49,7 +50,7 @@ export default function DispatchScreen() {
   const [available, setAvailable] = useState<DispatchMember[]>([]);
   const [adding, setAdding] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [sharing, setSharing] = useState(false);
+  const [sharing, setSharing] = useState<'pdf' | 'csv' | null>(null);
 
   const load = useCallback(() => {
     (async () => {
@@ -73,17 +74,19 @@ export default function DispatchScreen() {
   }
   const open = dispatch.status === 'open';
 
-  async function share() {
-    setSharing(true);
+  async function share(format: 'pdf' | 'csv') {
+    setSharing(format);
     try {
-      await shareDispatchSheet(dispatchId);
+      await (format === 'pdf'
+        ? shareDispatchSheetPdf(dispatchId)
+        : shareDispatchSheet(dispatchId));
     } catch (error) {
       Alert.alert(
         'Could not share the sheet',
         error instanceof Error ? error.message : String(error),
       );
     } finally {
-      setSharing(false);
+      setSharing(null);
     }
   }
 
@@ -160,12 +163,20 @@ export default function DispatchScreen() {
           />
         ) : null}
         <PrimaryButton
-          label="Share dispatch sheet"
+          label="Share dispatch sheet (PDF)"
           icon="share-variant-outline"
           variant={open ? 'secondary' : 'primary'}
-          loading={sharing}
-          disabled={members.length === 0}
-          onPress={() => void share()}
+          loading={sharing === 'pdf'}
+          disabled={members.length === 0 || sharing !== null}
+          onPress={() => void share('pdf')}
+        />
+        <PrimaryButton
+          label="Share as spreadsheet (CSV)"
+          icon="file-delimited-outline"
+          variant="secondary"
+          loading={sharing === 'csv'}
+          disabled={members.length === 0 || sharing !== null}
+          onPress={() => void share('csv')}
         />
 
         <View style={styles.section}>
@@ -191,8 +202,7 @@ export default function DispatchScreen() {
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`Take ${sample.sampleNumber} out of this dispatch`}
-                    hitSlop={Spacing.two}
-                  >
+                    hitSlop={Spacing.two}>
                     <Icon
                       name="close-circle-outline"
                       size={26}
@@ -233,8 +243,7 @@ export default function DispatchScreen() {
                             return next;
                           })
                         }
-                        accessibilityLabel={`${on ? 'Remove' : 'Add'} sample ${sample.sampleNumber}`}
-                      >
+                        accessibilityLabel={`${on ? 'Remove' : 'Add'} sample ${sample.sampleNumber}`}>
                         <View style={styles.row}>
                           <Icon
                             name={
@@ -271,8 +280,7 @@ export default function DispatchScreen() {
             onPress={confirmDelete}
             accessibilityRole="button"
             accessibilityLabel={`Delete dispatch ${dispatch.dispatchNumber}`}
-            style={styles.delete}
-          >
+            style={styles.delete}>
             <ThemedText type="smallBold" themeColor="danger">
               Delete dispatch
             </ThemedText>

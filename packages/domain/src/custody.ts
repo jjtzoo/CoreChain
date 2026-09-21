@@ -415,14 +415,106 @@ export function dispatchSheet(input: DispatchSheetInput): DispatchSheet {
     ),
   ];
 
-  const safeNumber = dispatch.dispatchNumber
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
   return {
-    filename: `${safeNumber || "dispatch"}-sheet.csv`,
+    filename: sheetFilename(dispatch.dispatchNumber, "csv"),
     csv: lines.join("\r\n").concat("\r\n"),
     total: samples.length,
     byType,
   };
+}
+
+function sheetFilename(dispatchNumber: string, extension: string): string {
+  const safeNumber = dispatchNumber
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `${safeNumber || "dispatch"}-sheet.${extension}`;
+}
+
+function escapeHtml(value: string | number | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export type DispatchSheetPdf = {
+  filename: string;
+  /** A complete printable page: the phone turns it into a PDF. */
+  html: string;
+};
+
+/**
+ * The same sheet as a page to print or send: who it is for, a count by type,
+ * one row per sample, and blank lines for the courier and the laboratory to
+ * sign, so it can travel with the samples as the paper end of the record.
+ */
+export function dispatchSheetPdf(input: DispatchSheetInput): DispatchSheetPdf {
+  const { dispatch } = input;
+  const samples = [...input.samples].sort((a, b) =>
+    a.sampleNumber.localeCompare(b.sampleNumber, undefined, { numeric: true }),
+  );
+  const count = (type: SampleType) =>
+    samples.filter((sample) => sample.type === type).length;
+
+  const detail = (label: string, value: string | null) =>
+    value
+      ? `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`
+      : "";
+  const range = (sample: DispatchSheetSample) =>
+    sample.fromM != null && sample.toM != null
+      ? `${sample.fromM}–${sample.toM}`
+      : "";
+  const rows = samples
+    .map(
+      (sample, index) =>
+        `<tr><td class="n">${index + 1}</td>` +
+        `<td class="id">${escapeHtml(sample.sampleNumber)}</td>` +
+        `<td>${escapeHtml(TYPE_LABELS[sample.type])}</td>` +
+        `<td>${escapeHtml(sample.holeId)}</td>` +
+        `<td>${escapeHtml(range(sample))}</td>` +
+        `<td>${escapeHtml(qcNote(sample))}</td>` +
+        `<td class="box"></td></tr>`,
+    )
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${escapeHtml(dispatch.dispatchNumber)}</title>
+<style>
+@page { size: A4; margin: 16mm; }
+body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 11pt; }
+h1 { font-size: 20pt; margin: 0 0 2pt; }
+.sub { color: #555; margin: 0 0 14pt; }
+table { border-collapse: collapse; width: 100%; }
+.facts th { text-align: left; width: 38%; padding: 3pt 0; color: #555; font-weight: normal; vertical-align: top; }
+.facts td { padding: 3pt 0; font-weight: bold; }
+.counts { margin: 14pt 0 10pt; }
+.list th, .list td { border: 1px solid #999; padding: 4pt 6pt; text-align: left; }
+.list th { background: #eee; font-size: 9pt; }
+.list tr { page-break-inside: avoid; }
+.n { width: 22pt; color: #555; }
+.id { font-weight: bold; white-space: nowrap; }
+.box { width: 34pt; }
+.sign { margin-top: 26pt; display: flex; gap: 24pt; page-break-inside: avoid; }
+.sign div { flex: 1; border-top: 1px solid #111; padding-top: 4pt; font-size: 9pt; color: #555; }
+</style></head><body>
+<h1>${escapeHtml(dispatch.dispatchNumber)}</h1>
+<p class="sub">Sample dispatch sheet · ${escapeHtml(input.projectName)}</p>
+<table class="facts">
+${detail("Laboratory", dispatch.laboratory)}
+${detail("Preparation request", dispatch.preparationRequest)}
+${detail("Handover date", dispatch.handoverAt)}
+${detail("Handed over by", input.handedOverBy)}
+${detail("Note", dispatch.note)}
+</table>
+<p class="counts"><b>${samples.length} samples:</b> ${count("primary")} primary · ${count("standard")} standard · ${count("blank")} blank · ${count("duplicate")} duplicate</p>
+<table class="list">
+<tr><th>#</th><th>Sample ID</th><th>Type</th><th>Hole</th><th>From–to (m)</th><th>QC</th><th>Rec'd</th></tr>
+${rows}
+</table>
+<div class="sign"><div>Handed over by (name, signature)</div><div>Received by (name, signature)</div><div>Date and time received</div></div>
+</body></html>`;
+
+  return { filename: sheetFilename(dispatch.dispatchNumber, "pdf"), html };
 }

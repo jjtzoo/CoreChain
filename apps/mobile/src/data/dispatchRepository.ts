@@ -1,10 +1,12 @@
 import {
   canJoinDispatch,
   dispatchSheet,
+  dispatchSheetPdf,
   nextDispatchNumber,
   validateDispatch,
   type CustodyError,
   type DispatchSheet,
+  type DispatchSheetInput,
   type DispatchStatus,
   type FieldDispatch,
   type FieldSample,
@@ -12,6 +14,7 @@ import {
   type SampleType,
 } from '@corechain/domain';
 import { File, Paths } from 'expo-file-system';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { refreshSampleStatus } from './custodyRepository';
 import { getDatabase, type AppDatabase } from './database';
@@ -446,10 +449,10 @@ export async function handOverDispatch(
   });
 }
 
-/** Builds the dispatch sheet from what is on the phone. */
-export async function buildDispatchSheet(
+/** Gathers what the dispatch sheet says from what is on the phone. */
+async function loadDispatchSheetInput(
   dispatchId: string,
-): Promise<DispatchSheet | null> {
+): Promise<DispatchSheetInput | null> {
   const dispatch = await getDispatch(dispatchId);
   if (!dispatch) return null;
   const [project, members] = await Promise.all([
@@ -481,7 +484,7 @@ export async function buildDispatchSheet(
       numberById.set(member.parentSampleId, number);
     }
   }
-  return dispatchSheet({
+  return {
     projectName: project?.name ?? '',
     dispatch,
     handedOverBy,
@@ -496,10 +499,18 @@ export async function buildDispatchSheet(
         ? (numberById.get(m.parentSampleId) ?? null)
         : null,
     })),
-  });
+  };
 }
 
-/** Writes the dispatch sheet to a file and opens the phone's share sheet (E7-3). */
+/** Builds the dispatch sheet (CSV) from what is on the phone. */
+export async function buildDispatchSheet(
+  dispatchId: string,
+): Promise<DispatchSheet | null> {
+  const input = await loadDispatchSheetInput(dispatchId);
+  return input ? dispatchSheet(input) : null;
+}
+
+/** Writes the dispatch sheet to a spreadsheet file and opens the share sheet (E7-3). */
 export async function shareDispatchSheet(dispatchId: string): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) {
     throw new Error('Sharing isn’t available on this device.');
@@ -513,5 +524,30 @@ export async function shareDispatchSheet(dispatchId: string): Promise<void> {
     mimeType: 'text/csv',
     dialogTitle: 'Share dispatch sheet',
     UTI: 'public.comma-separated-values-text',
+  });
+}
+
+/** Makes the dispatch sheet a PDF and opens the share sheet (E7-3). */
+export async function shareDispatchSheetPdf(dispatchId: string): Promise<void> {
+  if (!(await Sharing.isAvailableAsync())) {
+    throw new Error('Sharing isn’t available on this device.');
+  }
+  const input = await loadDispatchSheetInput(dispatchId);
+  if (!input) throw new Error('This dispatch is no longer available.');
+  const pdf = dispatchSheetPdf(input);
+  // A4 at 72 dpi; the page's own @page margins do the rest.
+  const printed = await Print.printToFileAsync({
+    html: pdf.html,
+    width: 595,
+    height: 842,
+  });
+  // The printer names the file itself; copy it under the dispatch's name so the
+  // person who receives it sees "dsp-001-sheet.pdf".
+  const named = new File(Paths.cache, pdf.filename);
+  await new File(printed.uri).copy(named, { overwrite: true });
+  await Sharing.shareAsync(named.uri, {
+    mimeType: 'application/pdf',
+    dialogTitle: 'Share dispatch sheet',
+    UTI: 'com.adobe.pdf',
   });
 }

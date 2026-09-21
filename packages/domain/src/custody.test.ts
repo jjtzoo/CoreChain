@@ -5,6 +5,7 @@ import {
   canRecordEvent,
   custodyTimeline,
   dispatchSheet,
+  dispatchSheetPdf,
   effectiveEvents,
   nextDispatchNumber,
   splitByEligibility,
@@ -381,5 +382,71 @@ describe("dispatchSheet", () => {
       "AGS-00010,Primary,H1,3,4,",
       "AGS-00011,Duplicate,H1,3,4,Duplicate of AGS-00010",
     ]);
+  });
+});
+
+describe("dispatchSheetPdf", () => {
+  const input = {
+    projectName: "Alberta <sample> project",
+    dispatch: {
+      dispatchNumber: "DSP-002",
+      laboratory: "Lab & Sons",
+      preparationRequest: null,
+      handoverAt: "2026-09-20",
+      note: null,
+    },
+    handedOverBy: "A. Geologist",
+    samples: [
+      {
+        sampleNumber: "AGS-00010",
+        type: "primary" as const,
+        holeId: "H1",
+        fromM: 3,
+        toM: 4,
+        standardRef: null,
+        parentSampleNumber: null,
+      },
+      {
+        sampleNumber: "AGS-00002",
+        type: "standard" as const,
+        holeId: "H1",
+        fromM: null,
+        toM: null,
+        standardRef: "OREAS 45e",
+        parentSampleNumber: null,
+      },
+    ],
+  };
+  const pdf = dispatchSheetPdf(input);
+
+  it("names the file after the dispatch", () => {
+    expect(pdf.filename).toBe("dsp-002-sheet.pdf");
+  });
+
+  it("says who it is for and counts the samples", () => {
+    expect(pdf.html).toContain("DSP-002");
+    expect(pdf.html).toContain("2 samples:");
+    expect(pdf.html).toContain("1 primary · 1 standard · 0 blank · 0 duplicate");
+    expect(pdf.html).toContain("2026-09-20");
+    expect(pdf.html).toContain("A. Geologist");
+  });
+
+  it("lists samples in number order with their QC note", () => {
+    expect(pdf.html.indexOf("AGS-00002")).toBeLessThan(
+      pdf.html.indexOf("AGS-00010"),
+    );
+    expect(pdf.html).toContain("Reference material OREAS 45e");
+    expect(pdf.html).toContain("3–4");
+  });
+
+  it("leaves out facts that were not given, and keeps signature lines", () => {
+    expect(pdf.html).not.toContain("Preparation request");
+    expect(pdf.html).toContain("Received by (name, signature)");
+  });
+
+  it("escapes what people typed", () => {
+    expect(pdf.html).toContain("Lab &amp; Sons");
+    expect(pdf.html).toContain("Alberta &lt;sample&gt; project");
+    expect(pdf.html).not.toContain("<sample>");
   });
 });
