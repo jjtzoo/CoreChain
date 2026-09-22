@@ -1,4 +1,5 @@
 import type { SQLBatchTuple } from '@op-engineering/op-sqlite';
+import type { AbstractPowerSyncDatabase } from '@powersync/react-native';
 
 // Local SQLite schema for the offline-first field workflow (E8-1). Every
 // table carries the sync-ready columns decisions D6-D8 call for
@@ -466,3 +467,47 @@ export const MIGRATIONS: readonly Migration[] = [
     ],
   },
 ];
+
+const ADD_COLUMN = /^ALTER TABLE (\w+) ADD COLUMN (\w+)/i;
+
+function addedColumns(): { table: string; column: string; sql: string }[] {
+  const result: { table: string; column: string; sql: string }[] = [];
+  for (const migration of MIGRATIONS) {
+    for (const [sql] of migration.commands) {
+      const match = ADD_COLUMN.exec(sql);
+      if (match) {
+        result.push({ table: match[1], column: match[2], sql });
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * PowerSync's `disconnectAndClear()` has been observed to silently revert a raw
+ * table's physical columns back to whichever shape it first inferred for that
+ * table, without touching SQLite's own `user_version` — so the migration system
+ * above has no way to notice the loss on its own (`runMigrations` sees every
+ * version already applied and does nothing). This re-checks every column a
+ * migration has ever added via `PRAGMA table_info` and re-adds any that are
+ * missing. Safe to call any time; a no-op when nothing is missing.
+ */
+export async function repairMissingColumns(
+  db: AbstractPowerSyncDatabase,
+): Promise<void> {
+  const existing = new Map<string, Set<string>>();
+  for (const { table, column, sql } of addedColumns()) {
+    if (!existing.has(table)) {
+      const info = await db.getAll<{ name: string }>(
+        `PRAGMA table_info(${table})`,
+      );
+      existing.set(table, new Set(info.map((c) => c.name)));
+    }
+    const columns = existing.get(table)!;
+    if (!columns.has(column)) {
+      console.log(`[Migrate] repairing missing column ${table}.${column}`);
+      await db.execute(sql);
+      columns.add(column);
+    }
+  }
+}

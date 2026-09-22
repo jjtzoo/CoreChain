@@ -124,6 +124,7 @@ export default function HomeScreen() {
   }
 
   const reload = useCallback(() => {
+    if (!user) return;
     (async () => {
       void loadWorkInput().then((work) =>
         setToday(summariseWork(work, rangeForPreset('today', new Date()))),
@@ -131,7 +132,7 @@ export default function HomeScreen() {
       const projects = await listProjects();
       setSummaries(await Promise.all(projects.map(summarise)));
 
-      const latest = await getMostRecentDrillhole();
+      const latest = await getMostRecentDrillhole(user.id);
       if (latest) {
         const ranges = await listIntervalRangesByProject(
           latest.drillhole.projectId,
@@ -149,7 +150,7 @@ export default function HomeScreen() {
     })().catch((err: unknown) => {
       setError(err instanceof Error ? err.message : String(err));
     });
-  }, []);
+  }, [user]);
 
   useFocusReload(reload);
 

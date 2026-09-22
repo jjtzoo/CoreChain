@@ -252,17 +252,17 @@ export async function updateDrillholeStatus(
  * any of its core boxes, runs, log intervals, samples or photos. Drives the
  * "Continue where you left off" card on the home screen.
  *
- * KNOWN GAP (2026-09-23): this counts a teammate's freshly-synced work the
- * same as the signed-in person's own, so the card can claim someone else's
- * day. A `created_by` column exists to fix this (see migration 16 and
- * PHONE_READ_ONLY_COLUMNS) but is not wired in here yet — `wipeDevice()`'s
- * `disconnectAndClear()` was found to silently revert a raw table's columns
- * to whatever PowerSync first inferred for it, with no re-migration after,
- * so `created_by` (and `priority`/`priority_note` from an earlier sprint) can
- * vanish after an account switch on a shared phone. Fix that gap first, then
- * filter this query by the signed-in user's own `created_by`.
+ * Scoped to the signed-in person's own holes: `created_by` is stamped by the
+ * server, from the signed-in account, the moment a hole is first created (see
+ * migration 16), so a teammate's synced-down work has a different value and
+ * is excluded here. A hole this phone created itself has `created_by` still
+ * blank until the next sync round-trip fills it in, so `NULL` is treated as
+ * "mine" too — otherwise a geologist's own brand-new hole would drop off this
+ * card the moment they created it, before ever reaching the server.
  */
-export async function getMostRecentDrillhole(): Promise<{
+export async function getMostRecentDrillhole(
+  userId: string,
+): Promise<{
   drillhole: FieldDrillhole;
   projectName: string;
 } | null> {
@@ -276,8 +276,10 @@ export async function getMostRecentDrillhole(): Promise<{
      FROM drillholes d
      JOIN projects p ON p.id = d.project_id
      WHERE d.deleted_at IS NULL AND p.deleted_at IS NULL
+       AND (d.created_by IS NULL OR d.created_by = ?)
      ORDER BY last_touched DESC
      LIMIT 1`,
+    [userId],
   );
   const row = (rows as unknown as (DrillholeRow & { project_name: string })[])[0];
   return row

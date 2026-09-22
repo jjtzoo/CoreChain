@@ -5,9 +5,19 @@ import { getDeviceId, registerDevice } from './device';
 
 // Asks the server for more sample numbers whenever a project's run is getting
 // short (E6-4), so a geologist at the rig does not run out. Safe to call as
-// often as you like: it does nothing when there is enough, and never throws.
+// often as you like: a project that already has enough is a cheap no-op, and
+// a project the server refused (see RETRY_COOLDOWN_MS below) is skipped until
+// the cooldown passes rather than retried on every call.
 
 let running = false;
+
+// The caller (sync-context.tsx's refresh()) runs on every status change from
+// PowerSync, which can fire many times a second even while idle. A refusal
+// (404: project not provisioned yet, 409: no runs left) will not resolve
+// itself that fast, so retrying immediately just hammers the server; wait
+// this long before trying the same project again.
+const RETRY_COOLDOWN_MS = 60_000;
+const lastAttemptAt = new Map<string, number>();
 
 export async function topUpSampleBlocks(cookie: string): Promise<void> {
   if (running) return;
@@ -19,6 +29,10 @@ export async function topUpSampleBlocks(cookie: string): Promise<void> {
       // A project with no run yet needs one too: until it has one, numbers
       // come from the project's own counter, which two phones could share.
       if (status.hasBlocks && !status.low) continue;
+
+      const last = lastAttemptAt.get(project.id) ?? 0;
+      if (Date.now() - last < RETRY_COOLDOWN_MS) continue;
+      lastAttemptAt.set(project.id, Date.now());
 
       const registered = await registerDevice(cookie);
       if (!registered.ok) return;

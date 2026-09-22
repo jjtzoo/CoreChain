@@ -5,7 +5,7 @@ import {
 } from '@powersync/react-native';
 import type { Scalar } from '@op-engineering/op-sqlite';
 import { getOrCreateEncryptionKey } from './encryptionKey';
-import { MIGRATIONS } from './migrations';
+import { MIGRATIONS, repairMissingColumns } from './migrations';
 import { SYNCED_TABLES } from '@/sync/syncedTables';
 
 // The app's single encrypted database. It is opened through PowerSync, which
@@ -112,6 +112,7 @@ async function open() {
   });
   await sync.init();
   await runMigrations(sync);
+  await repairMissingColumns(sync);
   const schema = rawTableSchema();
   await sync.updateSchema(schema);
   await installChangeCapture(sync, schema);
@@ -224,6 +225,13 @@ export async function wipeSyncedData(): Promise<void> {
     await tx.execute('DELETE FROM feedback_outbox');
   });
   await sync.disconnectAndClear();
+  // disconnectAndClear() can revert a raw table's physical columns to
+  // whichever shape PowerSync first inferred for it, dropping columns added
+  // by a later migration with no trace in user_version — repair those, then
+  // re-run updateSchema so PowerSync re-infers its put/delete statements
+  // against the now-correct columns rather than a stale cached shape.
+  await repairMissingColumns(sync);
+  await sync.updateSchema(schema);
   await installChangeCapture(sync, schema);
   try {
     // Hand the freed space back, so removed records do not linger in the file.
