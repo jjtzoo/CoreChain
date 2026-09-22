@@ -28,6 +28,7 @@ export type MemberRow = {
   name: string;
   email: string;
   role: string | null;
+  title: string | null;
 };
 
 export type DeviceRow = {
@@ -347,9 +348,11 @@ export function TeamWorkspace({
                 <span className="admin-user-email">{member.email}</span>
               </div>
               <div className="admin-status">
-                <span className="admin-meta-label">Tier</span>
+                <span className="admin-meta-label">
+                  {member.title ? "Title" : "Tier"}
+                </span>
                 <span className="admin-pill">
-                  {ROLE_LABELS[toUserRole(member.role)]}
+                  {member.title || ROLE_LABELS[toUserRole(member.role)]}
                 </span>
               </div>
             </li>

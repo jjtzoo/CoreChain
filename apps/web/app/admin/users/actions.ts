@@ -51,6 +51,7 @@ export async function createUserAction(input: {
   role: string;
   password: string;
   organizationId?: string | null;
+  title?: string | null;
 }): Promise<ActionResult<{ email: string; password: string }>> {
   await requireAdmin();
   const name = input.name.trim();
@@ -74,16 +75,17 @@ export async function createUserAction(input: {
     });
     if (!team) return { ok: false, error: "That team no longer exists." };
   }
+  const title = input.title?.trim() || null;
 
   try {
     const created = await auth.api.createUser({
       body: { name, email, password: input.password, role: input.role },
       headers: await headers(),
     });
-    if (organizationId) {
+    if (organizationId || title) {
       await prisma.user.update({
         where: { id: created.user.id },
-        data: { organizationId },
+        data: { organizationId, title },
       });
     }
   } catch (error) {
@@ -141,6 +143,24 @@ export async function createTeamAction(
   });
   revalidatePath("/admin/users");
   return { ok: true, id: team.id, name: team.name };
+}
+
+export async function setUserTitleAction(
+  userId: string,
+  title: string,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const trimmed = title.trim();
+  if (trimmed.length > 80) {
+    return { ok: false, error: "Keep the title under 80 characters." };
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { title: trimmed || null },
+  });
+  revalidatePath("/admin/users");
+  revalidatePath("/team");
+  return { ok: true };
 }
 
 export async function setUserTeamAction(

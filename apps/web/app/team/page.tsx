@@ -36,7 +36,7 @@ export default async function TeamPage() {
     prisma.user.findMany({
       where: { organizationId },
       orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true, title: true },
     }),
     prisma.drillhole.findMany({
       where: { organizationId, deletedAt: null },
@@ -70,6 +70,7 @@ export default async function TeamPage() {
     name: member.name,
     email: member.email,
     role: member.role,
+    title: member.title,
   }));
   const nameById = new Map(members.map((m) => [m.id, m.name]));
 

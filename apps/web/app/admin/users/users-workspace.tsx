@@ -22,6 +22,7 @@ import {
   setQaqcStageAction,
   setRoleAction,
   setUserTeamAction,
+  setUserTitleAction,
   dismissRequestAction,
   setSwitchedOffAction,
   suggestPasswordAction,
@@ -32,6 +33,7 @@ export type UserRow = {
   name: string;
   email: string;
   role: string | null;
+  title: string | null;
   switchedOff: boolean;
   createdAt: string;
   lastActiveAt: string | null;
@@ -321,6 +323,7 @@ function AddUserForm({
 }) {
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
+  const [title, setTitle] = useState("");
   const [role, setRole] = useState<UserRole>("geologist");
   const [organizationId, setOrganizationId] = useState(PERSONAL_WORKSPACE);
   const [password, setPassword] = useState(initialSuggestion);
@@ -343,6 +346,7 @@ function AddUserForm({
         role,
         password,
         organizationId: organizationId || null,
+        title: title || null,
       });
       if (!result.ok) {
         setError(result.error);
@@ -356,6 +360,7 @@ function AddUserForm({
       });
       setName("");
       setEmail("");
+      setTitle("");
       setRole("geologist");
       setOrganizationId(PERSONAL_WORKSPACE);
       setPassword(await suggestPasswordAction());
@@ -385,6 +390,20 @@ function AddUserForm({
           autoCapitalize="none"
           spellCheck={false}
         />
+      </label>
+
+      <label className="field">
+        <span className="field-label">Title (optional)</span>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Senior geologist, Site manager"
+          autoComplete="off"
+        />
+        <span className="admin-hint">
+          Shown instead of the tier name on the team roster. Leave blank to
+          just show the tier.
+        </span>
       </label>
 
       <label className="field">
@@ -471,7 +490,17 @@ function UserItem({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [title, setTitle] = useState(user.title ?? "");
   const role = toUserRole(user.role);
+
+  const saveTitle = () => {
+    if (title.trim() === (user.title ?? "").trim()) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await setUserTitleAction(user.id, title);
+      if (!result.ok) setError(result.error);
+    });
+  };
 
   const changeRole = (next: string) => {
     setError(null);
@@ -549,6 +578,16 @@ function UserItem({
           {isYou ? <span className="admin-you">You</span> : null}
         </span>
         <span className="admin-user-email">{user.email}</span>
+        <input
+          className="admin-user-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={saveTitle}
+          placeholder="Add a title (optional)"
+          aria-label={`Title for ${user.name}`}
+          autoComplete="off"
+          disabled={pending}
+        />
       </div>
 
       <div className="admin-user-meta">
@@ -801,14 +840,8 @@ export function UsersWorkspace({
             <h2 id="people-title">People</h2>
             <span className="admin-count">{users.length}</span>
           </div>
-          {userGroups.map((group) => (
-            <div className="admin-user-group" key={group.key}>
-              {group.label ? (
-                <div className="admin-user-group-head">
-                  <h3>{group.label}</h3>
-                  <span className="admin-count">{group.users.length}</span>
-                </div>
-              ) : null}
+          {userGroups.map((group) => {
+            const list = (
               <ul className="admin-users">
                 {group.users.map((user) => (
                   <UserItem
@@ -820,8 +853,33 @@ export function UsersWorkspace({
                   />
                 ))}
               </ul>
-            </div>
-          ))}
+            );
+            if (!group.label) {
+              return (
+                <div className="admin-user-group" key={group.key}>
+                  {list}
+                </div>
+              );
+            }
+            // Collapsed by default so a growing list of client teams stays a
+            // list of names, not a page-length scroll; Personal workspace
+            // starts open since that is usually who an admin is actively
+            // setting up.
+            return (
+              <details
+                className="admin-user-group"
+                key={group.key}
+                open={group.key === "personal"}
+              >
+                <summary className="admin-user-group-head">
+                  <span className="admin-user-group-chevron" aria-hidden="true" />
+                  <span>{group.label}</span>
+                  <span className="admin-count">{group.users.length}</span>
+                </summary>
+                {list}
+              </details>
+            );
+          })}
         </section>
       </div>
 
