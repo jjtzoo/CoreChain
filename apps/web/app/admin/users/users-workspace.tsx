@@ -814,6 +814,10 @@ export function UsersWorkspace({
 
         {credentials ? (
           <CredentialsCard
+            // A fresh key per account remounts the card, so its own "Copied"
+            // state resets instead of carrying over from whichever account
+            // was created before this one.
+            key={credentials.email}
             credentials={credentials}
             onDismiss={() => setCredentials(null)}
             onCopied={() => setEverCopied(true)}
