@@ -14,6 +14,11 @@
   --brand-copper: #a66a43;
   --warning-line: #e4c983;
   --warning-ink: #745a12;
+  --success: #1f7a55;
+  --success-soft: #d9e9de;
+  --danger: #b3261e;
+  --danger-soft: #f4dcd6;
+  --copper-soft: #f1e2d4;
   --radius-panel: 12px;
   --radius-control: 8px;
   color-scheme: light;
@@ -2343,17 +2348,37 @@ h3 {
 .admin-user-group-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   padding-top: 12px;
-}
-
-.admin-user-group-head h3 {
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-user-group-head::-webkit-details-marker {
+  display: none;
+}
+
+.admin-user-group-head .admin-count {
+  margin-left: auto;
+}
+
+.admin-user-group-chevron {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+details[open] > .admin-user-group-head .admin-user-group-chevron {
+  transform: rotate(45deg);
 }
 
 .admin-users {
@@ -2455,6 +2480,84 @@ h3 {
 .admin-add {
   position: sticky;
   top: 24px;
+}
+
+/* E11-2 team-overview KPI strip and status-pill colours, matching the
+   approved mockup (docs/product/mockups/team-overview.html). */
+.team-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.team-kpi {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.team-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.team-kpi-value em {
+  font-style: normal;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.team-kpi-sub {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.team-bar {
+  display: block;
+  height: 7px;
+  margin-top: 2px;
+  background: var(--surface-muted);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.team-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand-copper);
+}
+
+.team-progress-cell > span:last-child {
+  min-height: 0;
+  align-items: stretch;
+  width: 130px;
+}
+
+.pill-success {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.pill-drilling {
+  color: var(--brand-copper);
+  background: var(--copper-soft);
+}
+
+.pill-planned {
+  color: var(--muted);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+}
+
+.team-stale-text {
+  color: var(--warning-ink);
+  font-weight: 600;
 }
 
 @media (max-width: 920px) {
