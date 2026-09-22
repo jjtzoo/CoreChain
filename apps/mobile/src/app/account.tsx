@@ -212,7 +212,10 @@ export default function AccountScreen() {
           text: 'Sign out',
           style: 'destructive',
           onPress: () => {
-            signOut().then(() => router.dismissAll());
+            // Flipping the signed-in flag already swaps the whole screen
+            // stack back to sign-in (see _layout.tsx); an explicit dismissAll
+            // races that swap and logs a harmless "POP_TO_TOP not handled".
+            void signOut();
           },
         },
       ],
@@ -233,7 +236,6 @@ export default function AccountScreen() {
             setRemoving(true);
             wipeDevice()
               .then(() => signOut())
-              .then(() => router.dismissAll())
               .catch(() => {
                 setRemoving(false);
                 Alert.alert(

@@ -29,6 +29,7 @@ type EventRow = {
   dispatch_id: string | null;
   corrects_event_id: string | null;
   created_at: string;
+  created_by: string | null;
 };
 
 type Tx = { execute: AppDatabase['execute'] };
@@ -47,6 +48,7 @@ function rowToEvent(row: EventRow): FieldCustodyEvent {
     dispatchId: row.dispatch_id,
     correctsEventId: row.corrects_event_id,
     createdAt: row.created_at,
+    createdBy: row.created_by,
   };
 }
 

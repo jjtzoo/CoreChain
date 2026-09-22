@@ -446,4 +446,23 @@ export const MIGRATIONS: readonly Migration[] = [
       ['ALTER TABLE drillholes ADD COLUMN priority_note TEXT'],
     ],
   },
+  {
+    // Sprint 6: who logged each record (E7 custody traceability, and "Continue
+    // where you left off" on the home screen). The server has always stamped
+    // this on every write and shown it to a manager on the web; this just
+    // brings it down to the phone. Set on the server only, from the signed-in
+    // account, the moment a record is first created — the phone never writes
+    // it and a record this phone just created has it blank until the next
+    // sync round-trip fills it in.
+    version: 16,
+    commands: [
+      ['ALTER TABLE drillholes ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE core_boxes ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE core_runs ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE log_intervals ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE samples ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE photos ADD COLUMN created_by TEXT'],
+      ['ALTER TABLE custody_events ADD COLUMN created_by TEXT'],
+    ],
+  },
 ];

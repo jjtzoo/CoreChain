@@ -64,6 +64,14 @@ export type FieldCustodyEvent = {
   /** For a correction: the event it voids. */
   correctsEventId: string | null;
   createdAt: string;
+  /**
+   * The signed-in account that logged this event, stamped by the server and
+   * never chosen by the phone. Optional: blank on a fixture, and on a record
+   * this phone just created until the next sync fills it in. Distinct from
+   * `handledBy`, which is the free-text name of whoever physically had the
+   * sample and may not be the person typing it into the app.
+   */
+  createdBy?: string | null;
 };
 
 export type CustodyEventInput = {

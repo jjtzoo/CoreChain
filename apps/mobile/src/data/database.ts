@@ -56,13 +56,20 @@ async function runMigrations(db: AbstractPowerSyncDatabase): Promise<void> {
   for (const migration of pending) {
     // One transaction per migration, version bump included: a migration either
     // lands completely or not at all.
-    await db.writeTransaction(async (tx) => {
-      for (const [sql, params] of migration.commands) {
-        await tx.execute(sql, (params ?? []) as unknown[]);
-      }
-      // PRAGMA doesn't take bound parameters; the number is from our own fixed list.
-      await tx.execute(`PRAGMA user_version = ${migration.version}`);
-    });
+    try {
+      await db.writeTransaction(async (tx) => {
+        for (const [sql, params] of migration.commands) {
+          await tx.execute(sql, (params ?? []) as unknown[]);
+        }
+        // PRAGMA doesn't take bound parameters; the number is from our own fixed list.
+        await tx.execute(`PRAGMA user_version = ${migration.version}`);
+      });
+    } catch (error) {
+      console.log(
+        `[Migrate] version ${migration.version} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
   }
 }
 

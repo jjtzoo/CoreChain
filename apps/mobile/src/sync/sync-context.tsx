@@ -141,8 +141,10 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     (async () => {
       const sync = await getSyncDatabase();
       const owner = await getDataOwner();
+      console.log(`[Owner] effect running: owner=${owner} userId=${userId}`);
 
       if (owner && owner !== userId) {
+        console.log('[Owner] mismatch -> wipeDevice()');
         const { count } = await sync.getUploadQueueStats();
         if (count > 0) {
           // Two people's work must never mix. Send the first person's changes

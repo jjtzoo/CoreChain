@@ -32,6 +32,7 @@ type DrillholeRow = {
   note: string | null;
   priority: 'normal' | 'urgent';
   priority_note: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
   version: number;
@@ -250,6 +251,16 @@ export async function updateDrillholeStatus(
  * The hole worked on most recently: the latest change to the hole itself or to
  * any of its core boxes, runs, log intervals, samples or photos. Drives the
  * "Continue where you left off" card on the home screen.
+ *
+ * KNOWN GAP (2026-09-23): this counts a teammate's freshly-synced work the
+ * same as the signed-in person's own, so the card can claim someone else's
+ * day. A `created_by` column exists to fix this (see migration 16 and
+ * PHONE_READ_ONLY_COLUMNS) but is not wired in here yet — `wipeDevice()`'s
+ * `disconnectAndClear()` was found to silently revert a raw table's columns
+ * to whatever PowerSync first inferred for it, with no re-migration after,
+ * so `created_by` (and `priority`/`priority_note` from an earlier sprint) can
+ * vanish after an account switch on a shared phone. Fix that gap first, then
+ * filter this query by the signed-in user's own `created_by`.
  */
 export async function getMostRecentDrillhole(): Promise<{
   drillhole: FieldDrillhole;

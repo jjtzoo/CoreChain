@@ -29,3 +29,17 @@ export const SET_ONCE_COLUMNS = [
   'dispatch_id',
   'sample_id',
 ] as const;
+
+/**
+ * Columns this app only ever reads. They are set by someone else (a manager
+ * on the web, or the server itself) and PowerSync downloads them into the
+ * same row a geologist edits, so they must never be part of what the phone
+ * sends back — on a create as much as a change, or the server refuses the
+ * whole row (E11-7: drillhole priority is a project manager's call, made
+ * from the team overview, never from the phone).
+ */
+export const PHONE_READ_ONLY_COLUMNS = [
+  'priority',
+  'priority_note',
+  'created_by',
+] as const;

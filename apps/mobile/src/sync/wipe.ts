@@ -4,6 +4,7 @@ import { getSyncDatabase, wipeSyncedData } from '@/data/database';
 import { listPendingFeedback } from '@/data/feedbackRepository';
 import { deleteAllPhotoFiles, photoFile } from '@/data/photoFiles';
 import { listUnbackedFileNames } from '@/data/photoUploadsRepository';
+import { resetDeviceId } from './device';
 import { countOpenIssues } from './issues';
 import { clearDataOwner } from './owner';
 
@@ -36,4 +37,8 @@ export async function wipeDevice(): Promise<void> {
   await wipeSyncedData();
   deleteAllPhotoFiles();
   await clearDataOwner();
+  // The phone is handing itself to a different account: the old device id
+  // belongs to whoever used it last and the server will never let this
+  // account claim it, so a fresh one is needed.
+  await resetDeviceId();
 }

@@ -11,6 +11,21 @@ import { SERVER_URL } from '@/config';
 
 const KEY = 'corechain.device.id';
 
+// A stale pooled connection (e.g. surviving a Wi-Fi/mobile-data handoff) can
+// leave a request neither answered nor failed. Without a bound, that wedges
+// every later sync attempt, since registration gates the upload itself.
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * A device id belongs to one account for good (the server refuses a second
+ * account trying to claim it): when this phone changes hands to a different
+ * account, it must mint a fresh id rather than have the new account collide
+ * with whatever account last used this phone.
+ */
+export async function resetDeviceId(): Promise<void> {
+  await SecureStore.deleteItemAsync(KEY);
+}
+
 export async function getDeviceId(): Promise<string> {
   const existing = await SecureStore.getItemAsync(KEY);
   if (existing) return existing;
@@ -55,7 +70,15 @@ async function saveMinAppVersion(minAppVersion: unknown): Promise<void> {
 
 /** Tells the server this phone is in use. Safe to repeat. Never throws. */
 export async function registerDevice(cookie: string): Promise<Registration> {
+  console.log('[Sync] registerDevice: reading device id');
   const deviceId = await getDeviceId();
+  console.log(`[Sync] registerDevice: got device id ${deviceId}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    console.log('[Sync] registerDevice: aborting after timeout');
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+  console.log(`[Sync] registerDevice: POST /api/devices to ${SERVER_URL}`);
   try {
     const response = await fetch(`${SERVER_URL}/api/devices`, {
       method: 'POST',
@@ -66,7 +89,9 @@ export async function registerDevice(cookie: string): Promise<Registration> {
         platform: 'android',
         appVersion: Constants.expoConfig?.version ?? null,
       }),
+      signal: controller.signal,
     });
+    console.log(`[Sync] registerDevice: response ${response.status}`);
     if (response.ok) {
       const body = (await response.json().catch(() => null)) as {
         minAppVersion?: unknown;
@@ -80,7 +105,12 @@ export async function registerDevice(cookie: string): Promise<Registration> {
       ok: false,
       reason: response.status >= 500 ? 'unreachable' : 'refused',
     };
-  } catch {
+  } catch (error) {
+    console.log(
+      `[Sync] registerDevice: fetch threw: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return { ok: false, reason: 'unreachable' };
+  } finally {
+    clearTimeout(timer);
   }
 }
