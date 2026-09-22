@@ -232,6 +232,11 @@ export default async function QaqcPage() {
 
   resolvedOther.sort((a, b) => b.resolvedAt.localeCompare(a.resolvedAt));
 
+  const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
+  const resolvedThisWeekCount =
+    resolutions.filter((r) => r.resolvedAt >= weekAgo).length +
+    decisions.filter((d) => d.decidedAt >= weekAgo).length;
+
   return (
     <>
       <div className="admin-page-header">
@@ -248,6 +253,8 @@ export default async function QaqcPage() {
         devices={deviceRows}
         stage={stage}
         otherResolved={resolvedOther}
+        openCount={open.length}
+        resolvedThisWeekCount={resolvedThisWeekCount}
       />
     </>
   );

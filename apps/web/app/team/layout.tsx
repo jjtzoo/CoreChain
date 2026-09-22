@@ -37,7 +37,7 @@ export default async function TeamLayout({
           </div>
         </div>
       </header>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main admin-main--wide">{children}</main>
     </div>
   );
 }

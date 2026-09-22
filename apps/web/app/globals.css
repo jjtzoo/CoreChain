@@ -2228,6 +2228,13 @@ h3 {
   gap: 24px;
 }
 
+.admin-sidebar-column {
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+}
+
 .admin-card {
   display: grid;
   gap: 16px;
@@ -2957,4 +2964,468 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   .admin-page-header {
     flex-direction: column;
   }
+}
+
+/* Laboratory, QA/QC and Team overview: KPI strip, queue/detail layout,
+   status pills and small charts shared across the three role dashboards. */
+
+.admin-main--wide {
+  width: min(1400px, 100%);
+}
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.kpi-strip-label {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kpi-card {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.kpi-card.is-danger {
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+}
+
+.kpi-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kpi-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--forest-soft);
+  color: var(--forest);
+}
+
+.kpi-icon.is-copper {
+  background: var(--copper-soft);
+  color: var(--brand-copper);
+}
+
+.kpi-icon.is-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.kpi-icon.is-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.kpi-icon.is-muted {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.kpi-value {
+  font-family: var(--font-mono), monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.kpi-value em {
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.kpi-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.kpi-sub {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.kpi-sub.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kpi-bar {
+  display: block;
+  height: 5px;
+  margin-top: 10px;
+  background: var(--surface-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.kpi-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand-copper);
+  border-radius: 999px;
+}
+
+/* Lifecycle legend (Laboratory) */
+
+.lifecycle-legend {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.lifecycle-step {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.lifecycle-dot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--brand-copper);
+}
+
+.lifecycle-dot.is-final {
+  background: var(--success);
+}
+
+.lifecycle-dot i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.lifecycle-label {
+  margin-left: 8px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.lifecycle-line {
+  flex-grow: 1;
+  height: 1px;
+  margin: 0 14px;
+  background: var(--line-strong);
+}
+
+/* Three-column queue + detail + sidebar (QA/QC, Team overview) and
+   queue + sidebar (Laboratory) */
+
+.workspace-columns {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.workspace-queue {
+  width: 340px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+
+.workspace-queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.workspace-queue-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.workspace-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.workspace-row:hover {
+  border-color: var(--line-strong);
+}
+
+.workspace-row.is-selected {
+  background: var(--forest-soft);
+  border-color: var(--line-strong);
+}
+
+.workspace-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workspace-row-id {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.workspace-row-sub {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-detail {
+  flex-grow: 1;
+  min-width: 0;
+  display: grid;
+  gap: 22px;
+  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.workspace-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-cell {
+  padding: 16px 18px;
+  background: var(--canvas);
+  border-radius: var(--radius-control);
+}
+
+.stat-cell-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stat-cell-value {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Status pills: receipt, results, QA/QC decision */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-pill.is-muted {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+
+.status-pill.is-copper {
+  color: var(--brand-copper);
+  background: var(--copper-soft);
+}
+
+.status-pill.is-success {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.status-pill.is-danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Dispatch inbox rows (Laboratory) */
+
+.dispatch-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.dispatch-item:last-child {
+  border-bottom: 0;
+}
+
+.dispatch-item-head {
+  display: grid;
+  grid-template-columns: 20px minmax(180px, 1fr) 130px 180px 160px 140px;
+  align-items: center;
+  column-gap: 16px;
+  width: 100%;
+  padding: 18px 20px;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.dispatch-item-head:hover {
+  background: var(--surface-muted);
+}
+
+.dispatch-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease;
+}
+
+.dispatch-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.dispatch-item-detail {
+  padding: 4px 20px 22px 56px;
+  background: var(--canvas);
+}
+
+/* Exceptions / attention lists */
+
+.exception-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.exception-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.exception-row:last-child {
+  border-bottom: 0;
+}
+
+/* Donut chart and workload bars (Team overview) */
+
+.donut-chart {
+  transform: rotate(-90deg);
+}
+
+.donut-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.workload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workload-name {
+  width: 110px;
+  flex-shrink: 0;
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workload-bar {
+  flex-grow: 1;
+  height: 8px;
+  background: var(--surface-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.workload-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand-copper);
+  border-radius: 999px;
+}
+
+.activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.activity-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--brand-copper);
+  flex-shrink: 0;
 }
