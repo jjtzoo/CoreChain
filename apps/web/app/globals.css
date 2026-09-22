@@ -2336,6 +2336,26 @@ h3 {
   font-family: var(--font-mono), monospace;
 }
 
+.admin-user-group + .admin-user-group {
+  margin-top: 8px;
+}
+
+.admin-user-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.admin-user-group-head h3 {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .admin-users {
   display: grid;
   margin: 0;

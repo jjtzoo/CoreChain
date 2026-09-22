@@ -749,6 +749,25 @@ export function UsersWorkspace({
     );
   }
 
+  // With no team yet, everyone is in the same personal-workspace bucket, so
+  // a flat list reads fine. Once a team exists, group by team so the People
+  // card doesn't read as one undifferentiated pile once there is more than
+  // one workspace to keep straight.
+  const personal = users.filter((user) => !user.organizationId);
+  const userGroups =
+    teams.length === 0
+      ? [{ key: "all", label: null, users }]
+      : [
+          ...teams
+            .map((team) => ({
+              key: team.id,
+              label: team.name,
+              users: users.filter((user) => user.organizationId === team.id),
+            }))
+            .filter((group) => group.users.length > 0),
+          { key: "personal", label: "Personal workspace", users: personal },
+        ].filter((group) => group.users.length > 0);
+
   return (
     <div className="admin-columns">
       <div className="admin-list-column">
@@ -782,17 +801,27 @@ export function UsersWorkspace({
             <h2 id="people-title">People</h2>
             <span className="admin-count">{users.length}</span>
           </div>
-          <ul className="admin-users">
-            {users.map((user) => (
-              <UserItem
-                key={user.id}
-                user={user}
-                teams={teams}
-                isYou={user.id === currentUserId}
-                onCredentials={setCredentials}
-              />
-            ))}
-          </ul>
+          {userGroups.map((group) => (
+            <div className="admin-user-group" key={group.key}>
+              {group.label ? (
+                <div className="admin-user-group-head">
+                  <h3>{group.label}</h3>
+                  <span className="admin-count">{group.users.length}</span>
+                </div>
+              ) : null}
+              <ul className="admin-users">
+                {group.users.map((user) => (
+                  <UserItem
+                    key={user.id}
+                    user={user}
+                    teams={teams}
+                    isYou={user.id === currentUserId}
+                    onCredentials={setCredentials}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       </div>
 
