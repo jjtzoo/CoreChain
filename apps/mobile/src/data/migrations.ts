@@ -435,4 +435,15 @@ export const MIGRATIONS: readonly Migration[] = [
       ['ALTER TABLE feedback_outbox ADD COLUMN screenshot_uri TEXT'],
     ],
   },
+  {
+    // Sprint 6, E11-2: a resident / project manager can flag a hole as
+    // urgent from the web team overview. Set on the server only; the phone
+    // just displays it, so a default of 'normal' and no note is always
+    // correct for a hole this phone created itself.
+    version: 15,
+    commands: [
+      ["ALTER TABLE drillholes ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'"],
+      ['ALTER TABLE drillholes ADD COLUMN priority_note TEXT'],
+    ],
+  },
 ];

@@ -191,3 +191,5 @@ export * from "./signOut";
 export * from "./appVersion";
 
 export * from "./custody";
+export * from "./qaqc";
+export * from "./laboratory";

@@ -30,6 +30,8 @@ type DrillholeRow = {
   drill_type: string | null;
   diameter: string | null;
   note: string | null;
+  priority: 'normal' | 'urgent';
+  priority_note: string | null;
   created_at: string;
   updated_at: string;
   version: number;
@@ -64,6 +66,8 @@ function rowToDrillhole(row: DrillholeRow): FieldDrillhole {
     drillType: row.drill_type,
     diameter: row.diameter,
     note: row.note,
+    priority: row.priority,
+    priorityNote: row.priority_note,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     version: row.version,

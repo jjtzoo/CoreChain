@@ -59,12 +59,18 @@ export async function registerDevice(
     return { ok: true, deviceId };
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true },
+  });
   const now = new Date();
   await prisma.device.create({
     data: {
       id: deviceId,
-      // A personal workspace for now (decision D9): the account is its own organization.
-      organizationId: userId,
+      // A team's shared workspace if the admin put this account on one
+      // (E11-1); otherwise a personal workspace, same as before teams
+      // existed: the account is its own organization (decision D9).
+      organizationId: user?.organizationId ?? userId,
       userId,
       name,
       platform,

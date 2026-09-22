@@ -63,6 +63,13 @@ export const DRILLHOLE_STATUSES = [
 ] as const;
 export type DrillholeStatus = (typeof DRILLHOLE_STATUSES)[number];
 
+// E11-2: a resident / project manager can flag a hole as needing urgent
+// attention (a sample, a check, whatever the note says) from the team
+// overview on the web. Set only by a manager, never by the phone; the phone
+// only shows it, since the geologist's own logging never depends on it.
+export const DRILLHOLE_PRIORITIES = ["normal", "urgent"] as const;
+export type DrillholePriority = (typeof DRILLHOLE_PRIORITIES)[number];
+
 export type Collar = {
   source: "gps" | "manual";
   latitude: number;
@@ -87,6 +94,8 @@ export type FieldDrillhole = SyncableRecord & {
   drillType: string | null;
   diameter: string | null;
   note: string | null;
+  priority: DrillholePriority;
+  priorityNote: string | null;
 };
 
 export type FieldDrillholeInput = {

@@ -1,6 +1,9 @@
 "use server";
 
 import {
+  canReviewLaboratory,
+  canReviewQaqc,
+  canViewTeamOverview,
   classifySignInFailure,
   signInFailureMessage,
   validateSignInInput,
@@ -9,6 +12,7 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 /** `email` is sent back so a failed try keeps what was typed (React clears the form). */
 export type SignInState = { error: string | null; email: string };
@@ -44,6 +48,10 @@ export async function signInAction(
   }
 
   // Outside the try block: redirect() works by throwing.
+  const session = await getSession();
+  if (session && canViewTeamOverview(session.user.role)) redirect("/team");
+  if (session && canReviewQaqc(session.user.role)) redirect("/qaqc");
+  if (session && canReviewLaboratory(session.user.role)) redirect("/laboratory");
   redirect("/admin/users");
 }
 

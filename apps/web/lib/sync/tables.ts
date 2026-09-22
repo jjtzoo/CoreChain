@@ -256,9 +256,14 @@ export const SYNC_TABLES: Record<string, TableSpec> = {
       id: uuid({ required: true, immutable: true }),
       project_id: uuid({ required: true, immutable: true }),
       sample_id: uuid({ required: true, immutable: true }),
+      // "received" (E13-2) is written only by a laboratory account's own web
+      // action, never by the phone's generic sync-upload path; it is listed
+      // here so the SQL cast matches every value the database enum actually
+      // has (the schema-agreement test below requires that), not as a grant
+      // for the phone to send it.
       event_type: oneOf(
         "CustodyEventType",
-        ["bagged", "sealed", "handed_over", "dispatched", "correction"],
+        ["bagged", "sealed", "handed_over", "dispatched", "received", "correction"],
         { required: true },
       ),
       occurred_at: when({ required: true }),

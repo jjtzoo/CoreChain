@@ -7,7 +7,7 @@ import { UsersWorkspace, type UserRow } from "./users-workspace";
 export default async function UsersPage() {
   const session = await requireAdmin();
 
-  const [users, activity, requestRows] = await Promise.all([
+  const [users, activity, requestRows, teams] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -17,6 +17,8 @@ export default async function UsersPage() {
         role: true,
         banned: true,
         createdAt: true,
+        organizationId: true,
+        qaqcStage: true,
       },
     }),
     prisma.session.groupBy({ by: ["userId"], _max: { updatedAt: true } }),
@@ -24,6 +26,7 @@ export default async function UsersPage() {
       where: { status: "new" },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.organization.findMany({ orderBy: { createdAt: "asc" } }),
   ]);
   const lastActive = new Map(
     activity.map((row) => [row.userId, row._max.updatedAt]),
@@ -37,6 +40,8 @@ export default async function UsersPage() {
     switchedOff: user.banned === true,
     createdAt: user.createdAt.toISOString(),
     lastActiveAt: lastActive.get(user.id)?.toISOString() ?? null,
+    organizationId: user.organizationId,
+    qaqcStage: user.qaqcStage,
   }));
 
   return (
@@ -53,6 +58,7 @@ export default async function UsersPage() {
       </div>
       <UsersWorkspace
         users={rows}
+        teams={teams.map((team) => ({ id: team.id, name: team.name }))}
         currentUserId={session.user.id}
         hasTester={rows.some((user) => user.id !== session.user.id)}
         requests={requestRows.map((request) => ({

@@ -188,11 +188,21 @@ export default function ProjectDetailScreen() {
                       </ThemedText>
                       <SyncBadge kind="drillhole" id={hole.id} />
                     </View>
-                    <StatusPill
-                      label={statusLabel(hole.status)}
-                      tone={statusTone(hole.status)}
-                    />
+                    <View style={styles.holePills}>
+                      {hole.priority === 'urgent' ? (
+                        <StatusPill label="Urgent" tone="danger" />
+                      ) : null}
+                      <StatusPill
+                        label={statusLabel(hole.status)}
+                        tone={statusTone(hole.status)}
+                      />
+                    </View>
                   </View>
+                  {hole.priority === 'urgent' && hole.priorityNote ? (
+                    <ThemedText type="small" themeColor="danger">
+                      {hole.priorityNote}
+                    </ThemedText>
+                  ) : null}
                   <ProgressBar
                     value={progress}
                     label={`${hole.holeId} logging progress`}
@@ -256,6 +266,10 @@ const styles = StyleSheet.create({
   holeTitle: {
     flex: 1,
     gap: Spacing.half,
+  },
+  holePills: {
+    alignItems: 'flex-end',
+    gap: Spacing.one,
   },
   empty: {
     gap: Spacing.two,

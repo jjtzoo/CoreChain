@@ -140,12 +140,14 @@ export default function Home() {
             <p className="lp-kicker">
               Core logging and sample custody for geology and mining teams
             </p>
-            <h1>Core logging you can defend.</h1>
+            <h1>One workflow, from the rig to the result.</h1>
             <p className="lp-lede">
-              CoreChain is an offline-first field app, with a team workspace to
-              follow. Log, photograph and sample core at the rig, keep the chain
-              of custody to the laboratory, and hold every record to its depth,
-              its author and its version.
+              CoreChain carries a hole, a depth and a sample number forward
+              automatically through logging, sampling and custody, so nobody
+              re-types the same number off a chalk mark or a paper sheet, and
+              a result doesn&rsquo;t need several rounds of manual checking to
+              be trusted. It keeps working whether the rig has signal or not,
+              so the workflow itself never breaks.
             </p>
             <div className="lp-cta">
               <a className="lp-btn lp-btn-solid" href="#pilot">
@@ -156,9 +158,9 @@ export default function Home() {
               </a>
             </div>
             <ul className="lp-facts">
-              <li>Works with no signal</li>
-              <li>Encrypted on the device</li>
-              <li>Every record tied to its depth</li>
+              <li>One record, not five spreadsheets</li>
+              <li>Carries every depth and ID forward automatically</li>
+              <li>Every record tied to its depth, author and version</li>
             </ul>
           </div>
 
@@ -292,15 +294,21 @@ export default function Home() {
         <section id="field" className="lp-section">
           <div className="lp-wrap">
             <div className="lp-head">
-              <h2>Made for the field, not the office.</h2>
+              <h2>Built to remove the re-typing, not just collect it.</h2>
+              <p>
+                A hole, a depth or a sample number is entered once, at the
+                point it&rsquo;s created, and carries forward on its own from
+                there.
+              </p>
             </div>
             <div className="lp-field">
               <div>
-                <h3>Offline for weeks</h3>
+                <h3>One workflow, start to finish</h3>
                 <p>
-                  The app keeps working with no signal for up to 30 days after
-                  you last connect, and warns you before that runs out. Your
-                  data stays readable on the phone.
+                  A sample number, once assigned, follows the sample through
+                  logging, custody and dispatch automatically — nobody re-keys
+                  it from a chalk mark or a paper sheet, and it doesn&rsquo;t
+                  wait on a separate round of office checking to be trusted.
                 </p>
               </div>
               <div>

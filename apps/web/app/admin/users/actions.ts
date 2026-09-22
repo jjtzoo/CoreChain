@@ -2,7 +2,9 @@
 
 import {
   isUserRole,
+  QAQC_STAGES,
   suggestPassphrase,
+  type QaqcStage,
   type UserRole,
 } from "@corechain/domain";
 import { APIError } from "better-auth/api";
@@ -48,6 +50,7 @@ export async function createUserAction(input: {
   email: string;
   role: string;
   password: string;
+  organizationId?: string | null;
 }): Promise<ActionResult<{ email: string; password: string }>> {
   await requireAdmin();
   const name = input.name.trim();
@@ -64,12 +67,25 @@ export async function createUserAction(input: {
       error: `The password needs at least ${MIN_PASSWORD} characters.`,
     };
   }
+  const organizationId = input.organizationId?.trim() || null;
+  if (organizationId) {
+    const team = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+    if (!team) return { ok: false, error: "That team no longer exists." };
+  }
 
   try {
-    await auth.api.createUser({
+    const created = await auth.api.createUser({
       body: { name, email, password: input.password, role: input.role },
       headers: await headers(),
     });
+    if (organizationId) {
+      await prisma.user.update({
+        where: { id: created.user.id },
+        data: { organizationId },
+      });
+    }
   } catch (error) {
     return { ok: false, error: describe(error) };
   }
@@ -102,6 +118,67 @@ export async function setRoleAction(
   } catch (error) {
     return { ok: false, error: describe(error) };
   }
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+// E11-1: a team an admin groups accounts into, so their data stays isolated
+// from every other team (and from solo testers in their own personal
+// workspace). See the comment on Organization in prisma/schema.prisma for
+// what changing a user's team does and does not move.
+
+export async function createTeamAction(
+  name: string,
+): Promise<ActionResult<{ id: string; name: string }>> {
+  await requireAdmin();
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "Enter a team name." };
+  if (trimmed.length > 120) {
+    return { ok: false, error: "Keep the team name under 120 characters." };
+  }
+  const team = await prisma.organization.create({
+    data: { name: trimmed },
+  });
+  revalidatePath("/admin/users");
+  return { ok: true, id: team.id, name: team.name };
+}
+
+export async function setUserTeamAction(
+  userId: string,
+  organizationId: string | null,
+): Promise<ActionResult> {
+  await requireAdmin();
+  if (organizationId) {
+    const team = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+    if (!team) return { ok: false, error: "That team no longer exists." };
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { organizationId },
+  });
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+// E12-1: which stage of the chain a QA/QC account reviews. Only meaningful
+// for a "qaqc" tier account; setRoleAction does not clear it when a role
+// changes away from qaqc, so a stage picked earlier is still there if the
+// account is switched back.
+
+export async function setQaqcStageAction(
+  userId: string,
+  stage: string | null,
+): Promise<ActionResult> {
+  await requireAdmin();
+  if (stage !== null && !(QAQC_STAGES as readonly string[]).includes(stage)) {
+    return { ok: false, error: "Unknown stage." };
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { qaqcStage: stage as QaqcStage | null },
+  });
   revalidatePath("/admin/users");
   return { ok: true };
 }

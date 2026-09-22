@@ -15,13 +15,19 @@ export const CUSTODY_EVENT_TYPES = [
   "sealed",
   "handed_over",
   "dispatched",
+  // E13-2: recorded once per sample by a laboratory account on the web when
+  // it confirms a dispatch arrived. A geologist's phone only ever displays
+  // this (it syncs down like any other custody event); it is never written
+  // on the device, so it is not in RECORDABLE_EVENT_TYPES below.
+  "received",
   "correction",
 ] as const;
 export type CustodyEventType = (typeof CUSTODY_EVENT_TYPES)[number];
 
 /**
  * What a geologist records by hand. "dispatched" is written for them when a
- * dispatch is handed over, and "correction" by the correct-a-mistake flow.
+ * dispatch is handed over, "received" by the laboratory's own web screen,
+ * and "correction" by the correct-a-mistake flow.
  */
 export const RECORDABLE_EVENT_TYPES = [
   "bagged",
@@ -35,6 +41,7 @@ export const CUSTODY_LABELS: Record<CustodyEventType, string> = {
   sealed: "Sealed",
   handed_over: "Handed over",
   dispatched: "Dispatched to lab",
+  received: "Received by laboratory",
   correction: "Correction",
 };
 

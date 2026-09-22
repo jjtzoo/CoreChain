@@ -54,7 +54,14 @@ describe("exportSlug", () => {
   });
 });
 
-const base = { createdAt: "t", updatedAt: "t", version: 1, deletedAt: null };
+const base = {
+  createdAt: "t",
+  updatedAt: "t",
+  version: 1,
+  deletedAt: null,
+  priority: "normal" as const,
+  priorityNote: null,
+};
 
 const data: ExportData = {
   project: { name: "Sipalay Test", coordinateSystem: "PRS92" },

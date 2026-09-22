@@ -1,4 +1,9 @@
-import { canManageUsers } from "@corechain/domain";
+import {
+  canManageUsers,
+  canReviewLaboratory,
+  canReviewQaqc,
+  canViewTeamOverview,
+} from "@corechain/domain";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -16,6 +21,9 @@ export default async function LoginPage({
   const { reason } = await searchParams;
   const session = await getSession();
   if (session && canManageUsers(session.user.role)) redirect("/admin/users");
+  if (session && canViewTeamOverview(session.user.role)) redirect("/team");
+  if (session && canReviewQaqc(session.user.role)) redirect("/qaqc");
+  if (session && canReviewLaboratory(session.user.role)) redirect("/laboratory");
 
   return (
     <main className="auth-shell">
@@ -38,8 +46,14 @@ export default async function LoginPage({
             <p>
               {reason === "not-admin"
                 ? `${session.user.email} is signed in, but this account can't open the admin area.`
-                : `${session.user.email} is signed in.`}{" "}
-              Sign out to use an admin account.
+                : reason === "not-project-manager"
+                  ? `${session.user.email} is signed in, but this account isn't a resident / project manager.`
+                  : reason === "not-qaqc"
+                    ? `${session.user.email} is signed in, but this account isn't a QA/QC reviewer.`
+                    : reason === "not-laboratory"
+                      ? `${session.user.email} is signed in, but this account isn't a laboratory reviewer.`
+                      : `${session.user.email} is signed in.`}{" "}
+              Sign out to use a different account.
             </p>
             <form action={signOutAction}>
               <button type="submit" className="admin-button">

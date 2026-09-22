@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  QAQC_STAGE_LABELS,
+  QAQC_STAGES,
   ROLE_LABELS,
   ROLE_SUMMARIES,
   USER_ROLES,
@@ -14,9 +16,12 @@ import {
   type FormEvent,
 } from "react";
 import {
+  createTeamAction,
   createUserAction,
   resetPasswordAction,
+  setQaqcStageAction,
   setRoleAction,
+  setUserTeamAction,
   dismissRequestAction,
   setSwitchedOffAction,
   suggestPasswordAction,
@@ -30,7 +35,18 @@ export type UserRow = {
   switchedOff: boolean;
   createdAt: string;
   lastActiveAt: string | null;
+  organizationId: string | null;
+  qaqcStage: string | null;
 };
+
+const NO_STAGE = "";
+
+export type TeamRow = {
+  id: string;
+  name: string;
+};
+
+const PERSONAL_WORKSPACE = "";
 
 export type RequestRow = {
   id: string;
@@ -217,12 +233,87 @@ function FirstRunChecklist({
   );
 }
 
+// E11-1: teams keep a company's data from mixing with another company's, or
+// with a solo tester's personal workspace. A team's own workspace, in the
+// admin's own words, so it reads right whether there is one team or ten.
+function TeamsCard({
+  teams,
+  memberCounts,
+}: {
+  teams: TeamRow[];
+  memberCounts: Map<string, number>;
+}) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const result = await createTeamAction(name);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setName("");
+    });
+  };
+
+  return (
+    <section className="admin-card" aria-labelledby="teams-title">
+      <div className="admin-card-head">
+        <h2 id="teams-title">Teams</h2>
+        <span className="admin-count">{teams.length}</span>
+      </div>
+      <p className="admin-hint">
+        A team keeps one company&apos;s projects, holes and samples isolated
+        from every other team and from solo testers. Assign each person to a
+        team below, or leave them in their own personal workspace.
+      </p>
+      {teams.length > 0 ? (
+        <ul className="admin-users">
+          {teams.map((team) => (
+            <li className="admin-user" key={team.id}>
+              <div className="admin-user-who">
+                <span className="admin-user-name">{team.name}</span>
+              </div>
+              <div className="admin-status">
+                <span className="admin-meta-label">People</span>
+                <span>{memberCounts.get(team.id) ?? 0}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <form className="field-with-action" onSubmit={submit} noValidate>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="New team name, e.g. a company's name"
+          autoComplete="off"
+        />
+        <button type="submit" className="admin-button" disabled={pending}>
+          {pending ? "Working…" : "Create team"}
+        </button>
+      </form>
+      {error ? (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function AddUserForm({
+  teams,
   initialSuggestion,
   initialName = "",
   initialEmail = "",
   onCreated,
 }: {
+  teams: TeamRow[];
   initialSuggestion: string;
   initialName?: string;
   initialEmail?: string;
@@ -231,6 +322,7 @@ function AddUserForm({
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [role, setRole] = useState<UserRole>("geologist");
+  const [organizationId, setOrganizationId] = useState(PERSONAL_WORKSPACE);
   const [password, setPassword] = useState(initialSuggestion);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -245,7 +337,13 @@ function AddUserForm({
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await createUserAction({ name, email, role, password });
+      const result = await createUserAction({
+        name,
+        email,
+        role,
+        password,
+        organizationId: organizationId || null,
+      });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -259,6 +357,7 @@ function AddUserForm({
       setName("");
       setEmail("");
       setRole("geologist");
+      setOrganizationId(PERSONAL_WORKSPACE);
       setPassword(await suggestPasswordAction());
     });
   };
@@ -304,6 +403,25 @@ function AddUserForm({
       </label>
 
       <label className="field">
+        <span className="field-label">Team</span>
+        <select
+          value={organizationId}
+          onChange={(e) => setOrganizationId(e.target.value)}
+        >
+          <option value={PERSONAL_WORKSPACE}>Personal workspace</option>
+          {teams.map((team) => (
+            <option key={team.id} value={team.id}>
+              {team.name}
+            </option>
+          ))}
+        </select>
+        <span className="admin-hint">
+          Put testers from the same company on the same team so they share
+          one workspace, isolated from every other team.
+        </span>
+      </label>
+
+      <label className="field">
         <span className="field-label">Starting password</span>
         <span className="field-with-action">
           <input
@@ -342,10 +460,12 @@ function AddUserForm({
 
 function UserItem({
   user,
+  teams,
   isYou,
   onCredentials,
 }: {
   user: UserRow;
+  teams: TeamRow[];
   isYou: boolean;
   onCredentials: (credentials: Credentials) => void;
 }) {
@@ -357,6 +477,22 @@ function UserItem({
     setError(null);
     startTransition(async () => {
       const result = await setRoleAction(user.id, next);
+      if (!result.ok) setError(result.error);
+    });
+  };
+
+  const changeTeam = (next: string) => {
+    setError(null);
+    startTransition(async () => {
+      const result = await setUserTeamAction(user.id, next || null);
+      if (!result.ok) setError(result.error);
+    });
+  };
+
+  const changeStage = (next: string) => {
+    setError(null);
+    startTransition(async () => {
+      const result = await setQaqcStageAction(user.id, next || null);
       if (!result.ok) setError(result.error);
     });
   };
@@ -431,6 +567,40 @@ function UserItem({
             ))}
           </select>
         </label>
+        <label className="admin-tier">
+          <span className="admin-meta-label">Team</span>
+          <select
+            value={user.organizationId ?? PERSONAL_WORKSPACE}
+            onChange={(e) => changeTeam(e.target.value)}
+            disabled={pending}
+            aria-label={`Team for ${user.name}`}
+          >
+            <option value={PERSONAL_WORKSPACE}>Personal workspace</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {role === "qaqc" ? (
+          <label className="admin-tier">
+            <span className="admin-meta-label">Stage reviewed</span>
+            <select
+              value={user.qaqcStage ?? NO_STAGE}
+              onChange={(e) => changeStage(e.target.value)}
+              disabled={pending}
+              aria-label={`Stage reviewed by ${user.name}`}
+            >
+              <option value={NO_STAGE}>Not set</option>
+              {QAQC_STAGES.map((stage) => (
+                <option key={stage} value={stage}>
+                  {QAQC_STAGE_LABELS[stage]}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="admin-status">
           <span className="admin-meta-label">Status</span>
           <span
@@ -548,12 +718,14 @@ function RequestsCard({
 
 export function UsersWorkspace({
   users,
+  teams,
   requests,
   currentUserId,
   hasTester,
   initialSuggestion,
 }: {
   users: UserRow[];
+  teams: TeamRow[];
   requests: RequestRow[];
   currentUserId: string;
   hasTester: boolean;
@@ -567,6 +739,15 @@ export function UsersWorkspace({
     email: string;
     nonce: number;
   } | null>(null);
+
+  const memberCounts = new Map<string, number>();
+  for (const user of users) {
+    if (!user.organizationId) continue;
+    memberCounts.set(
+      user.organizationId,
+      (memberCounts.get(user.organizationId) ?? 0) + 1,
+    );
+  }
 
   return (
     <div className="admin-columns">
@@ -594,6 +775,8 @@ export function UsersWorkspace({
           />
         ) : null}
 
+        <TeamsCard teams={teams} memberCounts={memberCounts} />
+
         <section className="admin-card" aria-labelledby="people-title">
           <div className="admin-card-head">
             <h2 id="people-title">People</h2>
@@ -604,6 +787,7 @@ export function UsersWorkspace({
               <UserItem
                 key={user.id}
                 user={user}
+                teams={teams}
                 isYou={user.id === currentUserId}
                 onCredentials={setCredentials}
               />
@@ -614,6 +798,7 @@ export function UsersWorkspace({
 
       <AddUserForm
         key={prefill?.nonce ?? 0}
+        teams={teams}
         initialSuggestion={initialSuggestion}
         initialName={prefill?.name}
         initialEmail={prefill?.email}

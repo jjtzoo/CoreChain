@@ -389,6 +389,8 @@ describe("the field-day scenario: traceability and export", () => {
       drillType: null,
       diameter: null,
       note: null,
+      priority: "normal",
+      priorityNote: null,
       createdAt: now,
       updatedAt: now,
       version: 1,

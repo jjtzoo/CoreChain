@@ -5,15 +5,18 @@
 # Postgres here; the phone's changes go up through our own API, not through
 # this file.
 #
-# The MVP has one rule: a geologist gets the projects they created, plus
-# everything that hangs off those projects. When teams arrive (decision D9),
-# only `my_projects` below changes, to also include projects the person is a
-# member of. Nothing else in this file needs to move.
+# Teams arrived in E11-1 (decision D9): a person gets every project whose
+# organization_id matches their own account's organization_id (a team the
+# admin put them on), or, if they are not on a team, their personal workspace
+# (organization_id equal to their own user id, same as before teams existed).
+# Nothing below `my_projects` needed to change.
 #
 # Rows are synced including soft-deleted ones (deleted_at set), so a delete
 # made on one phone reaches the others. The phone hides them.
 #
-# Not synced on purpose: audit_events (server-side history only).
+# Not synced on purpose: audit_events (server-side history only) and
+# hole_assignments (E11-2, web-only: a geologist's own logging never depends
+# on being assigned a hole, so the phone doesn't need to know).
 
 config:
   edition: 3
@@ -22,9 +25,13 @@ streams:
   my_workspace:
     auto_subscribe: true
     with:
-      my_projects: SELECT id FROM projects WHERE created_by = auth.user_id()
+      my_projects: |
+        SELECT id FROM projects WHERE organization_id IN (
+          SELECT CASE WHEN organization_id IS NULL THEN id ELSE organization_id END
+          FROM "user" WHERE id = auth.user_id()
+        )
     queries:
-      - SELECT * FROM projects WHERE created_by = auth.user_id()
+      - SELECT * FROM projects WHERE id IN my_projects
       - SELECT * FROM drillholes WHERE project_id IN my_projects
       - SELECT * FROM drillhole_status_history WHERE project_id IN my_projects
       - SELECT * FROM core_boxes WHERE project_id IN my_projects

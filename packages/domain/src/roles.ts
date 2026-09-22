@@ -61,3 +61,18 @@ export function toUserRole(value: unknown): UserRole {
 export function canManageUsers(role: unknown): boolean {
   return role === "admin";
 }
+
+/** Only a resident / project manager may open the team overview (E11-2). */
+export function canViewTeamOverview(role: unknown): boolean {
+  return role === "project_manager";
+}
+
+/** Only a QA/QC account may open the exceptions queue (E12). */
+export function canReviewQaqc(role: unknown): boolean {
+  return role === "qaqc";
+}
+
+/** Only a laboratory account may open the dispatch inbox (E13). */
+export function canReviewLaboratory(role: unknown): boolean {
+  return role === "laboratory";
+}
