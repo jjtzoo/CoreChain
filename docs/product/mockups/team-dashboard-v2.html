@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Team dashboard v2 mockup</title>
+<!--
+  MOCKUP, not the app. A second design pass on the manager dashboard (E11-2),
+  after the owner's "this is kinda trash UI" reaction to the first built pass
+  and a reference screenshot of a generic SaaS admin dashboard (left nav, KPI
+  cards, charts, workload panel, quick-create). This mockup studies that
+  reference's UX ideas and adapts the useful ones to CoreChain's own data and
+  architecture — it does not copy its layout, colours or wording.
+
+  What was adapted, and why:
+  - Persistent nav: yes, but as a top-bar nav extending the pattern already
+    built for /admin (AdminNav), not a new left-sidebar paradigm.
+  - KPI strip: already built in the real app (2026-09-22), shown here as-is.
+  - Charts: hand-rolled SVG (no charting library is installed, and a small
+    "holes by status" bar and a "team workload" list are enough data to show
+    honestly — no fabricated trend line).
+  - Central work area: the holes table gains filter tabs (All / Urgent /
+    Needs attention) and a "Quick actions" side panel replaces the buried
+    per-row assign/urgent controls.
+  - Deadlines/Activity/Goals row: "Needs attention" and a preview of the
+    existing /team/activity feed. No "Goals & Milestones" — CoreChain has no
+    goal-tracking concept, so it is omitted rather than invented.
+  - Reference's global "search tasks/people/projects" box: omitted (no
+    cross-entity search backend exists); replaced with a real, buildable
+    "Jump to a hole" input instead of a decorative one.
+
+  Hole names and planned depths are real (Alberta Geological Survey, AGS DIG
+  2024-0022), continuing the first team-overview mockup. Everything else
+  (metres, recovery, people, times) is ILLUSTRATIVE. Colours are the web
+  app's own tokens (apps/web/app/globals.css), including the success/danger
+  tokens added 2026-09-22 to match the mobile app's brand system.
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --surface-muted: #e3ddcf; --ink: #182321; --text: #3a4642;
+    --muted: #6b736e; --line: #d6cfc0; --line-strong: #bdb5a3; --forest: #182321; --forest-soft: #e3ddcf;
+    --copper: #a66a43; --copper-soft: #f1e2d4; --warn-bg: #fff8e5; --warn-line: #e4c983; --warn-ink: #745a12;
+    --success: #1f7a55; --success-soft: #d9e9de; --danger: #b3261e; --danger-soft: #f4dcd6;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+  .wrap { width: min(1240px, 100% - 48px); margin: 0 auto; }
+
+  .top { padding: 56px 0 24px; border-bottom: 1px solid var(--line); }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 10px 0 14px; max-width: 26ch; }
+  .lede { max-width: 74ch; color: var(--text); font-size: 17px; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); max-width: 84ch; }
+
+  .view { padding: 40px 0 8px; }
+  .view > h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .view > h3 { font-size: 22px; line-height: 1.25; margin-bottom: 8px; }
+  .view > p { font-size: 15px; color: var(--text); max-width: 80ch; margin-bottom: 18px; }
+  .scroll { overflow-x: auto; padding-bottom: 12px; }
+
+  .win { width: 1180px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(24,35,33,.10); }
+
+  /* top bar, extending the real app's admin-header/admin-nav pattern */
+  .appbar { display: flex; align-items: center; gap: 18px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .appbar .brand { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; flex: none; }
+  .appbar nav { display: flex; gap: 4px; }
+  .appbar nav a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+  .appbar nav a.on { background: var(--forest-soft); color: var(--ink); }
+  .jump { margin-left: 8px; flex: 1; max-width: 260px; }
+  .jump input { width: 100%; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--canvas); font-size: 13px; color: var(--muted); }
+  .acct { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 12.5px; color: var(--muted); }
+  .acct button { padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--ink); }
+
+  .main { padding: 22px 24px 26px; background: var(--canvas); }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
+  .head h4 { margin: 0; font-size: 21px; }
+  .head p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .asof { font-size: 12px; color: var(--muted); text-align: right; }
+  .asof b { color: var(--ink); }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .kpi small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kpi b { display: block; font-size: 24px; line-height: 1.15; margin-top: 4px; }
+  .kpi b em { font-style: normal; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+  .kpi span { font-size: 12px; color: var(--muted); }
+  .bar { height: 7px; border-radius: 4px; background: var(--surface-muted); overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: var(--copper); }
+
+  .row2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .panel h5 { margin: 0 0 10px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+  /* holes-by-status stacked bar */
+  .stackbar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
+  .stackbar i { display: block; height: 100%; }
+  .stackbar .s-logged { background: var(--success); }
+  .stackbar .s-complete { background: var(--forest-soft); }
+  .stackbar .s-drilling { background: var(--copper); }
+  .stackbar .s-planned { background: var(--surface-muted); border-right: 1px solid var(--line); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+
+  /* workload */
+  .workload li { display: grid; grid-template-columns: 100px 1fr 34px; align-items: center; gap: 10px; padding: 7px 0; font-size: 12.5px; }
+  .workload .wbar { height: 8px; border-radius: 4px; background: var(--surface-muted); overflow: hidden; }
+  .workload .wbar i { display: block; height: 100%; background: var(--copper); }
+  .workload .wval { text-align: right; color: var(--muted); }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tabs button { padding: 6px 13px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .tabs button.on { background: var(--forest); border-color: var(--forest); color: var(--surface); }
+
+  .cols { display: grid; grid-template-columns: 1fr 320px; gap: 12px; align-items: start; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 8px 6px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 10px 8px 10px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td .h { font-weight: 700; white-space: nowrap; }
+  .mini { width: 130px; }
+  .mini .bar { margin-top: 4px; }
+  .st { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+  .st.logged { background: var(--success-soft); color: var(--success); }
+  .st.complete { background: var(--forest-soft); color: var(--ink); }
+  .st.drill { background: var(--copper-soft); color: var(--copper); }
+  .st.planned { background: var(--surface-muted); color: var(--muted); border: 1px solid var(--line); }
+  .urgent { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .attn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .attn h5 { color: var(--warn-ink); }
+  .attn li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--warn-line); font-size: 12.5px; }
+  .attn li:first-child { border-top: 0; padding-top: 2px; }
+  .attn b { display: block; }
+  .attn span { color: var(--warn-ink); font-size: 12px; }
+  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #c98a1c; margin-top: 5px; }
+
+  .feed li { padding: 7px 0; border-top: 1px solid var(--line); font-size: 12.5px; display: grid; grid-template-columns: 46px 1fr; gap: 8px; }
+  .feed li:first-child { border-top: 0; }
+  .feed time { color: var(--muted); font-size: 11.5px; }
+  .feedlink { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--copper); }
+
+  .quick { display: grid; gap: 10px; }
+  .quick label { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .quick select, .quick input { padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--canvas); font-size: 13px; color: var(--ink); }
+  .quick button { margin-top: 2px; padding: 9px; border: none; border-radius: 8px; background: var(--forest); color: var(--surface); font-size: 13px; font-weight: 700; }
+  .quicktabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .quicktabs span { padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); }
+  .quicktabs span.on { background: var(--forest); border-color: var(--forest); color: var(--surface); }
+
+  .band { border-top: 1px solid var(--line); padding: 44px 0; margin-top: 24px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .band h2 { font-size: 22px; margin-bottom: 14px; }
+  .band p, .band li { color: var(--text); font-size: 15.5px; }
+  .band li { padding: 10px 0; border-top: 1px solid var(--line); }
+  .band li:first-child { border-top: 0; }
+  .band li b { color: var(--ink); }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="tag">Design mockup · not built</span>
+    <h1>Team dashboard, second pass: adapted from a SaaS reference, not copied</h1>
+    <p class="lede">The first built pass (2026-09-22) was three flat text cards. This pass studies a generic project-management dashboard the owner shared as a design reference — persistent nav, KPI cards, charts, a workload view, quick actions — and re-derives each idea from CoreChain's own data instead of reusing its layout, tasks/projects language, or colours.</p>
+    <p class="note">Hole names and planned depths are real (Alberta Geological Survey, AGS DIG 2024-0022). Metres, recovery, people and times are illustrative. Colours are the web app's own tokens, including the success/copper/danger tokens added 2026-09-22.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="view" aria-label="Team dashboard">
+    <h2>1 · Team dashboard</h2>
+    <h3>Everything a manager needs, one screen, still read-only</h3>
+    <p>The reference's "tasks/projects/team" tabs, donut chart and generic task-creation form don't exist in CoreChain's domain, so none of them are copied. What's kept is the underlying idea each serves: a persistent way to move around, a chart that shows composition at a glance, a workload view, and a fast path to the two things a manager actually changes here — flagging a hole urgent and assigning it to someone.</p>
+    <div class="scroll">
+    <div class="win">
+      <div class="appbar">
+        <span class="brand">CoreChain</span>
+        <nav>
+          <a class="on">Team overview</a>
+          <a>Activity</a>
+        </nav>
+        <div class="jump"><input value="Jump to a hole, e.g. 200110-133" readonly></div>
+        <div class="acct">manager@corechain.test <button>Sign out</button></div>
+      </div>
+      <div class="main">
+        <div class="head">
+          <div><h4>Alberta sample project</h4><p>6 holes · 2 field geologists · 1 QA/QC reviewer</p></div>
+          <div class="asof">20 Sep 2026, 16:40<br><b>Each figure is as of that phone's last sync</b></div>
+        </div>
+
+        <div class="kpis">
+          <div class="panel kpi"><small>Metres logged</small><b>469.5 <em>of 721.6 m</em></b><span>65% of planned depth</span><div class="bar"><i style="width:65%"></i></div></div>
+          <div class="panel kpi"><small>Holes</small><b>6</b><span>2 logged · 2 complete<br>1 drilling · 1 planned</span></div>
+          <div class="panel kpi"><small>Core recovery</small><b>93%</b><span>average across holes</span></div>
+          <div class="panel kpi"><small>Samples waiting</small><b>9</b><span>6 to bag · 3 to dispatch</span></div>
+          <div class="panel kpi"><small>Phones</small><b>1 <em>of 2</em></b><span>synced today</span></div>
+        </div>
+
+        <div class="row2">
+          <div class="panel">
+            <h5>Holes by status</h5>
+            <div class="stackbar">
+              <i class="s-logged" style="width:33.3%" title="2 logged"></i>
+              <i class="s-complete" style="width:33.3%" title="2 complete"></i>
+              <i class="s-drilling" style="width:16.7%" title="1 drilling"></i>
+              <i class="s-planned" style="width:16.7%" title="1 planned"></i>
+            </div>
+            <div class="legend">
+              <span><i style="background:var(--success)"></i>Logged, 2</span>
+              <span><i style="background:var(--forest-soft)"></i>Complete, 2</span>
+              <span><i style="background:var(--copper)"></i>Drilling, 1</span>
+              <span><i style="background:var(--surface-muted);border:1px solid var(--line)"></i>Planned, 1</span>
+            </div>
+          </div>
+          <div class="panel">
+            <h5>Team workload &middot; metres logged, last 7 days</h5>
+            <ul class="workload">
+              <li><span>Geologist A</span><div class="wbar"><i style="width:78%"></i></div><span class="wval">38.2</span></li>
+              <li><span>Geologist B</span><div class="wbar"><i style="width:31%"></i></div><span class="wval">15.0</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cols">
+          <div class="panel">
+            <div class="tabs">
+              <button class="on">All holes &middot; 6</button>
+              <button>Urgent &middot; 1</button>
+              <button>Needs attention &middot; 2</button>
+            </div>
+            <table>
+              <thead><tr><th>Hole</th><th>Status</th><th>Logged</th><th>Recovery</th><th>Samples</th><th>Assigned</th></tr></thead>
+              <tbody>
+                <tr><td><span class="h">200110-128</span></td><td><span class="st logged">Logged</span></td><td class="mini">159.7 of 159.7 m<div class="bar"><i style="width:100%"></i></div></td><td>95%</td><td>Dispatched</td><td>Geologist A</td></tr>
+                <tr><td><span class="h">200110-129</span></td><td><span class="st logged">Logged</span></td><td class="mini">150.8 of 150.8 m<div class="bar"><i style="width:100%"></i></div></td><td>93%</td><td>Dispatched</td><td>Geologist A</td></tr>
+                <tr><td><span class="h">200110-133</span><span class="urgent">Urgent</span></td><td><span class="st complete">Complete</span></td><td class="mini">96.0 of 131.9 m<div class="bar"><i style="width:73%"></i></div></td><td>91%</td><td>3 waiting</td><td>Geologist A</td></tr>
+                <tr><td><span class="h">200134-001</span></td><td><span class="st drill">Drilling</span></td><td class="mini">41.0 of 132.9 m<div class="bar"><i style="width:31%"></i></div></td><td>89%</td><td>3 waiting</td><td>Geologist B</td></tr>
+                <tr><td><span class="h">200134-006</span></td><td><span class="st complete">Complete</span></td><td class="mini">22.0 of 73.0 m<div class="bar"><i style="width:30%"></i></div></td><td>92%</td><td>&middot;</td><td>Unassigned</td></tr>
+                <tr><td><span class="h">200134-008</span></td><td><span class="st planned">Planned</span></td><td class="mini">0 of 73.3 m<div class="bar"><i style="width:0"></i></div></td><td>&middot;</td><td>&middot;</td><td>Unassigned</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="stack">
+            <div class="panel attn">
+              <h5>Needs attention &middot; 3</h5>
+              <ul>
+                <li><span class="dot"></span><div><b>Geologist B's phone last seen 2 days ago</b><span>Work since then may not have reached the office.</span></div></li>
+                <li><span class="dot"></span><div><b>200134-006: no new logging for 3 days</b><span>Complete, 30% logged.</span></div></li>
+                <li><span class="dot"></span><div><b>3 samples bagged, not yet dispatched on 200110-133</b><span>Oldest bagged 5 days ago.</span></div></li>
+              </ul>
+            </div>
+
+            <div class="panel feed">
+              <h5>Recent activity</h5>
+              <ul>
+                <li><time>16:32</time><span>Geologist A logged 3 intervals on <b>200134-001</b>.</span></li>
+                <li><time>15:10</time><span>Geologist A bagged 3 samples on <b>200134-001</b>.</span></li>
+                <li><time>Yest.</time><span>Geologist A dispatched 5 samples from <b>200110-133</b>.</span></li>
+              </ul>
+              <a class="feedlink" href="#">See the full activity feed →</a>
+            </div>
+
+            <div class="panel">
+              <h5>Quick actions</h5>
+              <div class="quicktabs"><span class="on">Flag urgent</span><span>Assign a hole</span></div>
+              <form class="quick">
+                <label>Hole
+                  <select><option>200134-006 &middot; Complete, 30% logged</option><option>200134-008 &middot; Planned</option></select>
+                </label>
+                <label>Note
+                  <input placeholder="What needs attention, e.g. an urgent sample">
+                </label>
+                <button type="button">Flag as urgent</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="grid2">
+      <div>
+        <h2>What changed from the reference, and why</h2>
+        <ul>
+          <li><b>Left sidebar → top nav.</b> The reference uses a left rail; CoreChain already has a top-bar nav pattern built for /admin (AdminNav). Extending that instead of introducing a second nav paradigm keeps the app internally consistent — the same choice the app already made once.</li>
+          <li><b>Generic search → jump to a hole.</b> "Search tasks, people, projects" has no equivalent backend here. A real, typeable hole-ID lookup is buildable today; a fake search box is not.</li>
+          <li><b>Donut + trend line → holes-by-status bar + workload list.</b> No charting library is installed. A composition bar and a sorted list are honest with the data actually available, and match the app's existing hand-rolled progress-bar style rather than pulling in a new dependency for one screen.</li>
+          <li><b>"Create New Task" → Quick actions (flag urgent / assign).</b> CoreChain has no generic task concept; a manager's two real actions here are flagging urgency and assigning a hole, which is what the panel does.</li>
+          <li><b>Goals & Milestones → omitted.</b> Not a CoreChain concept. Nothing was invented to fill the slot.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Still true from the first mockup</h2>
+        <ul>
+          <li><b>It does not edit a geologist's records</b>, only assignment, priority and read-only progress.</li>
+          <li><b>It never shows a number without its age</b> — "as of" stays on every view.</li>
+          <li><b>It does not score people.</b> The workload list is for spotting an uneven week, not a league table.</li>
+          <li><b>Same holes table data as today's built page</b>, reorganised into filter tabs and a dedicated Quick actions panel instead of a control on every row.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
