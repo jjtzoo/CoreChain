@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   actualDepthWarning,
+  deriveDrillholeStatus,
   isValidAzimuthDeg,
   isValidInclinationDeg,
   loggingProgress,
@@ -181,6 +182,32 @@ describe("loggingProgress", () => {
     expect(
       loggingProgress(10, { actualFinalDepthM: null, plannedDepthM: 0 }),
     ).toBe(0);
+  });
+});
+
+describe("deriveDrillholeStatus", () => {
+  const notStarted = { completedAt: null, actualFinalDepthM: null };
+  const withActuals = { completedAt: "2026-09-19", actualFinalDepthM: 120 };
+
+  it("is planned when nothing has been recorded yet", () => {
+    expect(deriveDrillholeStatus(notStarted, false, 0)).toBe("planned");
+  });
+
+  it("is drilling once a box, run or interval exists", () => {
+    expect(deriveDrillholeStatus(notStarted, true, 0.3)).toBe("drilling");
+  });
+
+  it("is complete once actual dates or a final depth are saved, even mid-logging", () => {
+    expect(deriveDrillholeStatus(withActuals, true, 0.5)).toBe("complete");
+  });
+
+  it("is complete on saved actuals even before any core is recorded", () => {
+    expect(deriveDrillholeStatus(withActuals, false, 0)).toBe("complete");
+  });
+
+  it("is logged once the reference depth is fully covered, regardless of actuals", () => {
+    expect(deriveDrillholeStatus(notStarted, true, 1)).toBe("logged");
+    expect(deriveDrillholeStatus(withActuals, true, 1)).toBe("logged");
   });
 });
 

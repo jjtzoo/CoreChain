@@ -8,11 +8,13 @@ import { useSync } from '@/sync/sync-context';
  * finishes bringing in or sending records, so a list never stays out of date
  * behind a download (for example on a phone just signed in).
  */
-export function useFocusReload(load: () => void | (() => void)) {
+export function useFocusReload(load: () => void | Promise<void>) {
   const { dataVersion } = useSync();
   useFocusEffect(
-    // dataVersion is not read inside; changing it is what re-runs the load.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useCallback(() => load(), [load, dataVersion]),
+    useCallback(() => {
+      void load();
+      // dataVersion is not read above; changing it is what re-runs the load.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [load, dataVersion]),
   );
 }

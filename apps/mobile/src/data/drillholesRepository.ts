@@ -223,9 +223,13 @@ async function recordStatusChange(
 }
 
 /**
- * E2-3: sets the hole's status and appends to its history — the history
- * table is append-only (decision D7's pattern applied here too), so a
- * status can be revisited later without losing the earlier record.
+ * E2-3 (redesigned): sets the hole's status and appends to its history — the
+ * history table is append-only (decision D7's pattern applied here too), so
+ * a status can be revisited later without losing the earlier record. Status
+ * is derived from what's actually recorded (see `deriveDrillholeStatus` in
+ * @corechain/domain), not picked by the geologist, so this is called from
+ * the drillhole screen's own reconciliation, never directly from a UI
+ * control.
  */
 export async function updateDrillholeStatus(
   id: string,

@@ -260,6 +260,27 @@ export function loggingProgress(
 }
 
 /**
+ * E2-3 (redesigned): a hole's status, computed from what's actually been
+ * recorded rather than picked from a chip. "Logged" once every metre of the
+ * reference depth is covered; otherwise "complete" once the geologist has
+ * saved actual dates or a final depth for the hole; otherwise "drilling" once
+ * any box, run or interval exists; otherwise "planned".
+ */
+export function deriveDrillholeStatus(
+  drillhole: Pick<FieldDrillhole, "completedAt" | "actualFinalDepthM">,
+  hasCoreRecorded: boolean,
+  loggingProgressFraction: number,
+): DrillholeStatus {
+  if (loggingProgressFraction >= 1) {
+    return "logged";
+  }
+  if (drillhole.completedAt != null || drillhole.actualFinalDepthM != null) {
+    return "complete";
+  }
+  return hasCoreRecorded ? "drilling" : "planned";
+}
+
+/**
  * E2-4: case-insensitive substring search across a hole's own ID, so typing
  * part of a name finds it regardless of how it was capitalized when created.
  */

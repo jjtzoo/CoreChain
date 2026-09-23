@@ -12,6 +12,7 @@ import { StickyActions } from '@/components/form/sticky-actions';
 import { TextField } from '@/components/form/text-field';
 import { Spacing } from '@/constants/theme';
 import { createBox, listBoxes } from '@/data/coreRepository';
+import { reconcileDrillholeStatus } from '@/data/drillholeStatus';
 import { useGuideStep } from '@/guide/use-guide-step';
 import { useDepthLandmarks } from '@/hooks/use-depth-landmarks';
 import { parseRequiredNumber } from '@/utils/numbers';
@@ -84,6 +85,7 @@ export default function NewCoreBoxScreen() {
         Keyboard.dismiss();
         return;
       }
+      await reconcileDrillholeStatus(drillholeId);
       if ('step' in guide) await guide.advance();
       router.back();
     } finally {

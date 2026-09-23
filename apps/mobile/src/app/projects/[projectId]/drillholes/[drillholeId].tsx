@@ -2,14 +2,12 @@ import {
   actualDepthWarning,
   buildHoleLog,
   deepestRecordedDepthM,
-  DRILLHOLE_STATUSES,
   holeAttention,
   loggedLengthM,
   loggingProgress,
   normaliseDateInput,
   overallRecoveryPercent,
   validateActualDates,
-  type DrillholeStatus,
   type FieldCoreBox,
   type FieldCoreRun,
   type FieldDrillhole,
@@ -22,7 +20,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContinuityStrip } from '@/components/continuity-strip';
 import { HoleLogRibbons } from '@/components/hole-log-ribbons';
-import { ChipSelect } from '@/components/form/chip-select';
 import { DateField } from '@/components/form/date-field';
 import { FormScrollView } from '@/components/form/form-scroll-view';
 import { PrimaryButton } from '@/components/form/primary-button';
@@ -37,11 +34,8 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
 import { listBoxes, listRuns } from '@/data/coreRepository';
-import {
-  getDrillhole,
-  updateDrillholeActuals,
-  updateDrillholeStatus,
-} from '@/data/drillholesRepository';
+import { updateDrillholeActuals } from '@/data/drillholesRepository';
+import { reconcileDrillholeStatus } from '@/data/drillholeStatus';
 import { listIntervals } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { listHoleSamples } from '@/data/samplesRepository';
@@ -82,7 +76,6 @@ export default function DrillholeDetailScreen() {
   const [actualFinalDepthM, setActualFinalDepthM] = useState('');
   const [depthWarning, setDepthWarning] = useState<string | null>(null);
   const [savingActuals, setSavingActuals] = useState(false);
-  const [statusSaving, setStatusSaving] = useState(false);
 
   // Deepest depth recorded by any core box, run or log interval — what the
   // E2-2 "final depth is shallower than what's recorded" warning compares to.
@@ -92,50 +85,49 @@ export default function DrillholeDetailScreen() {
     ...intervals,
   ]);
 
-  const load = useCallback(() => {
+  // Loads the hole along with its boxes, runs and intervals, then reconciles
+  // its stored status against what they actually show — status is never
+  // picked by the geologist.
+  const load = useCallback(async () => {
     getProject(projectId).then((project) =>
       setProjectName(project?.name ?? ''),
     );
-    getDrillhole(drillholeId).then((loaded) => {
-      if (!loaded) {
-        return;
-      }
-      setDrillhole(loaded);
-      // Tidy any date saved in an older, looser format (e.g. 2026/09/19).
-      const started = normaliseDateInput(loaded.startedAt ?? '', 'Started');
-      const completed = normaliseDateInput(
-        loaded.completedAt ?? '',
-        'Completed',
-      );
-      setStartedAt(started.valid ? started.value : null);
-      setCompletedAt(completed.valid ? completed.value : null);
-      setActualFinalDepthM(
-        loaded.actualFinalDepthM != null
-          ? String(loaded.actualFinalDepthM)
-          : '',
-      );
-    });
-    listHoleSamples(drillholeId).then((samples) =>
-      setSampleCount(samples.length),
+
+    const [samples, loadedBoxes, loadedRuns, loadedIntervals, reconciled] =
+      await Promise.all([
+        listHoleSamples(drillholeId),
+        listBoxes(drillholeId),
+        listRuns(drillholeId),
+        listIntervals(drillholeId),
+        reconcileDrillholeStatus(drillholeId),
+      ]);
+
+    setSampleCount(samples.length);
+    setBoxes(loadedBoxes);
+    setRuns(loadedRuns);
+    setIntervals(loadedIntervals);
+
+    if (!reconciled) {
+      return;
+    }
+
+    setDrillhole(reconciled);
+    // Tidy any date saved in an older, looser format (e.g. 2026/09/19).
+    const started = normaliseDateInput(reconciled.startedAt ?? '', 'Started');
+    const completed = normaliseDateInput(
+      reconciled.completedAt ?? '',
+      'Completed',
     );
-    listBoxes(drillholeId).then(setBoxes);
-    listRuns(drillholeId).then(setRuns);
-    listIntervals(drillholeId).then(setIntervals);
+    setStartedAt(started.valid ? started.value : null);
+    setCompletedAt(completed.valid ? completed.value : null);
+    setActualFinalDepthM(
+      reconciled.actualFinalDepthM != null
+        ? String(reconciled.actualFinalDepthM)
+        : '',
+    );
   }, [projectId, drillholeId]);
 
   useFocusReload(load);
-
-  async function handleStatusChange(status: DrillholeStatus) {
-    setStatusSaving(true);
-    try {
-      const updated = await updateDrillholeStatus(drillholeId, status);
-      if (updated) {
-        setDrillhole(updated);
-      }
-    } finally {
-      setStatusSaving(false);
-    }
-  }
 
   async function handleSaveActuals() {
     const dates = validateActualDates(startedAt ?? '', completedAt ?? '');
@@ -167,7 +159,9 @@ export default function DrillholeDetailScreen() {
         actualFinalDepthM: parsedDepth,
       });
       if (updated) {
-        setDrillhole(updated);
+        // Actual dates and depth feed deriveDrillholeStatus, so reload to
+        // reconcile the hole's status against what was just saved.
+        await load();
       }
     } finally {
       setSavingActuals(false);
@@ -321,21 +315,6 @@ export default function DrillholeDetailScreen() {
             }
           />
         </View>
-
-        <Card style={styles.formCard}>
-          <ChipSelect
-            label="Status"
-            options={DRILLHOLE_STATUSES}
-            value={drillhole.status}
-            onChange={handleStatusChange}
-            formatOption={statusLabel}
-          />
-          {statusSaving ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              Saving…
-            </ThemedText>
-          ) : null}
-        </Card>
 
         <Card style={styles.formCard}>
           <ThemedText type="heading">Actual details</ThemedText>

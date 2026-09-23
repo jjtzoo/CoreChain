@@ -20,6 +20,7 @@ import { Chip } from '@/components/ui/chip';
 import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
 import { createRun, listRuns } from '@/data/coreRepository';
+import { reconcileDrillholeStatus } from '@/data/drillholeStatus';
 import { parseOptionalNumber, parseRequiredNumber } from '@/utils/numbers';
 
 /**
@@ -87,6 +88,7 @@ export default function NewCoreRunScreen() {
         Keyboard.dismiss();
         return;
       }
+      await reconcileDrillholeStatus(drillholeId);
       router.back();
     } finally {
       setSaving(false);

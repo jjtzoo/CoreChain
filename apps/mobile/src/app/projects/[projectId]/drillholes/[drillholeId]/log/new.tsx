@@ -20,6 +20,7 @@ import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { listCodes } from '@/data/codesRepository';
+import { reconcileDrillholeStatus } from '@/data/drillholeStatus';
 import {
   clearDraft,
   createInterval,
@@ -203,6 +204,7 @@ export default function NewIntervalScreen() {
 
       saved.current = true;
       await clearDraft(drillholeId);
+      await reconcileDrillholeStatus(drillholeId);
       if ('step' in guide) await guide.advance();
       router.back();
     } finally {
