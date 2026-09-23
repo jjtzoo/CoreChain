@@ -356,16 +356,16 @@ export default function AccountScreen() {
                   option === 'wifi' ? 'Wi-Fi only' : 'Any connection'
                 }
               />
-              {photoCounts.waiting > 0 ? (
-                <PrimaryButton
-                  label="Back up now"
-                  icon="cloud-upload-outline"
-                  variant="secondary"
-                  loading={backingUp}
-                  onPress={() => void backUpNow()}
-                />
-              ) : null}
             </View>
+            {photoCounts.waiting > 0 ? (
+              <PrimaryButton
+                label="Back up now"
+                icon="cloud-upload-outline"
+                variant="secondary"
+                loading={backingUp}
+                onPress={() => void backUpNow()}
+              />
+            ) : null}
           </Card>
         ) : null}
 
