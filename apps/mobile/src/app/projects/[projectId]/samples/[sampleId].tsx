@@ -17,6 +17,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSession } from '@/auth/session-context';
 import { CustodyTimeline } from '@/components/custody-timeline';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
@@ -30,6 +31,7 @@ import { listCustodyEvents } from '@/data/custodyRepository';
 import { getDrillhole } from '@/data/drillholesRepository';
 import { listIntervals } from '@/data/intervalsRepository';
 import { countPhotosBySubject } from '@/data/photosRepository';
+import { loadRosterNames, refreshRoster } from '@/data/rosterRepository';
 import {
   deleteSample,
   getSample,
@@ -48,6 +50,7 @@ export default function SampleTraceScreen() {
     sampleId: string;
   }>();
   const router = useRouter();
+  const { cookie } = useSession();
 
   const [sample, setSample] = useState<FieldSample | null>(null);
   const [hole, setHole] = useState<FieldDrillhole | null>(null);
@@ -58,6 +61,7 @@ export default function SampleTraceScreen() {
   const [parent, setParent] = useState<FieldSample | null>(null);
   const [events, setEvents] = useState<FieldCustodyEvent[]>([]);
   const [asOf, setAsOf] = useState(0);
+  const [roster, setRoster] = useState<Record<string, string>>({});
 
   const load = useCallback(() => {
     (async () => {
@@ -93,8 +97,17 @@ export default function SampleTraceScreen() {
       setParent(
         holeSamples.find((s) => s.id === loaded.parentSampleId) ?? null,
       );
+      // "Logged by" on the custody timeline: use whatever is cached
+      // immediately, and refresh from the server in the background so a
+      // teammate's name isn't stuck blank forever on an offline phone.
+      setRoster(await loadRosterNames());
+      if (cookie) {
+        refreshRoster(cookie)
+          .then(() => loadRosterNames())
+          .then(setRoster);
+      }
     })();
-  }, [sampleId]);
+  }, [sampleId, cookie]);
 
   useFocusReload(load);
 
@@ -216,7 +229,7 @@ export default function SampleTraceScreen() {
 
         <Card style={styles.chainCard}>
           <ThemedText type="heading">Chain of custody</ThemedText>
-          <CustodyTimeline lines={custodyLines} asOf={asOf} />
+          <CustodyTimeline lines={custodyLines} asOf={asOf} roster={roster} />
           {nextSteps.map((type, index) => (
             <PrimaryButton
               key={type}

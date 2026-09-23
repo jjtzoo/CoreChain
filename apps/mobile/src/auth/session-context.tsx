@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 import { checkSession, signInWithEmail, signOutRemote, type SessionUser } from './authApi';
 import { clearSession, loadSession, saveSession, type StoredSession } from './sessionStore';
 import { flushFeedback } from '@/feedback/sender';
+import { updateOwnName } from '@/data/rosterRepository';
 
 // Who is signed in on this phone (E1-3), and whether that sign-in can still
 // sync (E1-4). The app never locks a geologist out of their own data: signed
@@ -26,6 +27,8 @@ type SessionContextValue = {
   /** Throws a SignInError the screen can turn into words. */
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Updates the signed-in account's own name, on the server and here. False if it didn't reach the server. */
+  updateName: (name: string) => Promise<boolean>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -120,6 +123,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setAuth({ phase: 'signed-out' });
   };
 
+  const updateName = async (name: string): Promise<boolean> => {
+    if (auth.phase !== 'signed-in') return false;
+    const ok = await updateOwnName(auth.session.cookie, auth.session.user.id, name);
+    if (!ok) return false;
+    const session: StoredSession = {
+      ...auth.session,
+      user: { ...auth.session.user, name },
+    };
+    await saveSession(session);
+    setAuth({ phase: 'signed-in', session, rejected: auth.rejected });
+    return true;
+  };
+
   let health: SessionStatus | null = null;
   if (auth.phase === 'signed-in') {
     const status = sessionStatus(auth.session.lastVerifiedAt, now);
@@ -137,6 +153,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         health,
         signIn,
         signOut,
+        updateName,
       }}>
       {children}
     </SessionContext.Provider>

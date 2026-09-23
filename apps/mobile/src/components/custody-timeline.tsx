@@ -18,10 +18,18 @@ const JUST_NOW_MS = 2 * 60 * 1000;
 export function CustodyTimeline({
   lines,
   asOf,
+  roster = {},
 }: {
   lines: readonly CustodyLine[];
   /** When the record was loaded (ms), so "just recorded" needs no clock read while rendering. */
   asOf: number;
+  /**
+   * Cached account id -> name (data/rosterRepository.ts), for "Logged by" —
+   * the account that entered the record on the phone, distinct from
+   * `handledBy` (who physically had the sample). Left off entirely when the
+   * id isn't cached yet, rather than showing a raw id.
+   */
+  roster?: Record<string, string>;
 }) {
   if (lines.length === 0) {
     return (
@@ -50,6 +58,11 @@ export function CustodyTimeline({
           <ThemedText type="small" themeColor="textSecondary">
             {describeMoment(line.occurredAt)} · {line.handledBy}
           </ThemedText>
+          {line.createdBy && roster[line.createdBy] ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              Logged by {roster[line.createdBy]}
+            </ThemedText>
+          ) : null}
           {line.recipient ? (
             <ThemedText type="small" themeColor="textSecondary">
               To {line.recipient}

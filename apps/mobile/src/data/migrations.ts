@@ -466,6 +466,29 @@ export const MIGRATIONS: readonly Migration[] = [
       ['ALTER TABLE custody_events ADD COLUMN created_by TEXT'],
     ],
   },
+  {
+    // Sprint 6: the mandatory first-login orientation (name + a short tour),
+    // and a cached roster (account id -> name) so `created_by` on a synced
+    // record can be shown as "logged by [name]" instead of a raw id. Both
+    // local only: orientation is a one-off phone event, and the roster is a
+    // refreshable cache from GET /api/roster, not something PowerSync syncs.
+    version: 17,
+    commands: [
+      [
+        `CREATE TABLE orientation_progress (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          completed_at TEXT NOT NULL
+        )`,
+      ],
+      [
+        `CREATE TABLE team_roster (
+          user_id TEXT PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          fetched_at TEXT NOT NULL
+        )`,
+      ],
+    ],
+  },
 ];
 
 const ADD_COLUMN = /^ALTER TABLE (\w+) ADD COLUMN (\w+)/i;

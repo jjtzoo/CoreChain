@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { RowAction } from '@/components/ui/row-action';
 import { StatusPill, type Tone } from '@/components/ui/status-pill';
 import { Spacing } from '@/constants/theme';
@@ -95,8 +96,12 @@ export default function PhotosScreen() {
         />
 
         {photos && photos.length === 0 ? (
-          <Card style={styles.card}>
-            <ThemedText type="default">No photos yet.</ThemedText>
+          <Card style={styles.empty}>
+            <Icon name="camera-outline" size={32} themeColor="accent" />
+            <ThemedText type="heading">No photos yet</ThemedText>
+            <ThemedText type="default" themeColor="textSecondary">
+              Take a photo of this box or interval and it shows up here.
+            </ThemedText>
           </Card>
         ) : (
           (photos ?? []).map((photo) => (
@@ -146,6 +151,10 @@ const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  empty: {
+    gap: Spacing.two,
+    paddingVertical: Spacing.four,
   },
   image: {
     width: '100%',

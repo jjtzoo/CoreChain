@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { initSentry, useSentryScreenTracking } from '@/crash/sentry';
 import { GuideProvider } from '@/guide/guide-context';
+import { OrientationProvider, useOrientation } from '@/onboarding/orientation-context';
 import { SyncProvider, useSync } from '@/sync/sync-context';
 import { applyThemePreference, loadThemePreference } from '@/theme/appearance';
 
@@ -80,13 +81,42 @@ function AppStack() {
   if (signedIn && preparation !== 'ready') {
     return <OpeningData failed={preparation === 'failed'} />;
   }
-  const stack = <AppStackScreens signedIn={signedIn} />;
-  // The guide only applies once signed in, and it opens the local database
-  // (lazily, like every repository) — so it stays out of the sign-in screen.
-  return signedIn ? <GuideProvider>{stack}</GuideProvider> : stack;
+  if (!signedIn) {
+    return <AppStackScreens signedIn={false} orientationDone />;
+  }
+  // Orientation and the guide only apply once signed in, and both open the
+  // local database (lazily, like every repository) — so they stay out of the
+  // sign-in screen.
+  return (
+    <OrientationProvider>
+      <GuideProvider>
+        <OrientationGate />
+      </GuideProvider>
+    </OrientationProvider>
+  );
 }
 
-function AppStackScreens({ signedIn }: { signedIn: boolean }) {
+/**
+ * Holds the real app back behind the mandatory first-login orientation
+ * (name + a short tour, app/orientation.tsx) until it has been completed
+ * once on this phone — mirrors the "opening data" wait above, so a returning
+ * geologist never sees the orientation screen flash before Home.
+ */
+function OrientationGate() {
+  const { status } = useOrientation();
+  if (status === 'loading') {
+    return <OpeningData failed={false} />;
+  }
+  return <AppStackScreens signedIn orientationDone={status === 'done'} />;
+}
+
+function AppStackScreens({
+  signedIn,
+  orientationDone,
+}: {
+  signedIn: boolean;
+  orientationDone: boolean;
+}) {
   return (
     <Stack
       screenOptions={{
@@ -100,7 +130,13 @@ function AppStackScreens({ signedIn }: { signedIn: boolean }) {
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={signedIn}>
+      <Stack.Protected guard={signedIn && !orientationDone}>
+        <Stack.Screen
+          name="orientation"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && orientationDone}>
         <Stack.Screen
           name="index"
           options={{
