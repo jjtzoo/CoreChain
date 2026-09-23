@@ -27,14 +27,40 @@ type OrientationContextValue = {
 
 const OrientationContext = createContext<OrientationContextValue | null>(null);
 
+// However `isOrientationComplete` fails — a rejection, or the underlying
+// database call simply never settling — the phone must never sit stuck on
+// "Opening your data..." forever. Same reasoning as the network timeouts in
+// sync/device.ts and sync/connector.ts, applied to a local call this time.
+const CHECK_TIMEOUT_MS = 5_000;
+
 export function OrientationProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<OrientationStatus>('loading');
 
   useEffect(() => {
     let cancelled = false;
-    void isOrientationComplete().then((done) => {
-      if (!cancelled) setStatus(done ? 'done' : 'pending');
-    });
+    console.log('[Orientation] checking whether orientation is complete');
+    const timeout = new Promise<'timeout'>((resolve) =>
+      setTimeout(() => resolve('timeout'), CHECK_TIMEOUT_MS),
+    );
+    Promise.race([isOrientationComplete(), timeout])
+      .then((result) => {
+        if (cancelled) return;
+        if (result === 'timeout') {
+          console.log('[Orientation] isOrientationComplete timed out');
+          setStatus('pending');
+          return;
+        }
+        console.log(`[Orientation] complete=${result}`);
+        setStatus(result ? 'done' : 'pending');
+      })
+      .catch((error) => {
+        console.log(
+          `[Orientation] isOrientationComplete failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        // Never leaves the phone stuck on "Opening your data...": if the
+        // check itself fails, fall through to orientation rather than hang.
+        if (!cancelled) setStatus('pending');
+      });
     return () => {
       cancelled = true;
     };

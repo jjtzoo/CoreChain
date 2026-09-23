@@ -476,7 +476,7 @@ export const MIGRATIONS: readonly Migration[] = [
     commands: [
       [
         `CREATE TABLE orientation_progress (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
+          id INTEGER PRIMARY KEY NOT NULL,
           completed_at TEXT NOT NULL
         )`,
       ],

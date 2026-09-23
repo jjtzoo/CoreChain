@@ -12,7 +12,7 @@ export type ActionResult<T = object> =
 // same isolation as the team overview and QA/QC queue.
 
 async function requireOwnOrganization(): Promise<
-  { userId: string; organizationId: string } | { error: string }
+  { userId: string; userName: string; organizationId: string } | { error: string }
 > {
   const session = await requireLaboratory();
   const self = await prisma.user.findUnique({
@@ -21,7 +21,7 @@ async function requireOwnOrganization(): Promise<
   });
   const organizationId = self?.organizationId ?? null;
   if (!organizationId) return { error: "You aren't on a team yet." };
-  return { userId: session.user.id, organizationId };
+  return { userId: session.user.id, userName: session.user.name, organizationId };
 }
 
 async function ownDispatch(dispatchId: string, organizationId: string) {
@@ -77,7 +77,7 @@ export async function confirmReceiptAction(
       sampleId,
       eventType: "received" as const,
       occurredAt,
-      handledBy: context.userId,
+      handledBy: context.userName,
       note: trimmedNote,
       dispatchId,
       createdAt: occurredAt,
