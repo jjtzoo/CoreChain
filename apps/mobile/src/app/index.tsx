@@ -10,8 +10,14 @@ import {
   type WorkSummary,
 } from '@corechain/domain';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  BackHandler,
+  ScrollView,
+  StyleSheet,
+  ToastAndroid,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { toUserRole } from '@corechain/domain';
@@ -153,6 +159,28 @@ export default function HomeScreen() {
   }, [user]);
 
   useFocusReload(reload);
+
+  // Home is the bottom of the stack: one back press here would otherwise
+  // exit the app immediately, an easy slip when backing out of a screen. A
+  // second press within the window confirms it.
+  const exitArmed = useRef(false);
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        if (exitArmed.current) {
+          return false;
+        }
+        exitArmed.current = true;
+        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+        setTimeout(() => {
+          exitArmed.current = false;
+        }, 2000);
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>

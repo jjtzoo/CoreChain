@@ -260,7 +260,7 @@ export default function NewIntervalScreen() {
           </FormRow>
           <LengthChips
             fromText={form.fromM}
-            lengths={[1, 2, 3, 5]}
+            lengths={[1, 2, 3, 4]}
             landmarks={landmarks}
             onPick={(v) => update('toM', v)}
           />
