@@ -45,7 +45,11 @@ function isSampleType(value: string | undefined): value is SampleType {
   return SAMPLE_TYPES.some((t) => t === value);
 }
 
-/** Where the last primary sample in a hole ended, as text; '' when there is none. */
+/**
+ * Where the last primary sample in a hole ended, as text; '0' when there is
+ * none — the hole's own start, so a first sample has somewhere to begin
+ * (the quick-length chips below do nothing until "from" holds a number).
+ */
 function endOfLastPrimary(samples: readonly FieldSample[]): string {
   let deepest = Number.NEGATIVE_INFINITY;
   for (const sample of samples) {
@@ -53,7 +57,7 @@ function endOfLastPrimary(samples: readonly FieldSample[]): string {
       deepest = Math.max(deepest, sample.toM);
     }
   }
-  return Number.isFinite(deepest) ? String(deepest) : '';
+  return Number.isFinite(deepest) ? String(deepest) : '0';
 }
 
 /**
