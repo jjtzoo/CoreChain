@@ -17,6 +17,21 @@ export const maxDuration = 60;
 
 type Row = { project_id: string; storage_key: string | null };
 
+// A team's shared workspace if the admin put this account on one (E11-1);
+// otherwise a personal workspace, same as before teams existed (decision D9,
+// matches how the phone's own device row resolves this in lib/devices.ts).
+// A photo's own organization_id is stamped from the uploading device's
+// resolved organizationId (lib/sync/upload.ts), never the account id itself,
+// so looking a photo up by the raw account id silently found nothing for
+// any account actually on a team.
+async function effectiveOrganizationId(userId: string): Promise<string> {
+  const self = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true },
+  });
+  return self?.organizationId ?? userId;
+}
+
 async function ownedPhoto(
   photoId: string,
   organizationId: string,
@@ -43,6 +58,7 @@ export async function PUT(
   const { photoId } = await context.params;
   if (!isUuid(photoId)) return badRequest("invalid");
   if (!storageConfigured(process.env)) return notConfigured();
+  const organizationId = await effectiveOrganizationId(user.id);
 
   const lengthHeader = request.headers.get("content-length");
   const check = checkPhotoUpload({
@@ -57,7 +73,7 @@ export async function PUT(
 
   // The record must have synced first: a file with no record is refused, and the
   // phone simply tries again after its next sync.
-  const photo = await ownedPhoto(photoId, user.id);
+  const photo = await ownedPhoto(photoId, organizationId);
   if (!photo)
     return NextResponse.json({ error: "photo-not-found" }, { status: 404 });
 
@@ -76,7 +92,7 @@ export async function PUT(
     );
 
   const key = photoStorageKey({
-    organizationId: user.id,
+    organizationId,
     projectId: photo.project_id,
     photoId,
     extension: check.extension,
@@ -95,7 +111,7 @@ export async function PUT(
   await prisma.$executeRawUnsafe(
     `UPDATE photos SET storage_key = $3 WHERE id = $1::uuid AND organization_id = $2`,
     photoId,
-    user.id,
+    organizationId,
     key,
   );
   return NextResponse.json({ ok: true, storageKey: key });
@@ -111,7 +127,8 @@ export async function GET(
   if (!isUuid(photoId)) return badRequest("invalid");
   if (!storageConfigured(process.env)) return notConfigured();
 
-  const photo = await ownedPhoto(photoId, user.id);
+  const organizationId = await effectiveOrganizationId(user.id);
+  const photo = await ownedPhoto(photoId, organizationId);
   if (!photo?.storage_key)
     return NextResponse.json({ error: "photo-not-found" }, { status: 404 });
 
