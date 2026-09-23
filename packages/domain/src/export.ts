@@ -62,6 +62,8 @@ export type ExportData = {
   runs: readonly FieldCoreRun[];
   intervals: readonly LogInterval[];
   samples: readonly FieldSample[];
+  /** Overrides the project name in each file's name, for this export only. */
+  filenamePrefix?: string;
 };
 
 /** A filesystem-safe, lowercase slug of the project name. */
@@ -91,7 +93,7 @@ const byHoleThenDepth = <T extends { drillholeId: string; fromM: number | null }
  * GPS; a manually typed collar takes the project's coordinate system.
  */
 export function buildExportTables(data: ExportData): ExportTable[] {
-  const slug = exportSlug(data.project.name);
+  const slug = exportSlug(data.filenamePrefix || data.project.name);
   const holes = [...data.drillholes].sort((a, b) =>
     a.holeId.localeCompare(b.holeId, undefined, { numeric: true }),
   );

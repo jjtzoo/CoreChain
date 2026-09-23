@@ -15,9 +15,14 @@ import { listSamples } from './samplesRepository';
 // E9-1: CSV export. Everything is read from the local database and written to
 // the app's cache folder, so it works with no signal.
 
-/** Reads a project's data and builds one CSV table per export file. */
+/**
+ * Reads a project's data and builds one CSV table per export file.
+ * `filenamePrefix` overrides the project name in each file's name, for this
+ * export only — nothing is saved.
+ */
 export async function loadExportTables(
   projectId: string,
+  filenamePrefix?: string,
 ): Promise<ExportTable[]> {
   const project = await getProject(projectId);
   if (!project) {
@@ -37,6 +42,7 @@ export async function loadExportTables(
     runs: runsByHole.flat(),
     intervals: intervalsByHole.flat(),
     samples,
+    filenamePrefix,
   };
   return buildExportTables(data);
 }

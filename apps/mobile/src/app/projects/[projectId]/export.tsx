@@ -1,10 +1,11 @@
 import type { ExportTable } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form/primary-button';
+import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
@@ -24,6 +25,9 @@ export default function ExportScreen() {
   const [tables, setTables] = useState<ExportTable[] | null>(null);
   const [sharing, setSharing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Overrides the project name in each file's name, for this visit only —
+  // nothing is saved, so it resets to the project name next time.
+  const [filenamePrefix, setFilenamePrefix] = useState('');
 
   async function finishGuide() {
     if (!('step' in guide)) return;
@@ -32,14 +36,15 @@ export default function ExportScreen() {
   }
 
   const load = useCallback(() => {
-    loadExportTables(projectId)
+    loadExportTables(projectId, filenamePrefix.trim() || undefined)
       .then(setTables)
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : String(err)),
       );
-  }, [projectId]);
+  }, [projectId, filenamePrefix]);
 
   useFocusReload(load);
+  useEffect(load, [load]);
 
   async function handleShare(table: ExportTable) {
     setError(null);
@@ -62,6 +67,16 @@ export default function ExportScreen() {
           the share sheet to save or send each file. This works without a
           signal.
         </ThemedText>
+
+        <TextField
+          label="File name prefix"
+          optional
+          placeholder="Defaults to the project name"
+          value={filenamePrefix}
+          onChangeText={setFilenamePrefix}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
 
         {error ? (
           <ThemedText type="small" themeColor="danger">

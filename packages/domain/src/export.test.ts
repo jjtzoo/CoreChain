@@ -153,6 +153,22 @@ describe("buildExportTables", () => {
     ]);
   });
 
+  it("uses filenamePrefix in place of the project name when given", () => {
+    const tables = buildExportTables({ ...data, filenamePrefix: "Client Copy 2026" });
+    expect(tables.map((t) => t.filename)).toEqual([
+      "client-copy-2026-collars.csv",
+      "client-copy-2026-surveys.csv",
+      "client-copy-2026-log.csv",
+      "client-copy-2026-runs.csv",
+      "client-copy-2026-samples.csv",
+    ]);
+  });
+
+  it("falls back to the project name when filenamePrefix is empty", () => {
+    const tables = buildExportTables({ ...data, filenamePrefix: "" });
+    expect(tables[0]?.filename).toBe("sipalay-test-collars.csv");
+  });
+
   it("uses the standard HOLEID / FROM / TO column names", () => {
     expect(lines("collars")[0]).toBe(
       "HOLEID,LONGITUDE,LATITUDE,COORDINATE_SYSTEM,COLLAR_SOURCE,ACCURACY_M,PLANNED_DEPTH,FINAL_DEPTH,STATUS,STARTED,COMPLETED",
