@@ -130,6 +130,81 @@ export async function enterAssayResultAction(
   return { ok: true };
 }
 
+export type AssayImportInput = {
+  sampleId: string;
+  analyte: string;
+  value: number | null;
+  unit: string | null;
+  belowDetection: boolean;
+};
+
+/**
+ * Bulk version of enterAssayResultAction: the Laboratory screen's "Upload
+ * results" import builds these rows client-side (packages/domain's
+ * assayImport.ts) from a CSV the chemist maps themselves — there's no
+ * official lab-certificate format to parse against, so every row is
+ * re-validated here exactly as a manually typed one would be, batched into
+ * one insert.
+ */
+export async function importAssayResultsAction(
+  dispatchId: string,
+  results: AssayImportInput[],
+): Promise<ActionResult<{ imported: number }>> {
+  const context = await requireOwnOrganization();
+  if ("error" in context) return { ok: false, error: context.error };
+
+  const dispatch = await ownDispatch(dispatchId, context.organizationId);
+  if (!dispatch) return { ok: false, error: "That dispatch isn't on your team." };
+
+  if (results.length === 0) {
+    return { ok: false, error: "Nothing to import." };
+  }
+  if (results.length > 2000) {
+    return { ok: false, error: "That's more results than one import can hold — split the file." };
+  }
+
+  const dispatchSamples = await prisma.dispatchSample.findMany({
+    where: { dispatchId, deletedAt: null },
+    select: { sampleId: true },
+  });
+  const dispatchedIds = new Set(dispatchSamples.map((s) => s.sampleId));
+
+  const rows: {
+    organizationId: string;
+    dispatchId: string;
+    sampleId: string;
+    analyte: string;
+    value: number | null;
+    unit: string | null;
+    belowDetection: boolean;
+    enteredBy: string;
+  }[] = [];
+  for (const result of results) {
+    if (!dispatchedIds.has(result.sampleId)) {
+      return { ok: false, error: "One of those samples isn't in this dispatch." };
+    }
+    const analyte = result.analyte.trim();
+    if (!analyte) {
+      return { ok: false, error: "Every result needs an analyte." };
+    }
+    rows.push({
+      organizationId: context.organizationId,
+      dispatchId,
+      sampleId: result.sampleId,
+      analyte: analyte.slice(0, 40),
+      value: result.value !== null && Number.isFinite(result.value) ? result.value : null,
+      unit: result.unit?.trim().slice(0, 20) || null,
+      belowDetection: result.belowDetection,
+      enteredBy: context.userId,
+    });
+  }
+
+  await prisma.assayResult.createMany({ data: rows });
+
+  revalidatePath("/laboratory");
+  return { ok: true, imported: rows.length };
+}
+
 /** E13-3: mark a batch's results entry done, or reopen it to keep adding. */
 export async function setResultsCompleteAction(
   dispatchId: string,

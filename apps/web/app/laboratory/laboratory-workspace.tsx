@@ -13,6 +13,7 @@ import {
   enterAssayResultAction,
   setResultsCompleteAction,
 } from "./actions";
+import { AssayCsvImport } from "./assay-csv-import";
 
 export type SampleRow = {
   id: string;
@@ -376,16 +377,21 @@ function DispatchItem({
                   />
                 ))}
               </ul>
-              <button
-                type="button"
-                className="admin-button"
-                disabled={pending}
-                onClick={() => toggleComplete(dispatch.resultsStatus !== "complete")}
-              >
-                {dispatch.resultsStatus === "complete"
-                  ? "Reopen to add more results"
-                  : "Mark results complete"}
-              </button>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="admin-button"
+                  disabled={pending}
+                  onClick={() => toggleComplete(dispatch.resultsStatus !== "complete")}
+                >
+                  {dispatch.resultsStatus === "complete"
+                    ? "Reopen to add more results"
+                    : "Mark results complete"}
+                </button>
+                {dispatch.resultsStatus !== "complete" ? (
+                  <AssayCsvImport dispatchId={dispatch.id} samples={dispatch.samples} />
+                ) : null}
+              </div>
             </>
           ) : null}
 
