@@ -60,14 +60,12 @@ export function AssayCsvImport({
       }
       setCsv(parsed);
       setFileName(file.name);
-      const guess = guessSampleColumn(parsed.headers);
-      setSampleColumnIndex(guess);
-      const columns = new Map<number, AssayColumnMapping>();
-      parsed.headers.forEach((header, i) => {
-        if (i === guess) return;
-        columns.set(i, { columnIndex: i, analyte: header.trim(), unit: null });
-      });
-      setAnalyteColumns(columns);
+      setSampleColumnIndex(guessSampleColumn(parsed.headers));
+      // Nothing is pre-checked: a real lab sheet often has non-result
+      // columns (note, analyst, date) alongside the analyte columns, and
+      // guessing wrong would silently import junk results. The chemist
+      // picks every result column themselves.
+      setAnalyteColumns(new Map());
     };
     reader.onerror = () => setError("Couldn't read that file.");
     reader.readAsText(file);
