@@ -205,7 +205,14 @@ export default function NewIntervalScreen() {
       saved.current = true;
       await clearDraft(drillholeId);
       await reconcileDrillholeStatus(drillholeId);
-      if ('step' in guide) await guide.advance();
+      if ('step' in guide) {
+        await guide.advance();
+        // The next step's coachmark lives on the New sample screen, not here.
+        router.push(
+          `/projects/${projectId}/samples/new?drillholeId=${drillholeId}`,
+        );
+        return;
+      }
       router.back();
     } finally {
       setSaving(false);
