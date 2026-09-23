@@ -15,18 +15,29 @@ export function ActionTile({
   title,
   detail,
   onPress,
+  disabled,
+  highlighted,
 }: {
   icon: IconName;
   title: string;
   detail: string;
   onPress: () => void;
+  /** Greyed and unresponsive — the guide is pointing somewhere else right now. */
+  disabled?: boolean;
+  /** The guide's next tap. An accent border, nothing else changes. */
+  highlighted?: boolean;
 }) {
   const theme = useTheme();
   return (
     <Card
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       accessibilityLabel={`${title}. ${detail}`}
-      style={styles.tile}>
+      accessibilityState={disabled ? { disabled: true } : undefined}
+      style={[
+        styles.tile,
+        disabled && styles.disabled,
+        highlighted && { borderColor: theme.accent, borderWidth: 2 },
+      ]}>
       <View style={[styles.iconWell, { backgroundColor: theme.accentSoft }]}>
         <Icon name={icon} size={24} themeColor="accent" />
       </View>
@@ -56,5 +67,8 @@ const styles = StyleSheet.create({
   },
   text: {
     gap: Spacing.half,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

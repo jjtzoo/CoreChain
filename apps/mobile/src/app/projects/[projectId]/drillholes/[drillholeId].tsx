@@ -27,6 +27,7 @@ import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ActionTile } from '@/components/ui/action-tile';
 import { AlertRow } from '@/components/ui/alert-row';
+import type { GuideStep } from '@/guide/steps';
 import { Card } from '@/components/ui/card';
 import { CoachmarkOverlay } from '@/components/guide/coachmark-overlay';
 import { Icon } from '@/components/ui/icon';
@@ -59,6 +60,14 @@ export default function DrillholeDetailScreen() {
     );
   const addBoxGuide = useGuideStep('add-box', projectId ?? null);
   const logIntervalGuide = useGuideStep('log-interval', projectId ?? null);
+  const addSampleGuide = useGuideStep('add-sample', projectId ?? null);
+  const exportGuide = useGuideStep('export', projectId ?? null);
+  // The guide's next tap is elsewhere: point at it, and grey everything else
+  // on this screen so it can't be mistaken for the next step.
+  const guidingToSamples = 'step' in addSampleGuide;
+  const guidingBack: GuideStep | null =
+    'step' in exportGuide ? (exportGuide.step ?? null) : null;
+  const guiding = guidingToSamples || guidingBack != null;
 
   const [drillhole, setDrillhole] = useState<FieldDrillhole | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -181,6 +190,15 @@ export default function DrillholeDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FormScrollView contentContainerStyle={styles.content}>
+        {guidingBack ? (
+          <AlertRow
+            tone="info"
+            message={guidingBack.body}
+            actionLabel="Back"
+            onPress={() => router.back()}
+          />
+        ) : null}
+
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <ThemedText type="subtitle" style={styles.holeId}>
@@ -238,8 +256,8 @@ export default function DrillholeDetailScreen() {
 
         {intervals.length > 0 ? (
           <Card
-            style={styles.progressCard}
-            onPress={() => go('/graphic')}
+            style={[styles.progressCard, guiding && styles.disabled]}
+            onPress={guiding ? undefined : () => go('/graphic')}
             accessibilityLabel="Open the graphic hole log">
             <View style={styles.progressTop}>
               <ThemedText type="heading">Hole log</ThemedText>
@@ -260,8 +278,8 @@ export default function DrillholeDetailScreen() {
           <AlertRow
             key={`${item.kind}-${item.message}`}
             message={item.message}
-            actionLabel="Fix"
-            onPress={() => go(`/${item.target}`)}
+            actionLabel={guiding ? undefined : 'Fix'}
+            onPress={guiding ? undefined : () => go(`/${item.target}`)}
           />
         ))}
 
@@ -272,6 +290,7 @@ export default function DrillholeDetailScreen() {
               : 'Log next interval'
           }
           icon="plus"
+          disabled={guiding}
           onPress={() =>
             go(
               intervals.length === 0 && boxes.length === 0
@@ -286,6 +305,7 @@ export default function DrillholeDetailScreen() {
             icon="package-variant-closed"
             title="Core boxes"
             detail={count(boxes.length, 'box', 'boxes')}
+            disabled={guiding}
             onPress={() => go('/boxes')}
           />
           <ActionTile
@@ -296,18 +316,22 @@ export default function DrillholeDetailScreen() {
                 ? 'No runs yet'
                 : `${count(runs.length, 'run', 'runs')}${recovery != null ? ` · ${recovery}% recovery` : ''}`
             }
+            disabled={guiding}
             onPress={() => go('/runs')}
           />
           <ActionTile
             icon="text-box-outline"
             title="Core log"
             detail={count(intervals.length, 'interval', 'intervals')}
+            disabled={guiding}
             onPress={() => go('/log')}
           />
           <ActionTile
             icon="flask-outline"
             title="Samples"
             detail={count(sampleCount, 'sample', 'samples')}
+            disabled={guidingBack != null}
+            highlighted={guidingToSamples}
             onPress={() =>
               router.push(
                 `/projects/${projectId}/samples?drillholeId=${drillholeId}`,
@@ -345,6 +369,7 @@ export default function DrillholeDetailScreen() {
           <PrimaryButton
             label="Save actual details"
             variant="secondary"
+            disabled={guiding}
             onPress={handleSaveActuals}
             loading={savingActuals}
           />
@@ -418,5 +443,8 @@ const styles = StyleSheet.create({
   },
   formCard: {
     gap: Spacing.three,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

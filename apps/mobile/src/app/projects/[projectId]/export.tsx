@@ -78,6 +78,20 @@ export default function ExportScreen() {
           autoCorrect={false}
         />
 
+        {'step' in guide ? (
+          <Card style={styles.card}>
+            <ThemedText type="default">Look over the CSVs below</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Share one to see what leaves the phone, then finish the guide
+              when you’re ready.
+            </ThemedText>
+            <PrimaryButton
+              label="Finish guide"
+              onPress={() => void finishGuide()}
+            />
+          </Card>
+        ) : null}
+
         {error ? (
           <ThemedText type="small" themeColor="danger">
             {error}
@@ -111,8 +125,7 @@ export default function ExportScreen() {
           step={guide.step}
           stepNumber={guide.stepNumber}
           totalSteps={guide.totalSteps}
-          nextLabel="Finish guide"
-          onNext={() => void finishGuide()}
+          onNext={guide.hide}
           onSkip={() => void guide.skip()}
         />
       ) : null}

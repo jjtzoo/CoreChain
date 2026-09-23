@@ -44,6 +44,10 @@ export default function ProjectDetailScreen() {
   );
   const [query, setQuery] = useState('');
   const guide = useGuideStep('open-hole-list', projectId ?? null);
+  const exportGuide = useGuideStep('export', projectId ?? null);
+  // The guide's next tap is Export, elsewhere on this same screen: highlight
+  // it and grey everything else so it can't be mistaken for the next step.
+  const guidingToExport = 'step' in exportGuide;
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
@@ -98,33 +102,44 @@ export default function ProjectDetailScreen() {
         </View>
 
         <View style={styles.shortcuts}>
-          {shortcuts.map((shortcut) => (
-            <Pressable
-              key={shortcut.path}
-              onPress={() =>
-                router.push(`/projects/${projectId}/${shortcut.path}`)
-              }
-              accessibilityRole="button"
-              accessibilityLabel={shortcut.label}
-              style={({ pressed }) => [
-                styles.shortcut,
-                {
-                  backgroundColor: pressed
-                    ? theme.backgroundSelected
-                    : theme.backgroundElement,
-                  borderColor: theme.border,
-                },
-              ]}
-            >
-              <Icon name={shortcut.icon} size={24} themeColor="accent" />
-              <ThemedText type="small">{shortcut.label}</ThemedText>
-            </Pressable>
-          ))}
+          {shortcuts.map((shortcut) => {
+            const isExport = shortcut.path === 'export';
+            const disabled = guidingToExport && !isExport;
+            return (
+              <Pressable
+                key={shortcut.path}
+                onPress={
+                  disabled
+                    ? undefined
+                    : () => router.push(`/projects/${projectId}/${shortcut.path}`)
+                }
+                accessibilityRole="button"
+                accessibilityLabel={shortcut.label}
+                accessibilityState={{ disabled }}
+                style={({ pressed }) => [
+                  styles.shortcut,
+                  {
+                    backgroundColor: pressed
+                      ? theme.backgroundSelected
+                      : theme.backgroundElement,
+                    borderColor:
+                      guidingToExport && isExport ? theme.accent : theme.border,
+                    borderWidth: guidingToExport && isExport ? 2 : 1,
+                  },
+                  disabled && styles.disabled,
+                ]}
+              >
+                <Icon name={shortcut.icon} size={24} themeColor="accent" />
+                <ThemedText type="small">{shortcut.label}</ThemedText>
+              </Pressable>
+            );
+          })}
         </View>
 
         <PrimaryButton
           label="New drillhole"
           icon="plus"
+          disabled={guidingToExport}
           onPress={() => {
             void (async () => {
               if ('step' in guide) await guide.advance();
@@ -171,11 +186,19 @@ export default function ProjectDetailScreen() {
               return (
                 <Card
                   key={hole.id}
-                  onPress={() =>
-                    router.push(`/projects/${projectId}/drillholes/${hole.id}`)
+                  onPress={
+                    guidingToExport
+                      ? undefined
+                      : () =>
+                          router.push(
+                            `/projects/${projectId}/drillholes/${hole.id}`,
+                          )
                   }
                   accessibilityLabel={`Open hole ${hole.holeId}`}
-                  style={styles.holeCard}
+                  style={[
+                    styles.holeCard,
+                    guidingToExport && styles.disabled,
+                  ]}
                 >
                   <View style={styles.holeTop}>
                     <View style={styles.holeTitle}>
@@ -274,5 +297,8 @@ const styles = StyleSheet.create({
   empty: {
     gap: Spacing.two,
     paddingVertical: Spacing.four,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

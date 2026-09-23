@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { CONTROL_LABELS, QcReminders } from '@/components/qc-reminders';
 import { ThemedText } from '@/components/themed-text';
+import { AlertRow } from '@/components/ui/alert-row';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
@@ -34,6 +35,8 @@ import {
   listQcEvents,
   listSamples,
 } from '@/data/samplesRepository';
+import { useGuideStep } from '@/guide/use-guide-step';
+import type { GuideStep } from '@/guide/steps';
 import { sampleStatusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 
@@ -74,6 +77,12 @@ export default function SampleRegisterScreen() {
   }>();
   const router = useRouter();
   const theme = useTheme();
+  const addSampleGuide = useGuideStep('add-sample', projectId ?? null);
+  const exportGuide = useGuideStep('export', projectId ?? null);
+  const guidingBack: GuideStep | null =
+    'step' in exportGuide ? (exportGuide.step ?? null) : null;
+  // The guide's next tap is elsewhere: grey everything but the one it wants.
+  const guiding = 'step' in addSampleGuide || guidingBack != null;
 
   const [project, setProject] = useState<Project | null>(null);
   const [holes, setHoles] = useState<FieldDrillhole[]>([]);
@@ -162,9 +171,19 @@ export default function SampleRegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
+        {guidingBack ? (
+          <AlertRow
+            tone="info"
+            message={guidingBack.body}
+            actionLabel="Back"
+            onPress={() => router.back()}
+          />
+        ) : null}
+
         <PrimaryButton
           label="New sample"
           icon="plus"
+          disabled={guidingBack != null}
           onPress={() => openNew()}
         />
         {samples.length > 0 ? (
@@ -172,6 +191,7 @@ export default function SampleRegisterScreen() {
             label={selecting ? 'Done selecting' : 'Select samples'}
             icon={selecting ? 'check' : 'checkbox-multiple-marked-outline'}
             variant="secondary"
+            disabled={guiding}
             onPress={() => (selecting ? stopSelecting() : setSelecting(true))}
           />
         ) : null}
@@ -206,6 +226,7 @@ export default function SampleRegisterScreen() {
               options={[ALL, ...holes.map((h) => h.id)]}
               value={holeFilter}
               onChange={setHoleFilter}
+              disabled={guiding}
               format={(id) =>
                 id === ALL ? 'All holes' : (holeName.get(id) ?? id)
               }
@@ -216,6 +237,7 @@ export default function SampleRegisterScreen() {
             options={[ALL, ...SAMPLE_TYPES]}
             value={typeFilter}
             onChange={setTypeFilter}
+            disabled={guiding}
             format={(t) => (t === ALL ? 'All types' : capitalise(t))}
           />
           <FilterRow
@@ -223,6 +245,7 @@ export default function SampleRegisterScreen() {
             options={[ALL, ...SAMPLE_STATUSES]}
             value={statusFilter}
             onChange={setStatusFilter}
+            disabled={guiding}
             format={(s) => (s === ALL ? 'All statuses' : capitalise(s))}
           />
         </View>
@@ -243,11 +266,17 @@ export default function SampleRegisterScreen() {
           visible.map((sample) => (
             <Card
               key={sample.id}
-              onPress={() =>
-                selecting
-                  ? toggleSelected(sample.id)
-                  : router.push(`/projects/${projectId}/samples/${sample.id}`)
+              onPress={
+                guiding
+                  ? undefined
+                  : () =>
+                      selecting
+                        ? toggleSelected(sample.id)
+                        : router.push(
+                            `/projects/${projectId}/samples/${sample.id}`,
+                          )
               }
+              style={guiding ? styles.disabled : undefined}
               accessibilityLabel={
                 selecting
                   ? `${selected.has(sample.id) ? 'Deselect' : 'Select'} sample ${sample.sampleNumber}`
@@ -363,12 +392,14 @@ function FilterRow({
   value,
   onChange,
   format,
+  disabled,
 }: {
   label: string;
   options: readonly string[];
   value: string;
   onChange: (value: string) => void;
   format: (option: string) => string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.filterRow}>
@@ -385,6 +416,7 @@ function FilterRow({
             key={option}
             label={format(option)}
             selected={option === value}
+            disabled={disabled}
             onPress={() => onChange(option)}
           />
         ))}
@@ -452,5 +484,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

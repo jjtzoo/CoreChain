@@ -18,11 +18,13 @@ export function Card({
   children,
   onPress,
   accessibilityLabel,
+  accessibilityState,
   style,
 }: {
   children: ReactNode;
   onPress?: () => void;
   accessibilityLabel?: string;
+  accessibilityState?: { disabled?: boolean };
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useTheme();
@@ -40,6 +42,7 @@ export function Card({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       style={({ pressed }) => [
         styles.card,
         surface,

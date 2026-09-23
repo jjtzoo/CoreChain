@@ -188,12 +188,7 @@ export default function NewSampleScreen() {
         setErrors(fieldErrors);
         return;
       }
-      if ('step' in guide) {
-        await guide.advance();
-        // The next step's coachmark lives on the Export screen, not here.
-        router.push(`/projects/${projectId}/export`);
-        return;
-      }
+      if ('step' in guide) await guide.advance();
       router.back();
     } finally {
       setSaving(false);

@@ -16,19 +16,21 @@ export function Chip({
   label,
   selected,
   onPress,
+  disabled,
   accessibilityLabel,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  disabled?: boolean;
   accessibilityLabel?: string;
 }) {
   const theme = useTheme();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel}
       style={[
         styles.chip,
@@ -36,6 +38,7 @@ export function Chip({
           backgroundColor: selected ? theme.accent : theme.backgroundElement,
           borderColor: selected ? theme.accent : theme.border,
         },
+        disabled && styles.disabled,
       ]}>
       <ThemedText
         type="small"
@@ -53,5 +56,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three - 4,
     borderRadius: Radius.pill,
     borderWidth: 1.5,
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });
