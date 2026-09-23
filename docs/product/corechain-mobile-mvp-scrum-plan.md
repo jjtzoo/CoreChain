@@ -270,10 +270,11 @@ As a field geologist, I want to record the start and end dates and the actual fi
 - Planned and actual values are kept as separate fields and shown side by side.
 - The actual final depth can't be less than the deepest recorded box, run or interval (the app warns if it is).
 
-**E2-3 — Drillhole status (2)**
-As a field geologist, I want to set a hole's status (planned → drilling → complete → logged), so that I can see where each hole stands.
+**E2-3 — Drillhole status (2), redesigned 2026-09-23**
+As a field geologist, I want to see where each hole stands (planned → drilling → complete → logged), without having to remember to set it myself.
 
-- Every status change is recorded in the history, with the time.
+- Status is computed from what's actually recorded — a box, run or interval; actual dates or a final depth; full logging coverage — never picked by the geologist. See the S6 outcome log for why.
+- Every status change is still recorded in the history, with the time.
 
 **E2-4 — Drillhole list and search (3)**
 As a field geologist, I want a list of holes with status, depth and logging progress, and search by hole ID, so that I can find a hole quickly.
@@ -907,6 +908,13 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Also fixed:** a harmless but noisy `"POP_TO_TOP" not handled` navigation warning on sign-out, caused by a redundant `router.dismissAll()` racing the `Stack.Protected` guard's own navigation.
 - **Deferred to next session:** a synced roster (id → name) so the phone's custody timeline can show "logged by [name]" — the `created_by` id is stored but the phone never syncs the `user` table, so there is nothing yet to turn an id into a name.
 - **Verified on the real test phone:** all of the above, end to end (cross-account sync, the wipe/column-repair fix, the home-card scoping, the request-storm fix), not only in code. Typecheck, lint and the full 627-test suite also pass. Committed and pushed to `main` in two commits.
+
+### S6 continued: guide copy, export prefix, and a redesigned drillhole status (2026-09-23)
+
+- **First-run guide copy fixed to match the real button labels**, found by running the guide live on the test phone rather than only reading the screen source: the new-drillhole, add-box and log-interval steps told the geologist to tap buttons that don't exist under those names (e.g. "Add box" vs. the real "Add first core box"). Verified live by replaying the guide after each fix.
+- **E9-1 export gained an optional "File name prefix" field**, session-only (nothing persisted), so a geologist can hand a client- or lab-labelled copy of the CSVs without renaming the project. Verified live: typing a prefix live-updated every filename in the list.
+- **E2-3 redesigned: drillhole status is now derived, not picked.** The manual status chip routinely went stale, since nothing required the geologist to update it — and the web Team overview's stale-hole alert (`ACTIVE_STATUSES`, `app/team/page.tsx` and `app/team/activity/page.tsx`) reads this same field, so a forgotten chip was silently breaking that alert too. `deriveDrillholeStatus` (`packages/domain`) now computes status from what's actually recorded — a box, run or interval; actual dates or a final depth saved; full logging coverage — and it's reconciled after every box, run, interval or actuals save, and whenever the hole screen loads (so a teammate's synced-in work reconciles too). The status card and chip picker are gone from the drillhole screen; only the read-only pill remains.
+- **Verified on the real test phone:** creating a hole's first core box moved its status from Planned to Drilling with no chip tapped, and logging its full planned depth moved it straight to Logged. The "complete" transition (actual dates/depth saved without full logging) was not separately checked on the phone this session, only in the domain unit tests. Typecheck, lint and the full test suite (228 web + 418 domain) pass. Committed and pushed to `main` in three commits.
 
 ---
 
