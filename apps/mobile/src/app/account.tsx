@@ -346,24 +346,26 @@ export default function AccountScreen() {
                 </ThemedText>
               </View>
             </View>
-            <ChipSelect
-              label="Back up photos on"
-              options={['any', 'wifi'] as const}
-              value={wifiOnly ? 'wifi' : 'any'}
-              onChange={chooseWifiOnly}
-              formatOption={(option) =>
-                option === 'wifi' ? 'Wi-Fi only' : 'Any connection'
-              }
-            />
-            {photoCounts.waiting > 0 ? (
-              <PrimaryButton
-                label="Back up now"
-                icon="cloud-upload-outline"
-                variant="secondary"
-                loading={backingUp}
-                onPress={() => void backUpNow()}
+            <View style={styles.photoControls}>
+              <ChipSelect
+                label="Back up photos on"
+                options={['any', 'wifi'] as const}
+                value={wifiOnly ? 'wifi' : 'any'}
+                onChange={chooseWifiOnly}
+                formatOption={(option) =>
+                  option === 'wifi' ? 'Wi-Fi only' : 'Any connection'
+                }
               />
-            ) : null}
+              {photoCounts.waiting > 0 ? (
+                <PrimaryButton
+                  label="Back up now"
+                  icon="cloud-upload-outline"
+                  variant="secondary"
+                  loading={backingUp}
+                  onPress={() => void backUpNow()}
+                />
+              ) : null}
+            </View>
           </Card>
         ) : null}
 
@@ -539,6 +541,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   issues: {
+    gap: Spacing.three,
+  },
+  photoControls: {
+    // Lines up with the status text above, which is pushed right by its
+    // 24px icon and Spacing.three gap — flush-left here reads as jagged.
+    paddingLeft: 24 + Spacing.three,
     gap: Spacing.three,
   },
 });
