@@ -44,17 +44,17 @@ export const GUIDE_STEP_CONTENT: Record<
   'new-drillhole': {
     key: 'new-drillhole',
     title: 'Give this hole an ID and its collar',
-    body: 'Type a hole ID, then set the collar from GPS or by typing coordinates. Azimuth and dip are optional here — fill them in when you know them.',
+    body: 'Fill in Hole ID, then set the collar with Use GPS or by typing coordinates. Planned azimuth and dip are optional — fill them in when you know them. Tap Create drillhole when you’re done.',
   },
   'add-box': {
     key: 'add-box',
-    title: 'Register a core box',
-    body: 'A box holds a depth range of core. Its number and starting depth are filled in for you; set where it ends.',
+    title: 'Add a core box',
+    body: 'A box holds a depth range of core. Tap Add first core box — its number and starting depth are filled in for you; set where it ends.',
   },
   'log-interval': {
     key: 'log-interval',
     title: 'Log what you saw',
-    body: 'Record lithology, alteration and mineralisation for a depth range. This is the graphic log your Home screen will show.',
+    body: 'Tap Log next interval and record lithology, alteration and mineralisation for a depth range. This is the graphic log your Home screen will show.',
   },
   'add-sample': {
     key: 'add-sample',
