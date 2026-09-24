@@ -139,6 +139,16 @@ export default function LogScreen() {
                   accessibilityLabel={`Photos of interval ${interval.fromM} to ${interval.toM} metres`}
                 />
                 <RowAction
+                  icon="pencil-outline"
+                  label="Edit"
+                  onPress={() =>
+                    router.push(
+                      `/projects/${projectId}/drillholes/${drillholeId}/log/edit?intervalId=${interval.id}`,
+                    )
+                  }
+                  accessibilityLabel={`Edit interval ${interval.fromM} to ${interval.toM} metres`}
+                />
+                <RowAction
                   icon="trash-can-outline"
                   tone="danger"
                   onPress={() => confirmDelete(interval)}
