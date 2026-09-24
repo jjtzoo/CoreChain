@@ -3565,6 +3565,138 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   background: var(--danger-soft);
 }
 
+/* Receive by scan and the preparation queue (Laboratory) */
+
+.scan-form {
+  display: flex;
+  gap: 10px;
+}
+
+.scan-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono), monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.scan-input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--forest) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.scan-lines {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.scan-line {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+
+.scan-line.is-checking {
+  color: var(--muted);
+}
+
+.scan-line-code {
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-weight: 600;
+}
+
+.scan-line-detail {
+  color: var(--muted);
+}
+
+.scan-line-pills {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.queue-table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+}
+
+.queue-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.queue-table th,
+.queue-table td {
+  padding: 11px 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.queue-table thead th {
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.queue-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+.queue-table-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.queue-table-number {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.queue-hole {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.queue-note {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .scan-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .scan-line-detail {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 /* Dispatch inbox rows (Laboratory) */
 
 .dispatch-item {
