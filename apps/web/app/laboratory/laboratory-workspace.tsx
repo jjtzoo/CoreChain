@@ -336,7 +336,7 @@ function DispatchItem({
               <ul className="admin-users">
                 {dispatch.samples.map((sample) => (
                   <li key={sample.id} className="admin-user">
-                    <label className="admin-tier">
+                    <label className="receipt-check">
                       <input
                         type="checkbox"
                         checked={checked.has(sample.id)}

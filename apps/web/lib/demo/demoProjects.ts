@@ -208,7 +208,12 @@ const ENUMS: Record<string, Record<string, string>> = {
 };
 
 /** Web-only tables whose own id is text (a cuid), not a uuid. */
-const TEXT_IDS = new Set(["hole_assignments", "qaqc_review_decisions", "assay_results"]);
+const TEXT_IDS = new Set([
+  "hole_assignments",
+  "qaqc_review_decisions",
+  "qaqc_exception_resolutions",
+  "assay_results",
+]);
 
 function cast(table: string, column: string): string {
   const type = ENUMS[table]?.[column];
@@ -299,6 +304,17 @@ export async function removeDemoProjects(
   );
   for (const { id } of old) {
     const holes = `SELECT id FROM drillholes WHERE project_id = $1::uuid`;
+    // A QA/QC resolution names its hole, sample or dispatch inside its key
+    // ("kind:<id>:..."), not by a link the deletes below would follow, so
+    // without this a replaced project's resolutions would linger on the
+    // QA/QC screen as "Other resolved exceptions".
+    await db.$executeRawUnsafe(
+      `DELETE FROM qaqc_exception_resolutions WHERE split_part(exception_key, ':', 2) IN (
+         SELECT id::text FROM drillholes WHERE project_id = $1::uuid
+         UNION SELECT id::text FROM samples WHERE project_id = $1::uuid
+         UNION SELECT id::text FROM dispatches WHERE project_id = $1::uuid)`,
+      id,
+    );
     for (const t of [
       "drillhole_status_history",
       "core_boxes",
@@ -362,6 +378,10 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
   const holeIds: string[] = [];
   const sampleNumber = () => `AGS-${String(sampleNo++).padStart(5, "0")}`;
   const bagged: DemoSample[] = [];
+  // One run on the third hole was measured long. QA/QC held the hole, the
+  // driller explained it, and the hole was then accepted (see below), so the
+  // QA/QC screen opens with a finished review to show, not only open ones.
+  let longRun: { holeId: string; from: number; to: number } | null = null;
 
   for (const [index, hole] of holes.entries()) {
     const holeId = randomUUID();
@@ -456,13 +476,17 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
         ...tracked(age - 10),
       });
       boxCount++;
+      const measuredLong = index === 2 && longRun === null;
+      if (measuredLong) longRun = { holeId, from, to };
       rows.add("core_runs", {
         id: randomUUID(),
         ...base,
         drillhole_id: holeId,
         from_m: from,
         to_m: to,
-        recovered_m: Math.round((to - from) * (0.9 + ((m * 7) % 10) / 100) * 100) / 100,
+        recovered_m: measuredLong
+          ? Math.round((to - from + 0.12) * 100) / 100
+          : Math.round((to - from) * (0.9 + ((m * 7) % 10) / 100) * 100) / 100,
         rqd_pieces_m: Math.round((to - from) * (0.72 + ((m * 3) % 12) / 100) * 100) / 100,
         ...tracked(age - 10),
       });
@@ -479,6 +503,19 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
   if (crew.qaqc) {
     const logging = crew.qaqc.core_logging;
     const sampling = crew.qaqc.sampling_custody;
+    if (longRun) {
+      const run = `${longRun.from}–${longRun.to} m`;
+      decide(rows, org, longRun.holeId, "hold", logging, stamp(60 * 24 * 3),
+        `Recovery over 100% at ${run}. Driller to check the depth block.`);
+      rows.add("qaqc_exception_resolutions", {
+        id: randomUUID(),
+        organization_id: org,
+        exception_key: `recovery_over_100:${longRun.holeId}:${longRun.from}-${longRun.to}`,
+        reason: `Driller confirmed the depth block at ${longRun.to} m was placed 0.12 m high. Recovery within tolerance.`,
+        resolved_by: logging.id,
+        resolved_at: stamp(60 * 24 * 2 + 150),
+      });
+    }
     for (const hole of [0, 1, 2])
       decide(rows, org, holeIds[hole], "accept", logging, stamp(60 * 24 * 2 + 120 - hole * 10),
         "Intervals, runs and recovery checked against the drill log.");
