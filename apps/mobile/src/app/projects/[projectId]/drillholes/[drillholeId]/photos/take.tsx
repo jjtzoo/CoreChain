@@ -6,9 +6,10 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LoopingBrandFill, useBrandTone } from '@/components/brand-fill';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -24,6 +25,7 @@ import {
 } from '@/data/photosRepository';
 import { getProject } from '@/data/projectsRepository';
 import { nowIso } from '@/data/ids';
+import { ScreenLoader } from '@/components/screen-loader';
 
 type Context = Omit<
   NewPhoto,
@@ -46,6 +48,7 @@ export default function TakePhotoScreen() {
     }>();
   const router = useRouter();
   const theme = useTheme();
+  const brandTone = useBrandTone();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -121,7 +124,7 @@ export default function TakePhotoScreen() {
   }
 
   if (!permission) {
-    return null;
+    return <ScreenLoader />;
   }
 
   if (!permission.granted) {
@@ -167,7 +170,12 @@ export default function TakePhotoScreen() {
 
       <View style={styles.controls}>
         {busy ? (
-          <ActivityIndicator />
+          // Same footprint as the shutter it replaces, so the controls don't jump.
+          <LoopingBrandFill
+            size={76}
+            tone={brandTone}
+            accessibilityLabel="Saving photo"
+          />
         ) : (
           <Pressable
             onPress={handleCapture}

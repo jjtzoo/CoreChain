@@ -1,7 +1,6 @@
-import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, useColorScheme, View } from 'react-native';
+import { StyleSheet, useColorScheme } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -9,14 +8,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { BrandFill, CREEP_MS, CREEP_TO } from '@/components/brand-fill';
 import { Brand } from '@/constants/theme';
 
 /** Must match `imageWidth` for expo-splash-screen in app.json, so the hand-off is seamless. */
 const SPLASH_IMAGE_SIZE = 160;
 const FADE_MS = 600;
-/** How far the fill creeps while the app opens, and how long that takes. */
-const CREEP_TO = 0.85;
-const CREEP_MS = 2400;
 /** The last stretch, once the app is ready, and a beat to see it full. */
 const FINISH_MS = 240;
 const FULL_HOLD_MS = 160;
@@ -24,8 +21,6 @@ const FULL_HOLD_MS = 160;
 const MIN_SHOWN_MS = 1000;
 /** If the app is somehow never "ready", the overlay still leaves after this. */
 const MAX_SHOWN_MS = 8000;
-/** How faint the empty symbol is before it fills. */
-const GHOST_OPACITY = 0.14;
 
 /**
  * Drawn over the app while it opens, exactly where the native splash was. The
@@ -88,15 +83,8 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
   }, [fading, opacity]);
 
   const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const fillStyle = useAnimatedStyle(() => ({
-    width: SPLASH_IMAGE_SIZE * progress.value,
-  }));
 
   if (!visible) return null;
-
-  const source = dark
-    ? require('@/assets/images/corechain/splash-icon-dark.png')
-    : require('@/assets/images/corechain/splash-icon.png');
 
   return (
     <Animated.View
@@ -110,39 +98,17 @@ export function AnimatedSplashOverlay({ ready = true }: { ready?: boolean }) {
         { backgroundColor: dark ? Brand.graphite : Brand.limestone },
         overlayStyle,
       ]}>
-      <View
-        style={styles.symbol}
-        accessibilityRole="progressbar"
-        accessibilityLabel="Opening CoreChain">
-        <Image
-          style={[styles.image, { opacity: GHOST_OPACITY }]}
-          source={source}
-        />
-        <Animated.View style={[styles.fill, fillStyle]}>
-          <Image style={styles.image} source={source} />
-        </Animated.View>
-      </View>
+      <BrandFill
+        size={SPLASH_IMAGE_SIZE}
+        progress={progress}
+        tone={dark ? 'onDark' : 'onLight'}
+        accessibilityLabel="Opening CoreChain"
+      />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  symbol: {
-    width: SPLASH_IMAGE_SIZE,
-    height: SPLASH_IMAGE_SIZE,
-  },
-  image: {
-    width: SPLASH_IMAGE_SIZE,
-    height: SPLASH_IMAGE_SIZE,
-  },
-  // Shows only the left part of the full symbol, so it fills like a bar.
-  fill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: SPLASH_IMAGE_SIZE,
-    overflow: 'hidden',
-  },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',

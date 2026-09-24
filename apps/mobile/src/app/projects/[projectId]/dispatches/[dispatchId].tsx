@@ -23,6 +23,7 @@ import {
 } from '@/data/dispatchRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 import { describeDay } from '@/utils/dates';
+import { ScreenLoader } from '@/components/screen-loader';
 
 function describe(sample: DispatchMember): string {
   const parts = [sample.holeId];
@@ -70,7 +71,7 @@ export default function DispatchScreen() {
   useFocusReload(load);
 
   if (!dispatch) {
-    return null;
+    return <ScreenLoader />;
   }
   const open = dispatch.status === 'open';
 

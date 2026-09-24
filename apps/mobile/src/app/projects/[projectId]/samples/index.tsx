@@ -39,6 +39,7 @@ import { useGuideStep } from '@/guide/use-guide-step';
 import type { GuideStep } from '@/guide/steps';
 import { sampleStatusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { ScreenLoader } from '@/components/screen-loader';
 
 const ALL = 'all';
 
@@ -165,7 +166,7 @@ export default function SampleRegisterScreen() {
   }
 
   if (!project) {
-    return null;
+    return <ScreenLoader />;
   }
 
   return (

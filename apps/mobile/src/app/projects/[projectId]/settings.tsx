@@ -19,6 +19,7 @@ import {
   updateProjectPhotoMaxMb,
   updateProjectSamplingSettings,
 } from '@/data/projectsRepository';
+import { ScreenLoader } from '@/components/screen-loader';
 
 /**
  * E1-2 / E5-1: sampling rules and the photo size limit the geologist sets for
@@ -88,7 +89,7 @@ export default function ProjectSettingsScreen() {
   }
 
   if (!project) {
-    return null;
+    return <ScreenLoader />;
   }
 
   return (

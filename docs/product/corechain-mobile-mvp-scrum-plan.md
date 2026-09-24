@@ -965,6 +965,12 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Test data cleared, with the owner's confirmation:** the test phone's app data was wiped, and the two practice projects in `jjtgeo@corechain.test`, with all their child rows, were deleted from the live database in one transaction. Wiping the app data also signs the phone out, so the owner signed back in.
 - **Demo data for screenshots:** the synthetic Cordillera porphyry sample (`npm run sample:cordillera`) was loaded into `jjtgeo@corechain.test`; it must be labelled synthetic wherever it is shown. That account also still holds a "Practice project" from the owner's walkthrough recording and an empty "Copper Ridge Project" created by mistake; deleting the empty one was blocked by the session's safety check and is left for the owner to decide.
 - Items proposed during this work and during the first tester's feedback are listed, unscheduled, under "Proposed 2026-09-24, not scheduled" above.
+- **Every loading state now uses the opening splash's filling "C"** (owner's request).
+  - The drawing moved into `components/brand-fill.tsx`, and the splash itself uses it.
+  - The 12 screens that went blank while their data opened, and "Opening your data…" after sign-in, now show `components/screen-loader.tsx`: the same 160 px symbol. It appears only if loading takes longer than 200 ms, so fast local loads don't flash it.
+  - Buttons (32 px) and the camera shutter (76 px) show a small looping version in place of the spinner.
+  - A screen whose record never loads (removed, for example by a teammate's change that synced in) used to stay blank for good. After 8 seconds it now says "This could not be opened" with a "Go back" button. "Opening your data…" is exempt, since it has its own failure message.
+  - **Verified in code only** (typecheck, lint, Android bundle). The test phone was disconnected, so it is **not yet checked on the phone**. Planned check: open a missing record by link (`adb shell am start -a android.intent.action.VIEW -d "corechain-field://projects/<a real project id>/dispatches/missing"`) to see the loader and then the 8-second message, and watch a Save button's loader in a screen recording.
 
 ---
 

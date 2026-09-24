@@ -43,6 +43,7 @@ import { listHoleSamples } from '@/data/samplesRepository';
 import { useGuideStep } from '@/guide/use-guide-step';
 import { statusLabel, statusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { ScreenLoader } from '@/components/screen-loader';
 
 function count(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
@@ -178,7 +179,7 @@ export default function DrillholeDetailScreen() {
   }
 
   if (!drillhole) {
-    return null;
+    return <ScreenLoader />;
   }
 
   const holeDepthM = drillhole.actualFinalDepthM ?? drillhole.plannedDepthM;

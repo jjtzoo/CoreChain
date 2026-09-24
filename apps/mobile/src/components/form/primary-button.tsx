@@ -1,10 +1,15 @@
 import { useRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { LoopingBrandFill } from '@/components/brand-fill';
 import { ThemedText } from '@/components/themed-text';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { MinTap, Radius, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
+
+/** Fits inside the button's 52 px height with room around it. */
+const LOADER_SIZE = 32;
 
 export type PrimaryButtonProps = {
   label: string;
@@ -36,6 +41,7 @@ export function PrimaryButton({
   icon,
 }: PrimaryButtonProps) {
   const theme = useTheme();
+  const dark = useColorScheme() === 'dark';
   const lastPressAt = useRef(0);
   const handlePress = () => {
     const now = Date.now();
@@ -57,7 +63,7 @@ export function PrimaryButton({
       onPress={handlePress}
       disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled }}
+      accessibilityState={{ disabled: isDisabled, busy: !!loading }}
       style={({ pressed }) => [
         styles.button,
         primary
@@ -71,7 +77,13 @@ export function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={labelColor} />
+        // The solid primary fill is the opposite of the page, so it needs the
+        // other symbol; outlined buttons sit on the page itself.
+        <LoopingBrandFill
+          size={LOADER_SIZE}
+          tone={primary === dark ? 'onLight' : 'onDark'}
+          accessibilityLabel={label}
+        />
       ) : (
         <View style={styles.content}>
           {icon ? (

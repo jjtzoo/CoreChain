@@ -52,6 +52,7 @@ import {
   THEME_PREFERENCES,
   type ThemePreference,
 } from '@/theme/appearance';
+import { ScreenLoader } from '@/components/screen-loader';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -256,7 +257,7 @@ export default function AccountScreen() {
   };
 
   if (!user || !health) {
-    return null;
+    return <ScreenLoader />;
   }
 
   const message = sessionMessage(health);

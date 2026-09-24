@@ -28,6 +28,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { loadWorkInput } from '@/data/workRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { ScreenLoader } from '@/components/screen-loader';
 
 type Choice = WorkPreset | 'custom';
 
@@ -90,7 +91,7 @@ export default function MyWorkScreen() {
     return summariseWork(input, stripRange).perDay;
   }, [input, range.to]);
 
-  if (!summary) return null;
+  if (!summary) return <ScreenLoader />;
 
   function pickDay(day: string) {
     setChoice('custom');

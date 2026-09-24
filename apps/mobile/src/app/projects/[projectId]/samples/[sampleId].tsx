@@ -39,6 +39,7 @@ import {
 } from '@/data/samplesRepository';
 import { sampleStatusTone, statusLabel } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { ScreenLoader } from '@/components/screen-loader';
 
 /**
  * Where one sample has been, from the hole it came from to its assay: the
@@ -160,7 +161,7 @@ export default function SampleTraceScreen() {
   }
 
   if (!sample || !hole) {
-    return null;
+    return <ScreenLoader />;
   }
 
   const missing = steps.filter((s) => s.state === 'missing');

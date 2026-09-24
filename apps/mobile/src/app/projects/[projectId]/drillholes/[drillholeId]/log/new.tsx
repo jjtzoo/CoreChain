@@ -30,6 +30,7 @@ import {
 } from '@/data/intervalsRepository';
 import { useGuideStep } from '@/guide/use-guide-step';
 import { parseOptionalNumber, parseRequiredNumber } from '@/utils/numbers';
+import { ScreenLoader } from '@/components/screen-loader';
 
 type Form = {
   fromM: string;
@@ -215,7 +216,7 @@ export default function NewIntervalScreen() {
   // Wait for the draft to load so `autoFocus` is decided with `restored` known
   // (it only applies on mount) — a restored entry shouldn't pop the keyboard.
   if (!loaded) {
-    return null;
+    return <ScreenLoader />;
   }
 
   return (

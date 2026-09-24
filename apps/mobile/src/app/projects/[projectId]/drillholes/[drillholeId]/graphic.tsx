@@ -28,6 +28,7 @@ import { getDrillhole } from '@/data/drillholesRepository';
 import { listIntervals } from '@/data/intervalsRepository';
 import { useFocusReload } from '@/hooks/use-focus-reload';
 import { useTheme } from '@/hooks/use-theme';
+import { ScreenLoader } from '@/components/screen-loader';
 
 const SCALES = [
   { label: 'Overview', pxPerM: 3 },
@@ -93,7 +94,7 @@ export default function HoleGraphicLogScreen() {
   );
 
   if (!drillhole || !log) {
-    return null;
+    return <ScreenLoader />;
   }
 
   const describe = (category: CodeCategory, code: string | null) => {

@@ -27,6 +27,7 @@ import { getProject } from '@/data/projectsRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
+import { ScreenLoader } from '@/components/screen-loader';
 
 /** Only show the search box once there are enough holes to need it. */
 const SEARCH_FROM_HOLES = 5;
@@ -72,7 +73,7 @@ export default function ProjectDetailScreen() {
   );
 
   if (!project) {
-    return null;
+    return <ScreenLoader />;
   }
 
   const shortcuts: { icon: IconName; label: string; path: string }[] = [

@@ -21,6 +21,7 @@ import {
   resolveConflict,
   type SyncIssue,
 } from '@/sync/issues';
+import { ScreenLoader } from '@/components/screen-loader';
 
 type Entry = { issue: SyncIssue; name: string; fields: ConflictField[] };
 type Choices = Record<string, Record<string, ConflictSide>>;
@@ -77,7 +78,7 @@ export default function ConflictsScreen() {
     }
   }
 
-  if (entries === null) return null;
+  if (entries === null) return <ScreenLoader />;
 
   return (
     <SafeAreaView style={styles.safeArea}>

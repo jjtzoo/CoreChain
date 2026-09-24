@@ -5,13 +5,14 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, useColorScheme, View } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 
 import { SessionProvider, useSession } from '@/auth/session-context';
 import { AccountButton } from '@/components/account-button';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { BrandLockup } from '@/components/brand-lockup';
 import { FeedbackHeaderButton } from '@/components/feedback-header-button';
+import { ScreenLoader } from '@/components/screen-loader';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { initSentry, useSentryScreenTracking } from '@/crash/sentry';
@@ -42,23 +43,24 @@ function navigationTheme(scheme: 'light' | 'dark') {
 
 /** Shown for a moment while the phone's database opens, or if it cannot. */
 function OpeningData({ failed }: { failed: boolean }) {
+  if (!failed) {
+    // Its own failure state is `failed` below, so it never gives up by itself.
+    return <ScreenLoader message="Opening your data…" giveUpAfterMs={null} />;
+  }
   return (
     <View
       style={{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: Spacing.three,
         padding: Spacing.five,
       }}>
-      {failed ? null : <ActivityIndicator />}
       <ThemedText
         type="small"
         themeColor="textSecondary"
         style={{ textAlign: 'center' }}>
-        {failed
-          ? 'Your data could not be opened. Close the app and open it again. If this keeps happening, contact your CoreChain administrator.'
-          : 'Opening your data…'}
+        Your data could not be opened. Close the app and open it again. If this
+        keeps happening, contact your CoreChain administrator.
       </ThemedText>
     </View>
   );
