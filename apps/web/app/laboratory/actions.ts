@@ -1,5 +1,6 @@
 "use server";
 
+import { matchScan, scannedSampleNumber } from "@corechain/domain";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -223,4 +224,136 @@ export async function setResultsCompleteAction(
 
   revalidatePath("/laboratory");
   return { ok: true };
+}
+
+export type ScanResult = {
+  outcome: "received" | "already_received" | "not_dispatched";
+  code: string;
+  sampleNumber: string | null;
+  dispatchNumber: string | null;
+  holeId: string | null;
+  projectName: string | null;
+  urgent: boolean;
+  receivedAt: string | null;
+};
+
+/**
+ * Receive by scan: one bag's tag, scanned or typed. Finds the sample in any
+ * batch dispatched to this team and records its "received" custody event,
+ * the same event the dispatch's checklist records. A bag already received,
+ * or not on any dispatch, is reported and nothing is written.
+ */
+export async function receiveScannedSampleAction(
+  raw: string,
+): Promise<ActionResult<{ scan: ScanResult }>> {
+  const context = await requireOwnOrganization();
+  if ("error" in context) return { ok: false, error: context.error };
+
+  const code = scannedSampleNumber(raw);
+  if (!code) return { ok: false, error: "Scan or type a sample number." };
+
+  const lines = await prisma.dispatchSample.findMany({
+    where: {
+      organizationId: context.organizationId,
+      deletedAt: null,
+      dispatch: { deletedAt: null, status: "dispatched" },
+      sample: {
+        deletedAt: null,
+        sampleNumber: { equals: code, mode: "insensitive" },
+      },
+    },
+    select: {
+      dispatch: { select: { id: true, dispatchNumber: true, projectId: true } },
+      sample: {
+        select: {
+          id: true,
+          sampleNumber: true,
+          drillhole: {
+            select: { holeId: true, priority: true, project: { select: { name: true } } },
+          },
+        },
+      },
+    },
+  });
+  const received = lines.length
+    ? await prisma.custodyEvent.findMany({
+        where: {
+          eventType: "received",
+          sampleId: { in: lines.map((l) => l.sample.id) },
+          dispatchId: { in: lines.map((l) => l.dispatch.id) },
+        },
+        select: { sampleId: true, dispatchId: true, occurredAt: true },
+      })
+    : [];
+  const receivedAt = (sampleId: string, dispatchId: string) =>
+    received
+      .find((e) => e.sampleId === sampleId && e.dispatchId === dispatchId)
+      ?.occurredAt.toISOString() ?? null;
+
+  const outcome = matchScan(
+    code,
+    lines.map((l) => ({
+      sampleId: l.sample.id,
+      sampleNumber: l.sample.sampleNumber,
+      dispatchId: l.dispatch.id,
+      dispatchNumber: l.dispatch.dispatchNumber,
+      receivedAt: receivedAt(l.sample.id, l.dispatch.id),
+    })),
+  );
+  if (outcome.kind === "empty") {
+    return { ok: false, error: "Scan or type a sample number." };
+  }
+  if (outcome.kind === "not_dispatched") {
+    return {
+      ok: true,
+      scan: {
+        outcome: "not_dispatched",
+        code,
+        sampleNumber: null,
+        dispatchNumber: null,
+        holeId: null,
+        projectName: null,
+        urgent: false,
+        receivedAt: null,
+      },
+    };
+  }
+
+  const { candidate } = outcome;
+  const line = lines.find(
+    (l) => l.sample.id === candidate.sampleId && l.dispatch.id === candidate.dispatchId,
+  )!;
+  const scan: ScanResult = {
+    outcome: outcome.kind === "receive" ? "received" : "already_received",
+    code,
+    sampleNumber: candidate.sampleNumber,
+    dispatchNumber: candidate.dispatchNumber,
+    holeId: line.sample.drillhole.holeId,
+    projectName: line.sample.drillhole.project.name,
+    urgent: line.sample.drillhole.priority === "urgent",
+    receivedAt: candidate.receivedAt,
+  };
+
+  if (outcome.kind === "receive") {
+    const occurredAt = new Date();
+    await prisma.custodyEvent.create({
+      data: {
+        id: randomUUID(),
+        organizationId: context.organizationId,
+        projectId: line.dispatch.projectId,
+        createdBy: context.userId,
+        sampleId: candidate.sampleId,
+        eventType: "received",
+        occurredAt,
+        handledBy: context.userName,
+        note: "Received by scan",
+        dispatchId: candidate.dispatchId,
+        createdAt: occurredAt,
+      },
+    });
+    scan.receivedAt = occurredAt.toISOString();
+    revalidatePath("/laboratory");
+  }
+
+  return { ok: true, scan };
 }

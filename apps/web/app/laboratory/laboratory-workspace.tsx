@@ -14,6 +14,9 @@ import {
   setResultsCompleteAction,
 } from "./actions";
 import { AssayCsvImport } from "./assay-csv-import";
+import { PreparationQueue, ScanReceive, type QueueRow } from "./scan-receive";
+
+export type { QueueRow };
 
 export type SampleRow = {
   id: string;
@@ -49,8 +52,9 @@ export type DispatchRow = {
 
 // The lab's real lifecycle only has these four states — a dispatch is
 // created digitally before it physically arrives, then moves through
-// receipt to results. No "in transit" or "prep queue" step exists in the
-// data, so none is shown here.
+// receipt to results. No "in transit" step exists in the data, so none is
+// shown here; the preparation queue is worked out from receipts and results
+// (preparationQueue in packages/domain), not stored as a step of its own.
 const LIFECYCLE_STAGES = [
   "Dispatched to lab",
   "Received by laboratory",
@@ -406,7 +410,13 @@ function DispatchItem({
   );
 }
 
-export function LaboratoryWorkspace({ dispatches }: { dispatches: DispatchRow[] }) {
+export function LaboratoryWorkspace({
+  dispatches,
+  queue,
+}: {
+  dispatches: DispatchRow[];
+  queue: QueueRow[];
+}) {
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(dispatches.filter((d) => d.receiptStatus === "received").map((d) => d.id)),
   );
@@ -525,11 +535,16 @@ export function LaboratoryWorkspace({ dispatches }: { dispatches: DispatchRow[] 
           >
             <p className="admin-hint">
               1. A batch appears here once a geologist dispatches it from the
-              field. 2. Check off what actually arrived and confirm receipt —
-              anything left unchecked is flagged as missing. 3. Enter results
+              field. 2. Scan each bag as it arrives, or check off what arrived
+              in its dispatch and confirm receipt — anything not received is
+              flagged as missing. Received bags wait in the preparation queue,
+              urgent holes first. 3. Enter results
               per sample, then mark the batch complete once you&apos;re done.
             </p>
           </DismissibleHint>
+
+          <ScanReceive />
+          <PreparationQueue queue={queue} />
 
           <section className="admin-card" aria-labelledby="dispatches-title" style={{ padding: 0, overflow: "hidden" }}>
             <div className="admin-card-head" style={{ padding: "16px 20px", borderBottom: "1px solid var(--line)" }}>
