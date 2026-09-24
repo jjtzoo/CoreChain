@@ -7,6 +7,7 @@ import {
   type CustodyEventType,
   type FieldCustodyEvent,
 } from "@corechain/domain";
+import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -79,6 +80,14 @@ export default async function HoleViewPage({
             {hole.project.name} · planned {hole.plannedDepthM.toFixed(1)} m
             {hole.actualFinalDepthM ? ` · final ${hole.actualFinalDepthM.toFixed(1)} m` : ""}
             {assignedToName ? ` · assigned to ${assignedToName}` : ""}
+            {hole.samples.length > 0 ? (
+              <>
+                {" · "}
+                <Link href={`/team/tags?hole=${hole.id}` as Route} className="admin-link">
+                  Print tags
+                </Link>
+              </>
+            ) : null}
           </p>
         </div>
       </div>
