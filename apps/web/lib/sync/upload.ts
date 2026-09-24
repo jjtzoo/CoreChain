@@ -9,6 +9,7 @@ import {
   updateStatement,
   type Prepared,
 } from "./prepare";
+import { currentDeviceWorkspace } from "../devices";
 import { prisma } from "../prisma";
 
 // E8-3, the server half of upload: apply the changes a phone made while it had
@@ -284,7 +285,10 @@ export async function applyUpload(
   if (!device || device.userId !== userId)
     return { ok: false, reason: "device-not-found" };
   if (device.revokedAt) return { ok: false, reason: "device-revoked" };
-  const ctx = { orgId: device.organizationId, userId, deviceId };
+  // The account's workspace now, not the one the phone registered in: an
+  // account put on a team after signing in keeps working on the team's projects.
+  const orgId = await currentDeviceWorkspace(device);
+  const ctx = { orgId, userId, deviceId };
 
   const results = await prisma.$transaction(
     async (tx) => {
