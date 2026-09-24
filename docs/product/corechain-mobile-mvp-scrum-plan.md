@@ -970,7 +970,11 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
   - The 12 screens that went blank while their data opened, and "Opening your data…" after sign-in, now show `components/screen-loader.tsx`: the same 160 px symbol. It appears only if loading takes longer than 200 ms, so fast local loads don't flash it.
   - Buttons (32 px) and the camera shutter (76 px) show a small looping version in place of the spinner.
   - A screen whose record never loads (removed, for example by a teammate's change that synced in) used to stay blank for good. After 8 seconds it now says "This could not be opened" with a "Go back" button. "Opening your data…" is exempt, since it has its own failure message.
-  - **Verified in code only** (typecheck, lint, Android bundle). The test phone was disconnected, so it is **not yet checked on the phone**. Planned check: open a missing record by link (`adb shell am start -a android.intent.action.VIEW -d "corechain-field://projects/<a real project id>/dispatches/missing"`) to see the loader and then the 8-second message, and watch a Save button's loader in a screen recording.
+  - **Verified on the real test phone (dev build, 2026-09-24):**
+    - The app still opens through the splash to a signed-in Home.
+    - A missing dispatch opened by link (`adb shell am start -a android.intent.action.VIEW -d "corechain-field://projects/check/dispatches/missing"`) showed the filling C at 1.5 s, then "This could not be opened" with "Go back" by 9.5 s. "Go back" returned to the previous screen.
+    - Export on the Cordillera sample opened, and Share brought up the share sheet with the right file name.
+  - **Not seen on the phone:** the small looping C inside a button, because Share finished too quickly to catch it. Typecheck, lint and the Android bundle also pass.
 
 ---
 
