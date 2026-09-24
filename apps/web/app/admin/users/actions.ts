@@ -12,6 +12,11 @@ import { randomInt } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
+import {
+  loadDemoProjects,
+  removeDemoProjects,
+  type DemoSummary,
+} from "@/lib/demo/demoProjects";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -131,8 +136,9 @@ export async function setRoleAction(
 
 export async function createTeamAction(
   name: string,
-): Promise<ActionResult<{ id: string; name: string }>> {
-  await requireAdmin();
+  withDemoProjects = false,
+): Promise<ActionResult<{ id: string; name: string; demo: DemoSummary[] | null }>> {
+  const session = await requireAdmin();
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Enter a team name." };
   if (trimmed.length > 120) {
@@ -141,8 +147,78 @@ export async function createTeamAction(
   const team = await prisma.organization.create({
     data: { name: trimmed },
   });
+  // The automatic option: a new team starts with the demo projects, so its
+  // manager and geologists have something to look at from the first sign-in.
+  let demo: DemoSummary[] | null = null;
+  if (withDemoProjects) {
+    try {
+      demo = await loadDemoProjects(prisma, {
+        organizationId: team.id,
+        createdBy: await demoCreditFor(team.id, session.user.id),
+      });
+    } catch {
+      revalidatePath("/admin/users");
+      return {
+        ok: false,
+        error: `Team "${team.name}" was created, but the demo projects could not be added. Use "Add demo projects" on the team to try again.`,
+      };
+    }
+  }
   revalidatePath("/admin/users");
-  return { ok: true, id: team.id, name: team.name };
+  revalidatePath("/team");
+  return { ok: true, id: team.id, name: team.name, demo };
+}
+
+/**
+ * Who the demo work is credited to: a field geologist on the team if there is
+ * one (it is field work), else anyone on the team, else the admin adding it.
+ */
+async function demoCreditFor(teamId: string, adminId: string): Promise<string> {
+  const members = await prisma.user.findMany({
+    where: { organizationId: teamId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, role: true },
+  });
+  return (members.find((m) => m.role === "geologist") ?? members[0])?.id ?? adminId;
+}
+
+/**
+ * The manual option: add the two demo projects to a team, or replace them
+ * with a fresh copy. Anything recorded in the demo projects since is replaced.
+ */
+export async function loadDemoProjectsAction(
+  teamId: string,
+): Promise<ActionResult<{ demo: DemoSummary[] }>> {
+  const session = await requireAdmin();
+  const team = await prisma.organization.findUnique({ where: { id: teamId } });
+  if (!team) return { ok: false, error: "That team no longer exists." };
+  try {
+    const demo = await loadDemoProjects(prisma, {
+      organizationId: team.id,
+      createdBy: await demoCreditFor(team.id, session.user.id),
+    });
+    revalidatePath("/admin/users");
+    revalidatePath("/team");
+    return { ok: true, demo };
+  } catch {
+    return { ok: false, error: "The demo projects could not be added. Try again." };
+  }
+}
+
+/** Removes the two demo projects from a team, with everything recorded in them. */
+export async function removeDemoProjectsAction(
+  teamId: string,
+): Promise<ActionResult<{ removed: number }>> {
+  await requireAdmin();
+  const team = await prisma.organization.findUnique({ where: { id: teamId } });
+  if (!team) return { ok: false, error: "That team no longer exists." };
+  const removed = await prisma.$transaction(
+    (tx) => removeDemoProjects(tx, team.id),
+    { timeout: 60_000, maxWait: 10_000 },
+  );
+  revalidatePath("/admin/users");
+  revalidatePath("/team");
+  return { ok: true, removed };
 }
 
 export async function setUserTitleAction(

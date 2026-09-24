@@ -2404,6 +2404,71 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   border-top: 1px solid var(--line);
 }
 
+/* Teams card: demo projects per team (manual) and on create (automatic) */
+
+.team-demo {
+  display: grid;
+  flex-basis: 100%;
+  gap: 8px;
+}
+
+.team-demo-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 0.9rem;
+}
+
+.team-demo-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-demo-confirm {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--warning-ink);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-control);
+  font-size: 0.9rem;
+}
+
+.team-create {
+  display: grid;
+  gap: 10px;
+}
+
+.team-create .field-with-action input {
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  font: inherit;
+}
+
+.team-demo-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.team-demo-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
 .admin-user[data-switched-off] .admin-user-who {
   opacity: 0.6;
 }
