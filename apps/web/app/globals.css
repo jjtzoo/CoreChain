@@ -3565,6 +3565,215 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   background: var(--danger-soft);
 }
 
+/* Sample trace (Team) */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.trace-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono), monospace;
+}
+
+.trace-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-step {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 26px 8px 0 0;
+}
+
+.trace-step::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 16px;
+  right: 0;
+  height: 2px;
+  background: var(--line);
+}
+
+.trace-step:last-child::before {
+  display: none;
+}
+
+.trace-step.is-done::before {
+  background: var(--forest);
+}
+
+.trace-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+}
+
+.trace-step.is-done .trace-dot {
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+.trace-step.is-missing .trace-dot {
+  border-color: var(--brand-copper);
+  border-style: dashed;
+}
+
+.trace-step-label {
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.trace-step-at {
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+}
+
+.trace-step.is-missing .trace-step-at {
+  color: var(--brand-copper);
+}
+
+.trace-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.trace-facts > div {
+  display: grid;
+  gap: 3px;
+}
+
+.trace-facts strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.trace-facts span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.trace-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.trace-photo {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.trace-photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--surface-muted);
+  border-radius: var(--radius-control);
+}
+
+.trace-photo figcaption,
+.trace-photo.is-pending span {
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+}
+
+.trace-photo.is-pending {
+  align-content: center;
+  aspect-ratio: 4 / 3;
+  padding: 12px;
+  background: var(--surface-muted);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+}
+
+.trace-timeline {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-timeline li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.trace-timeline li:first-child {
+  border-top: 0;
+}
+
+.trace-timeline-when {
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+}
+
+.trace-timeline-what {
+  display: grid;
+  gap: 2px;
+}
+
+.trace-timeline-what span {
+  color: var(--muted);
+}
+
+.trace-timeline li.is-voided strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+@media (max-width: 600px) {
+  .trace-rail {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .trace-step {
+    padding: 0 0 0 28px;
+  }
+
+  .trace-step::before {
+    display: none;
+  }
+
+  .trace-timeline li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
 /* Print tags (Team) */
 
 .tag-controls {

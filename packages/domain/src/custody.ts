@@ -533,3 +533,64 @@ ${rows}
 
   return { filename: sheetFilename(dispatch.dispatchNumber, "pdf"), html };
 }
+
+// The sample trace page's progress rail: the main steps a sample passes on its
+// way from the core to a result. Sealing and handing over are optional steps
+// for many teams, so they stay in the full timeline rather than the rail.
+
+export const SAMPLE_PROGRESS_STEPS = [
+  "taken",
+  "bagged",
+  "dispatched",
+  "received",
+  "results",
+] as const;
+export type SampleProgressKey = (typeof SAMPLE_PROGRESS_STEPS)[number];
+
+export const SAMPLE_PROGRESS_LABELS: Record<SampleProgressKey, string> = {
+  taken: "Sampled",
+  bagged: "Bagged",
+  dispatched: "Dispatched",
+  received: "Received by the laboratory",
+  results: "Results in",
+};
+
+export type SampleProgressStep = {
+  key: SampleProgressKey;
+  label: string;
+  /** When it happened; null when it hasn't, or wasn't recorded. */
+  at: string | null;
+};
+
+/**
+ * Each rail step with the time it happened, from the sample's own record, its
+ * custody events that still count (a corrected mistake doesn't), and the
+ * first result the laboratory entered. A step with no time was never
+ * recorded, even when a later step was: the rail shows that gap rather than
+ * filling it in.
+ */
+export function sampleProgress(
+  sample: { createdAt: string },
+  events: readonly FieldCustodyEvent[],
+  firstResultAt: string | null,
+): SampleProgressStep[] {
+  const latest = (type: CustodyEventType) =>
+    effectiveEvents(events)
+      .filter((event) => event.type === type)
+      .reduce<string | null>(
+        (at, event) => (at === null || event.occurredAt > at ? event.occurredAt : at),
+        null,
+      );
+  const at: Record<SampleProgressKey, string | null> = {
+    taken: sample.createdAt,
+    bagged: latest("bagged"),
+    dispatched: latest("dispatched"),
+    received: latest("received"),
+    results: firstResultAt,
+  };
+  return SAMPLE_PROGRESS_STEPS.map((key) => ({
+    key,
+    label: SAMPLE_PROGRESS_LABELS[key],
+    at: at[key],
+  }));
+}
