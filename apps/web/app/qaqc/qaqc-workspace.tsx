@@ -173,6 +173,22 @@ const STAGE_HELP: Record<QaqcStage, string> = {
   laboratory_assays: "laboratory and assays",
 };
 
+// The number cards filter the queue: tap one to see just those holes.
+type CardFilter = "all" | "open" | "recent";
+
+const FILTER_TITLES: Record<CardFilter, string> = {
+  all: "Holes to review",
+  open: "Holes with open exceptions",
+  recent: "Reviewed this week",
+};
+
+function reviewedSince(hole: QaqcHoleRow, sinceIso: string): boolean {
+  return (
+    hole.resolvedExceptions.some((r) => r.resolvedAt >= sinceIso) ||
+    hole.decisions.some((d) => d.decidedAt >= sinceIso)
+  );
+}
+
 function HoleDetail({ hole }: { hole: QaqcHoleRow }) {
   const latest = hole.decisions[0] ?? null;
 
@@ -276,7 +292,23 @@ export function QaqcWorkspace({
   resolvedThisWeekCount: number;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(holes[0]?.id ?? null);
-  const selected = holes.find((h) => h.id === selectedId) ?? holes[0] ?? null;
+  const [filter, setFilter] = useState<CardFilter>("all");
+  const [since, setSince] = useState<string | null>(null);
+  const shown =
+    filter === "open"
+      ? holes.filter((h) => h.exceptions.length > 0)
+      : filter === "recent" && since
+        ? holes.filter((h) => reviewedSince(h, since))
+        : holes;
+  const selected = shown.find((h) => h.id === selectedId) ?? shown[0] ?? null;
+
+  const choose = (next: CardFilter) => {
+    const toggled = filter === next ? "all" : next;
+    if (toggled === "recent") setSince(new Date(Date.now() - 7 * 86_400_000).toISOString());
+    setFilter(toggled);
+  };
+  const cardClass = (base: string, active: boolean) =>
+    `${base} is-button${active ? " is-active" : ""}`;
 
   return (
     <>
@@ -292,7 +324,12 @@ export function QaqcWorkspace({
       </div>
 
       <div className="kpi-strip">
-        <div className="kpi-card">
+        <button
+          type="button"
+          className={cardClass("kpi-card", filter === "all")}
+          aria-pressed={filter === "all"}
+          onClick={() => setFilter("all")}
+        >
           <div className="kpi-card-head">
             <span className="kpi-icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -306,9 +343,14 @@ export function QaqcWorkspace({
             </span>
           </div>
           <div className="kpi-sub">with open evidence or a decision</div>
-        </div>
+        </button>
 
-        <div className="kpi-card is-danger">
+        <button
+          type="button"
+          className={cardClass("kpi-card is-danger", filter === "open")}
+          aria-pressed={filter === "open"}
+          onClick={() => choose("open")}
+        >
           <div className="kpi-card-head">
             <span className="kpi-icon is-danger" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -323,9 +365,16 @@ export function QaqcWorkspace({
             </span>
           </div>
           <div className="kpi-sub">across {holes.length} holes</div>
-        </div>
+        </button>
 
-        <div className="kpi-card">
+        <button
+          type="button"
+          className={cardClass("kpi-card", false)}
+          disabled={devices.length === 0}
+          onClick={() =>
+            document.getElementById("devices-title")?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        >
           <div className="kpi-card-head">
             <span className="kpi-icon is-muted" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -339,9 +388,14 @@ export function QaqcWorkspace({
             </span>
           </div>
           <div className="kpi-sub">quiet longer than expected</div>
-        </div>
+        </button>
 
-        <div className="kpi-card">
+        <button
+          type="button"
+          className={cardClass("kpi-card", filter === "recent")}
+          aria-pressed={filter === "recent"}
+          onClick={() => choose("recent")}
+        >
           <div className="kpi-card-head">
             <span className="kpi-icon is-success" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -354,20 +408,33 @@ export function QaqcWorkspace({
             </span>
           </div>
           <div className="kpi-sub">exceptions and decisions</div>
-        </div>
+        </button>
       </div>
 
       <div className="workspace-columns">
         <div className="workspace-queue">
           <div className="workspace-queue-head">
-            <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>Holes to review</span>
-            <span className="admin-count">{holes.length}</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{FILTER_TITLES[filter]}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {filter !== "all" ? (
+                <button type="button" className="admin-link" onClick={() => setFilter("all")}>
+                  Show all
+                </button>
+              ) : null}
+              <span className="admin-count">{shown.length}</span>
+            </span>
           </div>
           <div className="workspace-queue-body">
             {holes.length === 0 ? (
               <p className="admin-hint" style={{ padding: "0 4px" }}>{STAGE_EMPTY_HINT[stage]}</p>
+            ) : shown.length === 0 ? (
+              <p className="admin-hint" style={{ padding: "0 4px" }}>
+                {filter === "open"
+                  ? "No hole has an open exception right now."
+                  : "Nothing resolved or decided in the last seven days."}
+              </p>
             ) : (
-              holes.map((hole) => (
+              shown.map((hole) => (
                 <button
                   key={hole.id}
                   type="button"
