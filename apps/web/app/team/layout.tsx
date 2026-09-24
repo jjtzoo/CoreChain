@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { requireProjectManager } from "@/lib/session";
+import { ViewAsBar } from "@/components/view-as-bar";
 import { signOutAction } from "../login/actions";
 
 export const metadata: Metadata = { title: "Team | CoreChain" };
@@ -17,6 +18,7 @@ export default async function TeamLayout({
 
   return (
     <div className="admin-shell">
+      <ViewAsBar session={session} />
       <header className="admin-header">
         <div className="admin-header-inner">
           <Image

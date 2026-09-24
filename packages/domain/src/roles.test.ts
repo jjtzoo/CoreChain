@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canBeViewedAs,
   canManageUsers,
   DEFAULT_ROLE,
   isUserRole,
@@ -7,6 +8,7 @@ import {
   ROLE_SUMMARIES,
   toUserRole,
   USER_ROLES,
+  webHomeForRole,
 } from "./roles";
 
 describe("roles", () => {
@@ -44,5 +46,23 @@ describe("roles", () => {
       expect(canManageUsers(role)).toBe(false);
     }
     expect(canManageUsers(undefined)).toBe(false);
+  });
+
+  it("sends each tier to its own web page, and a geologist to none", () => {
+    expect(webHomeForRole("project_manager")).toBe("/team");
+    expect(webHomeForRole("qaqc")).toBe("/qaqc");
+    expect(webHomeForRole("laboratory")).toBe("/laboratory");
+    expect(webHomeForRole("admin")).toBe("/admin/users");
+    expect(webHomeForRole("geologist")).toBeNull();
+    expect(webHomeForRole(undefined)).toBeNull();
+  });
+
+  it("lets the admin view as web users only, never an admin or a switched-off account", () => {
+    expect(canBeViewedAs({ role: "project_manager" })).toBe(true);
+    expect(canBeViewedAs({ role: "qaqc", banned: false })).toBe(true);
+    expect(canBeViewedAs({ role: "laboratory", banned: null })).toBe(true);
+    expect(canBeViewedAs({ role: "laboratory", banned: true })).toBe(false);
+    expect(canBeViewedAs({ role: "admin" })).toBe(false);
+    expect(canBeViewedAs({ role: "geologist" })).toBe(false);
   });
 });

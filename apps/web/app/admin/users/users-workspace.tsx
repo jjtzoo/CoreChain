@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  canBeViewedAs,
   QAQC_STAGE_LABELS,
   QAQC_STAGES,
   ROLE_LABELS,
@@ -29,6 +30,7 @@ import {
   setSwitchedOffAction,
   suggestPasswordAction,
 } from "./actions";
+import { viewAsAction } from "@/app/actions/view-as";
 
 export type UserRow = {
   id: string;
@@ -700,6 +702,16 @@ function UserItem({
     });
   };
 
+  const canView = canBeViewedAs({ role: user.role, banned: user.switchedOff });
+
+  const viewAs = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await viewAsAction(user.id);
+      if (result && !result.ok) setError(result.error);
+    });
+  };
+
   const toggleSwitchedOff = () => {
     const turningOff = !user.switchedOff;
     if (
@@ -807,6 +819,17 @@ function UserItem({
       </div>
 
       <div className="admin-user-actions">
+        {canView ? (
+          <button
+            type="button"
+            className="admin-button"
+            onClick={viewAs}
+            disabled={pending}
+            title={`Open CoreChain as ${user.name} sees it, without their password`}
+          >
+            View as
+          </button>
+        ) : null}
         <button
           type="button"
           className="admin-button"

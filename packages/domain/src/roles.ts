@@ -76,3 +76,30 @@ export function canReviewQaqc(role: unknown): boolean {
 export function canReviewLaboratory(role: unknown): boolean {
   return role === "laboratory";
 }
+
+/**
+ * The web page each tier opens after signing in, or null for a field
+ * geologist, who works on the phone and has no web page. Sign-in and the
+ * admin's "View as" both use it.
+ */
+export type WebHome = "/team" | "/qaqc" | "/laboratory" | "/admin/users";
+
+export function webHomeForRole(role: unknown): WebHome | null {
+  if (canViewTeamOverview(role)) return "/team";
+  if (canReviewQaqc(role)) return "/qaqc";
+  if (canReviewLaboratory(role)) return "/laboratory";
+  if (canManageUsers(role)) return "/admin/users";
+  return null;
+}
+
+/**
+ * Whether the admin may open the web app as this person ("View as"): anyone
+ * with a web page who is not an admin and not switched off.
+ */
+export function canBeViewedAs(user: {
+  role: unknown;
+  banned?: boolean | null;
+}): boolean {
+  if (user.banned === true || canManageUsers(user.role)) return false;
+  return webHomeForRole(user.role) !== null;
+}

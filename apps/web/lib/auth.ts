@@ -8,6 +8,9 @@ import { DEFAULT_ROLE, OFFLINE_SESSION_DAYS } from "@corechain/domain";
 import { prisma } from "./prisma";
 import { POWERSYNC_AUDIENCE, POWERSYNC_TOKEN_LIFETIME } from "./powersync";
 
+/** How long one "View as" session lasts before it signs itself out. */
+export const VIEW_AS_HOURS = 3;
+
 // Sign-in for CoreChain (E1-3). Decision D13: during the pilot the owner
 // creates every account, so open sign-up is off. The account script and the
 // admin screen create users through the admin plugin; the only thing that
@@ -45,6 +48,10 @@ export const auth = betterAuth({
       },
       defaultRole: DEFAULT_ROLE,
       adminRoles: ["admin"],
+      // "View as" (admin Users page): long enough to walk a visitor through
+      // every role; the admin's own session is untouched and comes back with
+      // "Return to admin".
+      impersonationSessionDuration: VIEW_AS_HOURS * 60 * 60,
     }),
     // A signed-in phone asks /api/auth/token for a short-lived JWT and hands it
     // to PowerSync, which checks it against /api/auth/jwks. The token's `sub`
