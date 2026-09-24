@@ -179,7 +179,12 @@ export default async function HoleViewPage({
                   return (
                     <li className="admin-user" key={sample.id}>
                       <div className="admin-user-who">
-                        <span className="admin-user-name">{sample.sampleNumber}</span>
+                        <Link
+                          href={`/team/samples/${sample.id}` as Route}
+                          className="admin-user-name record-link"
+                        >
+                          {sample.sampleNumber}
+                        </Link>
                         <span className="admin-user-email">
                           {sample.sampleType} · {sample.status}
                           {sample.fromM !== null ? ` · ${sample.fromM}–${sample.toM} m` : ""} ·{" "}
