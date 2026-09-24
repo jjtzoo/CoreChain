@@ -263,6 +263,10 @@ export default async function TeamPage() {
             ·{" "}
             <Link href="/team/codes" className="admin-link">
               Code library
+            </Link>{" "}
+            ·{" "}
+            <Link href="/team/tags" className="admin-link">
+              Print tags
             </Link>
           </p>
         </div>
