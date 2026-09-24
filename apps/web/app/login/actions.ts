@@ -1,12 +1,10 @@
 "use server";
 
 import {
-  canReviewLaboratory,
-  canReviewQaqc,
-  canViewTeamOverview,
   classifySignInFailure,
   signInFailureMessage,
   validateSignInInput,
+  webHomeForRole,
 } from "@corechain/domain";
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
@@ -49,13 +47,17 @@ export async function signInAction(
 
   // Outside the try block: redirect() works by throwing.
   const session = await getSession();
-  if (session && canViewTeamOverview(session.user.role)) redirect("/team");
-  if (session && canReviewQaqc(session.user.role)) redirect("/qaqc");
-  if (session && canReviewLaboratory(session.user.role)) redirect("/laboratory");
-  redirect("/admin/users");
+  redirect(webHomeForRole(session?.user.role) ?? "/admin/users");
 }
 
 export async function signOutAction() {
+  // While the admin is viewing as someone, "Sign out" ends only that view
+  // and returns to the admin's own session.
+  const session = await getSession();
+  if (session?.session.impersonatedBy) {
+    await auth.api.stopImpersonating({ headers: await headers() });
+    redirect("/admin/users");
+  }
   await auth.api.signOut({ headers: await headers() });
   redirect("/login");
 }
