@@ -3263,6 +3263,86 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   font-weight: 500;
 }
 
+/* Code library import (E16) */
+
+.code-count-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.code-count-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.code-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.code-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.code-filter .admin-button[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+.code-table-wrap {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.code-import-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.code-import-table th,
+.code-import-table td {
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.code-import-table thead th {
+  position: sticky;
+  top: 0;
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.code-import-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+.code-import-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.code-import-code {
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Status pills: receipt, results, QA/QC decision */
 
 .status-pill {
