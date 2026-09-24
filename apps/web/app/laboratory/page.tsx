@@ -1,5 +1,6 @@
 import {
   missingSampleIds,
+  preparationQueue,
   receiptStatus,
   resultsStatus,
 } from "@corechain/domain";
@@ -9,6 +10,7 @@ import {
   LaboratoryWorkspace,
   type AssayResultRow,
   type DispatchRow,
+  type QueueRow,
   type SampleRow,
 } from "./laboratory-workspace";
 
@@ -46,7 +48,12 @@ export default async function LaboratoryPage() {
           where: { deletedAt: null },
           include: {
             sample: {
-              select: { id: true, sampleNumber: true, sampleType: true },
+              select: {
+                id: true,
+                sampleNumber: true,
+                sampleType: true,
+                drillhole: { select: { holeId: true, priority: true, priorityNote: true } },
+              },
             },
           },
         },
@@ -125,6 +132,32 @@ export default async function LaboratoryPage() {
     };
   });
 
+  // Receive by scan: received samples still waiting for results, urgent
+  // holes first (the project manager's flag on the hole).
+  const queue: QueueRow[] = preparationQueue(
+    dispatches.flatMap((dispatch) => {
+      const received = new Map(
+        (receivedByDispatch.get(dispatch.id) ?? []).map((e) => [
+          e.sampleId,
+          e.occurredAt.toISOString(),
+        ]),
+      );
+      const withResults = new Set(dispatch.assayResults.map((r) => r.sampleId));
+      return dispatch.samples.map((ds) => ({
+        sampleId: ds.sample.id,
+        sampleNumber: ds.sample.sampleNumber,
+        dispatchNumber: dispatch.dispatchNumber,
+        holeId: ds.sample.drillhole.holeId,
+        projectName: dispatch.project.name,
+        receivedAt: received.get(ds.sample.id) ?? null,
+        priority: ds.sample.drillhole.priority,
+        priorityNote: ds.sample.drillhole.priorityNote,
+        hasResults: withResults.has(ds.sample.id),
+        resultsComplete: dispatch.resultsReturnedAt !== null,
+      }));
+    }),
+  );
+
   return (
     <>
       <div className="admin-page-header">
@@ -133,7 +166,7 @@ export default async function LaboratoryPage() {
           <p>{dispatchRows.length} batches dispatched to your team</p>
         </div>
       </div>
-      <LaboratoryWorkspace dispatches={dispatchRows} />
+      <LaboratoryWorkspace dispatches={dispatchRows} queue={queue} />
     </>
   );
 }

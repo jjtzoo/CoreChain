@@ -166,7 +166,15 @@ export async function createRun(
   options: { acceptWarnings?: boolean } = {},
 ): Promise<CreateRunResult> {
   const existing = await listRuns(drillholeId);
-  const result = validateRunInput(input, existing);
+  // The hole's final depth, so a run past it is flagged before saving.
+  const { rows: holeRows } = await (await getDatabase()).execute(
+    'SELECT actual_final_depth_m FROM drillholes WHERE id = ?',
+    [drillholeId],
+  );
+  const hole = (holeRows as unknown as { actual_final_depth_m: number | null }[])[0];
+  const result = validateRunInput(input, existing, {
+    actualFinalDepthM: hole?.actual_final_depth_m ?? null,
+  });
   if (!result.valid) {
     return { outcome: 'invalid', result };
   }

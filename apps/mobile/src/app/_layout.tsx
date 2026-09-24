@@ -188,6 +188,10 @@ function AppStackScreens({
           options={{ title: 'Sample' }}
         />
         <Stack.Screen
+          name="projects/[projectId]/samples/scan"
+          options={{ title: 'Scan tags' }}
+        />
+        <Stack.Screen
           name="projects/[projectId]/samples/new"
           options={{ title: 'New sample', presentation: 'modal' }}
         />
