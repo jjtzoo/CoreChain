@@ -75,7 +75,16 @@ async function main() {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error("No account with that email.");
-    const org = user.id;
+    // The account's team when it is on one (E11-1), else its personal
+    // workspace: the same rule the sync streams and the team pages use, so the
+    // project reaches the team's phones and the team overview.
+    const org = user.organizationId ?? user.id;
+    const team = user.organizationId
+      ? await prisma.organization.findUnique({ where: { id: user.organizationId } })
+      : null;
+    console.log(
+      team ? `Seeding into team "${team.name}".` : "Seeding into the account's personal workspace (not on a team).",
+    );
 
     const insert = async (
       table: string,
