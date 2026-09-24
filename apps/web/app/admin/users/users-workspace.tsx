@@ -24,6 +24,8 @@ import {
   setUserTeamAction,
   setUserTitleAction,
   dismissRequestAction,
+  loadDemoProjectsAction,
+  removeDemoProjectsAction,
   setSwitchedOffAction,
   suggestPasswordAction,
 } from "./actions";
@@ -46,6 +48,8 @@ const NO_STAGE = "";
 export type TeamRow = {
   id: string;
   name: string;
+  /** How many of the two demo projects the team has now. */
+  demoProjects: number;
 };
 
 const PERSONAL_WORKSPACE = "";
@@ -246,19 +250,27 @@ function TeamsCard({
   memberCounts: Map<string, number>;
 }) {
   const [name, setName] = useState("");
+  const [withDemo, setWithDemo] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     startTransition(async () => {
-      const result = await createTeamAction(name);
+      const result = await createTeamAction(name, withDemo);
       if (!result.ok) {
         setError(result.error);
         return;
       }
       setName("");
+      setNotice(
+        result.demo
+          ? `Created "${result.name}" with the demo projects: ${describeDemo(result.demo)}.`
+          : `Created "${result.name}".`,
+      );
     });
   };
 
@@ -276,7 +288,7 @@ function TeamsCard({
       {teams.length > 0 ? (
         <ul className="admin-users">
           {teams.map((team) => (
-            <li className="admin-user" key={team.id}>
+            <li className="admin-user team-row" key={team.id}>
               <div className="admin-user-who">
                 <span className="admin-user-name">{team.name}</span>
               </div>
@@ -284,27 +296,164 @@ function TeamsCard({
                 <span className="admin-meta-label">People</span>
                 <span>{memberCounts.get(team.id) ?? 0}</span>
               </div>
+              <TeamDemoControls team={team} />
             </li>
           ))}
         </ul>
       ) : null}
-      <form className="field-with-action" onSubmit={submit} noValidate>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="New team name, e.g. a company's name"
-          autoComplete="off"
-        />
-        <button type="submit" className="admin-button" disabled={pending}>
-          {pending ? "Working…" : "Create team"}
-        </button>
+      <form className="team-create" onSubmit={submit} noValidate>
+        <div className="field-with-action">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="New team name, e.g. a company's name"
+            autoComplete="off"
+            aria-label="New team name"
+          />
+          <button type="submit" className="admin-button" disabled={pending}>
+            {pending ? "Working…" : "Create team"}
+          </button>
+        </div>
+        <label className="team-demo-option">
+          <input
+            type="checkbox"
+            checked={withDemo}
+            onChange={(e) => setWithDemo(e.target.checked)}
+          />
+          <span>
+            Start with the two demo projects, so the team has holes, logs and
+            samples to look at before its own work syncs. They can be removed
+            at any time.
+          </span>
+        </label>
       </form>
       {error ? (
         <p role="alert" className="form-error">
           {error}
         </p>
       ) : null}
+      {notice ? <p className="admin-hint">{notice}</p> : null}
     </section>
+  );
+}
+
+function describeDemo(demo: { name: string; holes: number; samples: number }[]): string {
+  return demo
+    .map((p) => `${p.name} (${p.holes} holes, ${p.samples} samples)`)
+    .join(" and ");
+}
+
+// The manual option, per team: add the demo projects, replace them with a
+// fresh copy, or remove them. Replacing and removing delete everything
+// recorded in the demo projects, so both ask first.
+function TeamDemoControls({ team }: { team: TeamRow }) {
+  const [confirming, setConfirming] = useState<"replace" | "remove" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const has = team.demoProjects > 0;
+
+  const load = () => {
+    setError(null);
+    setNotice(null);
+    setConfirming(null);
+    startTransition(async () => {
+      const result = await loadDemoProjectsAction(team.id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setNotice(`Added ${describeDemo(result.demo)}.`);
+    });
+  };
+
+  const remove = () => {
+    setError(null);
+    setNotice(null);
+    setConfirming(null);
+    startTransition(async () => {
+      const result = await removeDemoProjectsAction(team.id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setNotice(
+        result.removed > 0
+          ? "Removed the demo projects. Phones drop them at their next sync."
+          : "There were no demo projects to remove.",
+      );
+    });
+  };
+
+  return (
+    <div className="team-demo">
+      <div className="team-demo-line">
+        <span className="admin-meta-label">Demo projects</span>
+        <span>{has ? `${team.demoProjects} of 2 added` : "None"}</span>
+        {confirming === null ? (
+          <span className="team-demo-actions">
+            {has ? (
+              <>
+                <button
+                  type="button"
+                  className="admin-link"
+                  disabled={pending}
+                  onClick={() => setConfirming("replace")}
+                >
+                  Replace with a fresh copy
+                </button>
+                <button
+                  type="button"
+                  className="admin-link"
+                  disabled={pending}
+                  onClick={() => setConfirming("remove")}
+                >
+                  Remove
+                </button>
+              </>
+            ) : (
+              <button type="button" className="admin-link" disabled={pending} onClick={load}>
+                {pending ? "Adding…" : "Add demo projects"}
+              </button>
+            )}
+          </span>
+        ) : null}
+      </div>
+      {confirming ? (
+        <div className="team-demo-confirm" role="alert">
+          <span>
+            {confirming === "replace"
+              ? "Replace the demo projects? Anything recorded in them since they were added is deleted, on the web and on phones at their next sync."
+              : "Remove the demo projects? They and anything recorded in them are deleted, on the web and on phones at their next sync. The team's own projects are not touched."}
+          </span>
+          <span className="team-demo-actions">
+            <button
+              type="button"
+              className="admin-button"
+              disabled={pending}
+              onClick={confirming === "replace" ? load : remove}
+            >
+              {confirming === "replace" ? "Replace" : "Remove"}
+            </button>
+            <button
+              type="button"
+              className="admin-link"
+              disabled={pending}
+              onClick={() => setConfirming(null)}
+            >
+              Cancel
+            </button>
+          </span>
+        </div>
+      ) : null}
+      {pending ? <p className="admin-hint">Working… this can take up to a minute.</p> : null}
+      {error ? (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      ) : null}
+      {notice ? <p className="admin-hint">{notice}</p> : null}
+    </div>
   );
 }
 

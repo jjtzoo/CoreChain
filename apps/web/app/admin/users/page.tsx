@@ -1,13 +1,17 @@
 import { suggestPassphrase } from "@corechain/domain";
 import { randomInt } from "node:crypto";
+import { DEMO_PROJECT_NAMES } from "@/lib/demo/demoProjects";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { UsersWorkspace, type UserRow } from "./users-workspace";
 
+// Adding the demo projects writes about two thousand rows in one transaction.
+export const maxDuration = 60;
+
 export default async function UsersPage() {
   const session = await requireAdmin();
 
-  const [users, activity, requestRows, teams] = await Promise.all([
+  const [users, activity, requestRows, teams, demoProjects] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -28,7 +32,15 @@ export default async function UsersPage() {
       orderBy: { createdAt: "asc" },
     }),
     prisma.organization.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.project.findMany({
+      where: { name: { in: [...DEMO_PROJECT_NAMES] }, deletedAt: null },
+      select: { organizationId: true },
+    }),
   ]);
+  const demoCounts = new Map<string, number>();
+  for (const p of demoProjects) {
+    demoCounts.set(p.organizationId, (demoCounts.get(p.organizationId) ?? 0) + 1);
+  }
   const lastActive = new Map(
     activity.map((row) => [row.userId, row._max.updatedAt]),
   );
@@ -60,7 +72,11 @@ export default async function UsersPage() {
       </div>
       <UsersWorkspace
         users={rows}
-        teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+        teams={teams.map((team) => ({
+          id: team.id,
+          name: team.name,
+          demoProjects: demoCounts.get(team.id) ?? 0,
+        }))}
         currentUserId={session.user.id}
         hasTester={rows.some((user) => user.id !== session.user.id)}
         requests={requestRows.map((request) => ({
