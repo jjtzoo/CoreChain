@@ -1,5 +1,6 @@
 import { DEFAULT_BLOCK_SIZE, nextBlockRange } from "@corechain/domain";
 import { randomUUID } from "node:crypto";
+import { currentDeviceWorkspace } from "./devices";
 import { prisma } from "./prisma";
 
 // E6-4, the server half: hand a device a reserved run of sample numbers so two
@@ -66,17 +67,21 @@ export async function issueSampleBlock(
   if (!device || device.userId !== userId)
     return { ok: false, reason: "device-not-found" };
   if (device.revokedAt) return { ok: false, reason: "device-revoked" };
+  // The account's workspace now (its team, else its personal workspace), so a
+  // geologist gets numbers on a team project a teammate created, not only on
+  // their own projects.
+  const organizationId = await currentDeviceWorkspace(device);
 
   return prisma.$transaction(
     async (tx): Promise<BlockResult> => {
       // The lock: only one request per project gets past this line at a time.
-      // Only the account's own, undeleted project counts (the same rule the sync
-      // streams use).
+      // Any undeleted project in the account's workspace counts, the same rule
+      // the sync streams use to send the project to the phone.
       const project = await tx.$queryRaw<
         Array<{ next_sample_number: number; organization_id: string }>
       >`
         SELECT next_sample_number, organization_id FROM projects
-        WHERE id = ${projectId}::uuid AND created_by = ${userId} AND deleted_at IS NULL
+        WHERE id = ${projectId}::uuid AND organization_id = ${organizationId} AND deleted_at IS NULL
         FOR UPDATE`;
       if (project.length === 0)
         return { ok: false, reason: "project-not-found" };
