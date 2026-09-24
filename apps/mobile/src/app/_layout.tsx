@@ -256,6 +256,10 @@ function AppStackScreens({
           options={{ title: 'New interval', presentation: 'modal' }}
         />
         <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/log/edit"
+          options={{ title: 'Edit interval', presentation: 'modal' }}
+        />
+        <Stack.Screen
           name="projects/[projectId]/drillholes/[drillholeId]/photos/index"
           options={{ title: 'Photos' }}
         />

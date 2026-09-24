@@ -151,6 +151,81 @@ export async function createInterval(
   return { outcome: 'created', interval: rowToInterval(row) };
 }
 
+/** One interval, or null when it no longer exists (deleted here or by a sync). */
+export async function getInterval(id: string): Promise<LogInterval | null> {
+  const db = await getDatabase();
+  const { rows } = await db.execute(
+    'SELECT * FROM log_intervals WHERE id = ? AND deleted_at IS NULL',
+    [id],
+  );
+  const row = (rows as unknown as IntervalRow[])[0];
+  return row ? rowToInterval(row) : null;
+}
+
+export type UpdateIntervalResult =
+  | { outcome: 'updated'; interval: LogInterval }
+  | { outcome: 'missing' }
+  | { outcome: 'invalid'; result: CoreValidationResult }
+  | { outcome: 'needs-confirmation'; warnings: string[] };
+
+/**
+ * Corrects an interval already logged: a typo in a code, a wrong depth. It is
+ * checked against the hole's other intervals exactly as a new one is (gaps
+ * and overlaps warn, they don't block), and its version goes up so the change
+ * syncs like any other edit.
+ */
+export async function updateInterval(
+  id: string,
+  input: LogIntervalInput,
+  options: { acceptWarnings?: boolean } = {},
+): Promise<UpdateIntervalResult> {
+  const current = await getInterval(id);
+  if (!current) {
+    return { outcome: 'missing' };
+  }
+  const others = (await listIntervals(current.drillholeId)).filter(
+    (interval) => interval.id !== id,
+  );
+  const result = validateIntervalInput(input, others);
+  if (!result.valid) {
+    return { outcome: 'invalid', result };
+  }
+  if (result.warnings.length > 0 && !options.acceptWarnings) {
+    return { outcome: 'needs-confirmation', warnings: result.warnings };
+  }
+
+  const db = await getDatabase();
+  const clean = (value: string | null | undefined) => value?.trim() || null;
+  await db.execute(
+    `UPDATE log_intervals SET
+      from_m = ?, to_m = ?, lithology = ?, alteration_type = ?,
+      alteration_intensity = ?, mineral = ?, mineral_style = ?,
+      mineral_percent = ?, weathering = ?, structure_type = ?, notes = ?,
+      updated_at = ?, version = version + 1
+     WHERE id = ? AND deleted_at IS NULL`,
+    [
+      input.fromM,
+      input.toM,
+      clean(input.lithology),
+      clean(input.alterationType),
+      clean(input.alterationIntensity),
+      clean(input.mineral),
+      clean(input.mineralStyle),
+      input.mineralPercent ?? null,
+      clean(input.weathering),
+      clean(input.structureType),
+      clean(input.notes),
+      nowIso(),
+      id,
+    ],
+  );
+
+  const updated = await getInterval(id);
+  return updated
+    ? { outcome: 'updated', interval: updated }
+    : { outcome: 'missing' };
+}
+
 export async function deleteInterval(id: string): Promise<void> {
   const db = await getDatabase();
   const timestamp = nowIso();
