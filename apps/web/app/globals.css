@@ -2644,6 +2644,23 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   font-size: 0.875rem;
 }
 
+/* Laboratory receipt: the checkbox sits beside its sample number. */
+.receipt-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.receipt-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--forest);
+}
+
 .admin-status > span:last-child {
   display: flex;
   align-items: center;
