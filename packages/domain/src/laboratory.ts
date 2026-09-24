@@ -160,3 +160,20 @@ export function preparationQueue(
         a.sampleNumber.localeCompare(b.sampleNumber, undefined, { numeric: true }),
     );
 }
+
+/**
+ * The sample a scanned or typed tag names, among the ones given (the phone
+ * passes its project's samples). Capitals are ignored, like the samples'
+ * own unique index. A deleted sample's tag is never matched.
+ */
+export function findSampleByTag<
+  T extends { sampleNumber: string; deletedAt?: string | null },
+>(raw: string, samples: readonly T[]): T | null {
+  const code = scannedSampleNumber(raw).toLowerCase();
+  if (!code) return null;
+  return (
+    samples.find(
+      (s) => !s.deletedAt && s.sampleNumber.trim().toLowerCase() === code,
+    ) ?? null
+  );
+}

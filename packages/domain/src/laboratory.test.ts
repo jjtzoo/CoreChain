@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  findSampleByTag,
   matchScan,
   missingSampleIds,
   preparationQueue,
@@ -158,5 +159,22 @@ describe("preparationQueue", () => {
     ]);
     expect(queue.map((s) => s.sampleNumber)).toEqual(["S-4"]);
     expect(queue[0]).not.toHaveProperty("hasResults");
+  });
+});
+
+describe("findSampleByTag", () => {
+  const samples = [
+    { id: "a", sampleNumber: "AB-0041", deletedAt: null },
+    { id: "b", sampleNumber: "AB-0042", deletedAt: "2026-09-20T00:00:00Z" },
+  ];
+
+  it("finds the sample a tag names, ignoring capitals and scanner characters", () => {
+    expect(findSampleByTag("ab-0041\r\n", samples)?.id).toBe("a");
+  });
+
+  it("never matches a deleted sample, an unknown tag or an empty scan", () => {
+    expect(findSampleByTag("AB-0042", samples)).toBeNull();
+    expect(findSampleByTag("AB-9999", samples)).toBeNull();
+    expect(findSampleByTag("   ", samples)).toBeNull();
   });
 });

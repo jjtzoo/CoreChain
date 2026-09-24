@@ -196,6 +196,15 @@ export default function SampleRegisterScreen() {
             onPress={() => (selecting ? stopSelecting() : setSelecting(true))}
           />
         ) : null}
+        {samples.length > 0 && !selecting ? (
+          <PrimaryButton
+            label="Scan tags"
+            icon="qrcode-scan"
+            variant="secondary"
+            disabled={guiding}
+            onPress={() => router.push(`/projects/${projectId}/samples/scan`)}
+          />
+        ) : null}
 
         <QcReminders
           reminders={reminders}
