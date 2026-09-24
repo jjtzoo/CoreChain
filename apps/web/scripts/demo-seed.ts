@@ -30,7 +30,7 @@ async function main(which: DemoProjectKey, command: string) {
     );
     const [summary] = await loadDemoProjects(
       prisma,
-      { organizationId: workspaceId(user), createdBy: user.id },
+      { organizationId: workspaceId(user), requestedBy: { id: user.id, name: user.name } },
       [which],
     );
     console.log(

@@ -321,9 +321,10 @@ function TeamsCard({
             onChange={(e) => setWithDemo(e.target.checked)}
           />
           <span>
-            Start with the two demo projects, so the team has holes, logs and
-            samples to look at before its own work syncs. They can be removed
-            at any time.
+            Start with the two demo projects and a demo crew (three
+            geologists, a laboratory and three QA/QC reviewers, who cannot sign
+            in), so the team has holes, logs, samples and results to look at
+            before its own work syncs. They can be removed at any time.
           </span>
         </label>
       </form>
@@ -379,7 +380,7 @@ function TeamDemoControls({ team }: { team: TeamRow }) {
       }
       setNotice(
         result.removed > 0
-          ? "Removed the demo projects. Phones drop them at their next sync."
+          ? "Removed the demo projects and the demo crew. Phones drop the projects at their next sync."
           : "There were no demo projects to remove.",
       );
     });
@@ -424,7 +425,7 @@ function TeamDemoControls({ team }: { team: TeamRow }) {
           <span>
             {confirming === "replace"
               ? "Replace the demo projects? Anything recorded in them since they were added is deleted, on the web and on phones at their next sync."
-              : "Remove the demo projects? They and anything recorded in them are deleted, on the web and on phones at their next sync. The team's own projects are not touched."}
+              : "Remove the demo projects? They and anything recorded in them are deleted, on the web and on phones at their next sync. The demo crew's accounts are removed too. The team's own people and projects are not touched."}
           </span>
           <span className="team-demo-actions">
             <button
