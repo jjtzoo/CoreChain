@@ -1,3 +1,4 @@
+import { deviceWorkspaceChange, workspaceId } from "@corechain/domain";
 import { prisma } from "./prisma";
 
 // A phone or tablet signed in to an account (E1-5). The phone makes its own
@@ -47,9 +48,11 @@ export async function registerDevice(
     if (existing.userId !== userId)
       return { ok: false, reason: "belongs-to-someone-else" };
     if (existing.revokedAt) return { ok: false, reason: "revoked" };
+    const organizationId = await currentDeviceWorkspace(existing);
     await prisma.device.update({
       where: { id: deviceId },
       data: {
+        organizationId,
         name,
         platform,
         appVersion: clean(input.appVersion, 40),
@@ -70,7 +73,10 @@ export async function registerDevice(
       // A team's shared workspace if the admin put this account on one
       // (E11-1); otherwise a personal workspace, same as before teams
       // existed: the account is its own organization (decision D9).
-      organizationId: user?.organizationId ?? userId,
+      organizationId: workspaceId({
+        id: userId,
+        organizationId: user?.organizationId ?? null,
+      }),
       userId,
       name,
       platform,
@@ -80,4 +86,30 @@ export async function registerDevice(
     },
   });
   return { ok: true, deviceId };
+}
+
+/**
+ * The workspace a registered phone works in now, moving the phone there first
+ * if its account changed team since the phone registered. Without this, a
+ * phone signed in before its account joined a team stayed in the personal
+ * workspace: it was missing from the team's Devices, and the server checked
+ * its uploads against the personal workspace, refusing work on team projects.
+ */
+export async function currentDeviceWorkspace(device: {
+  id: string;
+  userId: string;
+  organizationId: string;
+}): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: device.userId },
+    select: { id: true, organizationId: true },
+  });
+  if (!user) return device.organizationId;
+  const moveTo = deviceWorkspaceChange(device, user);
+  if (moveTo === null) return device.organizationId;
+  await prisma.device.update({
+    where: { id: device.id },
+    data: { organizationId: moveTo },
+  });
+  return moveTo;
 }

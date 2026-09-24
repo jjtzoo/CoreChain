@@ -195,3 +195,4 @@ export * from "./qaqc";
 export * from "./laboratory";
 export * from "./assayImport";
 export * from "./codeImport";
+export * from "./workspace";
