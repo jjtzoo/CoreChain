@@ -14,7 +14,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import {
   loadDemoProjects,
-  removeDemoProjects,
+  removeDemo,
   type DemoSummary,
 } from "@/lib/demo/demoProjects";
 import { prisma } from "@/lib/prisma";
@@ -154,7 +154,7 @@ export async function createTeamAction(
     try {
       demo = await loadDemoProjects(prisma, {
         organizationId: team.id,
-        createdBy: await demoCreditFor(team.id, session.user.id),
+        requestedBy: { id: session.user.id, name: session.user.name },
       });
     } catch {
       revalidatePath("/admin/users");
@@ -170,19 +170,6 @@ export async function createTeamAction(
 }
 
 /**
- * Who the demo work is credited to: a field geologist on the team if there is
- * one (it is field work), else anyone on the team, else the admin adding it.
- */
-async function demoCreditFor(teamId: string, adminId: string): Promise<string> {
-  const members = await prisma.user.findMany({
-    where: { organizationId: teamId },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, role: true },
-  });
-  return (members.find((m) => m.role === "geologist") ?? members[0])?.id ?? adminId;
-}
-
-/**
  * The manual option: add the two demo projects to a team, or replace them
  * with a fresh copy. Anything recorded in the demo projects since is replaced.
  */
@@ -195,7 +182,7 @@ export async function loadDemoProjectsAction(
   try {
     const demo = await loadDemoProjects(prisma, {
       organizationId: team.id,
-      createdBy: await demoCreditFor(team.id, session.user.id),
+      requestedBy: { id: session.user.id, name: session.user.name },
     });
     revalidatePath("/admin/users");
     revalidatePath("/team");
@@ -205,7 +192,7 @@ export async function loadDemoProjectsAction(
   }
 }
 
-/** Removes the two demo projects from a team, with everything recorded in them. */
+/** Removes the two demo projects from a team, with everything recorded in them, and its demo crew. */
 export async function removeDemoProjectsAction(
   teamId: string,
 ): Promise<ActionResult<{ removed: number }>> {
@@ -213,7 +200,7 @@ export async function removeDemoProjectsAction(
   const team = await prisma.organization.findUnique({ where: { id: teamId } });
   if (!team) return { ok: false, error: "That team no longer exists." };
   const removed = await prisma.$transaction(
-    (tx) => removeDemoProjects(tx, team.id),
+    (tx) => removeDemo(tx, team.id),
     { timeout: 60_000, maxWait: 10_000 },
   );
   revalidatePath("/admin/users");

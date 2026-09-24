@@ -612,14 +612,15 @@ export function TeamWorkspace({
             </div>
             <div style={{ display: "grid", gap: 10 }}>
               {members.map((member) => (
-                <div key={member.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 12px", background: "var(--canvas)", borderRadius: "var(--radius-control)" }}>
-                  <div style={{ minWidth: 0 }}>
+                <div key={member.id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 12px", background: "var(--canvas)", borderRadius: "var(--radius-control)" }}>
+                  {/* A long title moves under the name rather than squeezing it. */}
+                  <div style={{ flex: "1 1 9rem", minWidth: 0 }}>
                     <div style={{ fontSize: "0.8rem", fontWeight: 500 }}>{member.name}</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {member.email}
                     </div>
                   </div>
-                  <span className="admin-pill" style={{ flexShrink: 0 }}>
+                  <span className="admin-pill" style={{ maxWidth: "100%" }}>
                     {member.title || ROLE_LABELS[toUserRole(member.role)]}
                   </span>
                 </div>
