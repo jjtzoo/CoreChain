@@ -180,6 +180,7 @@ export * from "./dates";
 export * from "./overview";
 export * from "./session";
 export * from "./sampleBlocks";
+export * from "./labQc";
 export * from "./roles";
 export * from "./signIn";
 export * from "./passwords";

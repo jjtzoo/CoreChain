@@ -33,7 +33,14 @@ export type QaqcExceptionKind =
   | "recovery_over_100"
   | "qc_rate_short"
   | "custody_stalled"
-  | "device_stale";
+  | "device_stale"
+  // E12-4, laboratory and assays (labQc.ts)
+  | "standard_failed"
+  | "standard_warning"
+  | "blank_failed"
+  | "duplicate_failed"
+  | "qc_reference_missing"
+  | "result_missing";
 
 /**
  * One row in the exceptions queue. `key` identifies the same underlying
@@ -61,6 +68,12 @@ export const QAQC_EXCEPTION_KIND_LABELS: Record<QaqcExceptionKind, string> = {
   qc_rate_short: "QC rate below target",
   custody_stalled: "Sample stalled before dispatch",
   device_stale: "Device quiet for a while",
+  standard_failed: "Standard failed",
+  standard_warning: "Standard near its limit",
+  blank_failed: "Blank failed",
+  duplicate_failed: "Duplicate failed",
+  qc_reference_missing: "No certified values or limit",
+  result_missing: "Result missing",
 };
 
 /** The exception kind encoded at the start of a `QaqcException.key`, or null
