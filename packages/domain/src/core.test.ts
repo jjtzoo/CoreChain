@@ -8,6 +8,7 @@ import {
   recoveryPercent,
   rqdPercent,
   validateBoxInput,
+  runPastFinalDepthWarning,
   validateRunInput,
 } from "./core";
 
@@ -313,5 +314,25 @@ describe("deepestRecordedDepthM", () => {
     expect(
       deepestRecordedDepthM([{ toM: 3 }, { toM: 12.5 }, { toM: 9 }]),
     ).toBe(12.5);
+  });
+});
+
+describe("run past the hole's final depth", () => {
+  it("warns when a run ends deeper than the recorded final depth", () => {
+    const result = validateRunInput(
+      { fromM: 118, toM: 121, recoveredM: 2.9 },
+      [{ fromM: 115, toM: 118 }],
+      { actualFinalDepthM: 120 },
+    );
+    expect(result.valid).toBe(true);
+    expect(result.warnings).toEqual([
+      "Ends at 121 m, past the hole's final depth of 120 m. Check the depth block, or correct the final depth.",
+    ]);
+  });
+
+  it("says nothing at the final depth, or before one is recorded", () => {
+    expect(runPastFinalDepthWarning({ toM: 120 }, 120)).toBeNull();
+    expect(runPastFinalDepthWarning({ toM: 120.005 }, 120)).toBeNull();
+    expect(runPastFinalDepthWarning({ toM: 500 }, null)).toBeNull();
   });
 });

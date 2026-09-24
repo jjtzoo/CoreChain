@@ -96,6 +96,7 @@ export default async function QaqcPage() {
             drillholeId: h.id,
             holeId: h.holeId,
             runs: h.runs,
+            actualFinalDepthM: h.actualFinalDepthM,
           })),
         )
       : stage === "sampling_custody"

@@ -11,7 +11,12 @@
 // recorded separately, keyed by `key`, so a resolved exception can be told
 // apart from one that no longer applies.
 
-import { analyseContinuity, recoveryPercent, type DepthRange } from "./core";
+import {
+  analyseContinuity,
+  recoveryPercent,
+  runPastFinalDepthWarning,
+  type DepthRange,
+} from "./core";
 import { qcAchievement, type QcRates, type SampleStatus, type SampleType } from "./sampling";
 
 export const QAQC_STAGES = [
@@ -31,6 +36,7 @@ export type QaqcExceptionKind =
   | "run_gap"
   | "run_overlap"
   | "recovery_over_100"
+  | "run_past_final_depth"
   | "qc_rate_short"
   | "custody_stalled"
   | "device_stale"
@@ -65,6 +71,7 @@ export const QAQC_EXCEPTION_KIND_LABELS: Record<QaqcExceptionKind, string> = {
   run_gap: "Gap between runs",
   run_overlap: "Runs overlap",
   recovery_over_100: "Recovery over 100%",
+  run_past_final_depth: "Run past the final depth",
   qc_rate_short: "QC rate below target",
   custody_stalled: "Sample stalled before dispatch",
   device_stale: "Device quiet for a while",
@@ -95,9 +102,14 @@ export type HoleRunsInput = {
   drillholeId: string;
   holeId: string;
   runs: readonly { fromM: number; toM: number; recoveredM: number }[];
+  /** The hole's recorded final depth, once drilling has finished. */
+  actualFinalDepthM?: number | null;
 };
 
-/** E12-2: run gaps, overlaps and recovery over 100%, for the core-and-logging stage. */
+/**
+ * E12-2: run gaps, overlaps, recovery over 100% and runs past the hole's
+ * final depth, for the core-and-logging stage.
+ */
 export function coreLoggingExceptions(
   holes: readonly HoleRunsInput[],
 ): QaqcException[] {
@@ -135,6 +147,17 @@ export function coreLoggingExceptions(
           kind: "recovery_over_100",
           summary: `Recovery ${pct}% at ${formatRange(run)}`,
           evidence: `${run.recoveredM} m recovered from a ${drilledM.toFixed(2)} m run.`,
+        });
+      }
+      const finalDepth = hole.actualFinalDepthM ?? null;
+      if (runPastFinalDepthWarning(run, finalDepth)) {
+        exceptions.push({
+          key: `run_past_final_depth:${hole.drillholeId}:${run.fromM}-${run.toM}:${finalDepth}`,
+          drillholeId: hole.drillholeId,
+          holeId: hole.holeId,
+          kind: "run_past_final_depth",
+          summary: `Run ${formatRange(run)} ends past the final depth`,
+          evidence: `The hole's recorded final depth is ${finalDepth} m. Either the run's depth block or the final depth is wrong.`,
         });
       }
     }

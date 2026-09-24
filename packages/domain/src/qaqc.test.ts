@@ -237,3 +237,23 @@ describe("isQaqcDecision", () => {
     expect(isQaqcDecision(undefined)).toBe(false);
   });
 });
+
+describe("coreLoggingExceptions: run past the final depth", () => {
+  it("flags a run ending deeper than the hole's final depth", () => {
+    const exceptions = coreLoggingExceptions([
+      {
+        drillholeId: "h9",
+        holeId: "DDH-09",
+        actualFinalDepthM: 5,
+        runs: [
+          { fromM: 0, toM: 3, recoveredM: 2.9 },
+          { fromM: 3, toM: 6, recoveredM: 2.9 },
+        ],
+      },
+    ]);
+    expect(exceptions.map((e) => [e.kind, e.key])).toEqual([
+      ["run_past_final_depth", "run_past_final_depth:h9:3-6:5"],
+    ]);
+    expect(exceptionKindFromKey("run_past_final_depth:h9:3-6:5")).toBe("run_past_final_depth");
+  });
+});

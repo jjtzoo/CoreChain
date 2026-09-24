@@ -233,10 +233,14 @@ export function nextRunDefaults(
  * a *warning*, not an error (E3-2: "flagged, not silently accepted"): it is
  * physically possible, so the geologist confirms it rather than being blocked.
  * RQD pieces longer than the recovered core are an error — they cannot exist.
+ * A run ending past the hole's recorded final depth is a warning: either the
+ * run's depth block or the final depth is wrong, and only the geologist knows
+ * which.
  */
 export function validateRunInput(
   input: CoreRunInput,
   existing: readonly Pick<FieldCoreRun, "fromM" | "toM">[],
+  hole: { actualFinalDepthM: number | null } = { actualFinalDepthM: null },
 ): CoreValidationResult {
   const errors: FieldValidationError[] = [];
   const warnings: string[] = [];
@@ -283,6 +287,9 @@ export function validateRunInput(
       );
     }
 
+    const warning = runPastFinalDepthWarning(input, hole.actualFinalDepthM);
+    if (warning) warnings.push(warning);
+
     const { gaps, overlaps } = analyseContinuity([
       ...existing,
       { fromM: input.fromM, toM: input.toM },
@@ -302,6 +309,19 @@ export function validateRunInput(
   return errors.length > 0
     ? { valid: false, errors, warnings }
     : { valid: true, warnings };
+}
+
+/**
+ * The warning, if any, for a run that ends deeper than the hole's recorded
+ * final depth. No final depth recorded yet: no warning.
+ */
+export function runPastFinalDepthWarning(
+  run: Pick<DepthRange, "toM">,
+  actualFinalDepthM: number | null,
+): string | null {
+  if (actualFinalDepthM == null || !isFiniteNumber(actualFinalDepthM)) return null;
+  if (run.toM <= actualFinalDepthM + DEPTH_TOLERANCE_M) return null;
+  return `Ends at ${run.toM} m, past the hole's final depth of ${actualFinalDepthM} m. Check the depth block, or correct the final depth.`;
 }
 
 /**
