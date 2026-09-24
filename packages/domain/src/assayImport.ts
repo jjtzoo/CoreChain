@@ -23,6 +23,18 @@ export type ParsedCsv = {
  * Blank trailing lines are dropped. The first row is always the header.
  */
 export function parseCsv(text: string): ParsedCsv {
+  const nonEmpty = parseCsvRows(text).filter((r) => r.some((cell) => cell.trim() !== ""));
+  const [headers = [], ...dataRows] = nonEmpty;
+  return { headers, rows: dataRows };
+}
+
+/**
+ * Every row of a CSV file, blank ones included, so that row `i` is line
+ * `i + 1` of the spreadsheet the person opened (quoted newlines aside). A
+ * leading byte-order mark, which Excel adds to "CSV UTF-8" files, is dropped.
+ */
+export function parseCsvRows(input: string): string[][] {
+  const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -81,10 +93,7 @@ export function parseCsv(text: string): ParsedCsv {
     i += 1;
   }
   if (field.length > 0 || row.length > 0) endRow();
-
-  const nonEmpty = rows.filter((r) => r.some((cell) => cell.trim() !== ""));
-  const [headers = [], ...dataRows] = nonEmpty;
-  return { headers, rows: dataRows };
+  return rows;
 }
 
 /**

@@ -259,6 +259,10 @@ export default async function TeamPage() {
             {memberRows.length} people ·{" "}
             <Link href="/team/activity" className="admin-link">
               Activity
+            </Link>{" "}
+            ·{" "}
+            <Link href="/team/codes" className="admin-link">
+              Code library
             </Link>
           </p>
         </div>
