@@ -574,6 +574,30 @@ QA/QC starts in the field and runs through sampling, custody, the laboratory and
 
 To answer with a geologist first: which number is reported at the end of a shift, and does the resident manager already ask for a daily or weekly summary?
 
+### Proposed 2026-09-24, not scheduled
+
+Collected from the owner's own testing and from the first geologist tester's suggestions. Nothing here is built or scheduled; each needs the owner's go-ahead (scope rule). Sizes are rough estimates in working sessions, not story points, and have not been checked against real velocity.
+
+**E15 — Collar map (phone), suggested by the first geologist tester.** He proposed MapLibre. Compared on 2026-09-24:
+
+- **Engine: MapLibre React Native** (`@maplibre/maplibre-react-native`, Expo config plugin, works in the existing native build). Free, no API key, built-in offline support. Not `react-native-maps` (Google Maps: needs a billing-linked key, no reliable offline) and not Mapbox (account and paid token).
+- **Map data, the real decision.** OpenStreetMap's own tile servers and OpenFreeMap forbid bulk or offline downloading. Stadia allows offline caching only with an active paid subscription and at most 100 MB per device, which conflicts with the owner's no-ongoing-cost constraint. Chosen direction: cut one PMTiles file per project from the free Protomaps OpenStreetMap build (`pmtiles extract --bbox=...`), host it, and have the phone download it once. MapLibre Native reads `pmtiles://file://...`, but that source does not use MapLibre's own offline-pack system, so the app must download and manage the file itself.
+- **What exists today:** each hole's single collar latitude and longitude (`collar_latitude`, `collar_longitude`, plus source, accuracy and capture time) already sync to the phone, and `expo-location` and `expo-file-system` are already dependencies. There are **no planned collar coordinates**: only planned azimuth, inclination and depth (`schema.prisma`, `Drillhole`).
+- **E15-1 — Collars and a "you are here" dot on a plain background (about 1 to 2 sessions).** A project map screen, a shortcut to it, and a small map on the hole screen. No database or server change. Needs a new APK (native code cannot ship as an over-the-air patch). Risks: MapLibre's compatibility with Expo 57 / React Native 0.86 is unchecked; the APK grows.
+- **E15-2 — Offline background map per project (about 3 to 5 sessions).** An extract script, somewhere to host the file, a new project field for its location (migration run by the owner), a Wi-Fi-only download with progress on the phone, the map style, and the required "© OpenStreetMap contributors" credit. Hidden cost: a vector style also needs its fonts and icon sprites available offline, either bundled in the APK or downloaded with the map. Caveat to tell testers: OpenStreetMap coverage around remote Philippine sites can be thin, so the map may show little beyond the collars.
+- **E15-3 — Planned collar positions (about 2 sessions), only if wanted.** New planned latitude and longitude on the drillhole: migration, the phone and web forms, and the upload rules in `apps/web/lib/sync/tables.ts`.
+- **E15-4 — Satellite or contours.** Not sized. Most imagery providers restrict offline use; licensing research first.
+- **To ask the tester before building:** is the map for checking collars and seeing holes relative to each other (E15-1 may be enough), or for finding planned drill pads (needs E15-3)?
+
+**E16 — Import a code scheme from a spreadsheet (web, about 1 to 2 sessions).** A project manager uploads the company's existing lithology, alteration, mineralisation, weathering and structure codes from CSV or Excel, previews them, and adds them to the project's code library. Web only, since geologists only use the phone; `code_library` already syncs per project (`sync-streams.yaml`), so no new APK is needed. Today codes can only be added one at a time on the phone's Code library screen. Company schemes often run to hundreds of codes, which nobody will type on a phone.
+
+**Smaller items, not sized:**
+
+- **Delete with a confirmation step**, on the web admin and possibly the phone. Must respect the existing rules: sample numbers are never reused, and custody events are never edited or deleted (a mistake is a correction step).
+- **Photos from the camera roll**, as well as the camera.
+- **Mark guide entries as practice or official.** A geologist following the first-run guide may be entering made-up data; let them say so, so practice holes stay out of real exports and the team views.
+- **Guide copy: say planned depth is required.** The new-drillhole step never mentions it, but "Create drillhole" stays disabled until it is filled.
+
 ### Later backlog (not in the MVP)
 
 | Epic                                   | Notes                                                                                         |
@@ -585,7 +609,7 @@ To answer with a geologist first: which number is reported at the end of a shift
 | QR/barcode scanning and label printing | After validating what hardware the testers use                                                |
 | iOS build                              | Once Android is proven                                                                        |
 | Web trace view of synced data          | A read-only "trace this sample" view for office staff                                         |
-| Maps and planned-vs-actual traces      | Drillhole plan map, collar-to-target view                                                     |
+| Maps and planned-vs-actual traces      | Drillhole plan map, collar-to-target view; first steps proposed as E15 above                  |
 | Work plans and deadlines               | Once managers are users                                                                       |
 
 ### Backlog totals
@@ -930,6 +954,17 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
 - **Verified on the real test phone, a full clean run:** uninstalled and freshly installed the signed release APK, signed in as a Test Team account (`teamteam2@corechain.test`) — orientation appeared with the name pre-filled from the account, editing it to "Test2 Verified" and continuing saved it (confirmed afterwards on the Account screen), the tour cards read correctly, "Start working" reached Home, and relaunching the app went straight to Home with no repeat. Opened a real dispatched sample and confirmed its custody timeline now reads "Logged by lab1" for the lab's receipt step, resolving a *teammate's* name, not just the signed-in account's own. Typecheck, lint and the full test suite (228 web + 418 domain) pass. Committed and pushed to `main` in two commits; the APK built from the second (fixed) commit is the one handed to the owner for today's tester rollout.
 - **"No photos yet" verified live too, and one more real bug found in the process: photo backup silently never worked for any team account.** Taking a real test photo on `teamteam2@corechain.test` (a Test Team account, not a personal workspace) left it stuck on "waiting to back up" forever — no error shown, `PUT /api/photos/[photoId]/file` answered 404 "photo-not-found" every retry, ignoring Wi-Fi and repeated manual "Back up now" taps. Root cause: the route looked the photo's record up by the caller's raw account id, but a photo's `organization_id` is always the uploading device's *resolved* organization id (a team's shared workspace if the admin put the account on one, per `lib/devices.ts` — otherwise the account's own id). Those two ids only match for a solo, personal-workspace account, so any photo from a teamed account — which is now most of today's test accounts — could never be found. Fixed to resolve the same effective organization id everywhere in the route, confirmed by diagnostic logging (added, read, then removed before committing) showing the exact 404 before the fix and a clean upload after. The Account screen's photo-backup section was also tidied: the "Back up photos on" chips now line up with the status text above them (they read as flush-left and jagged before), and "Back up now" stays full width like every other button on the screen.
 - **Verified end to end on the real test phone:** after the server fix deployed, the same stuck test photo backed up automatically with no further tap — Account read "1 photo backed up · Every photo is safe on the server." Typecheck, lint and the full test suite (228 web + 418 domain) pass throughout. Committed and pushed to `main` in three more commits. No new APK was needed for the org-id fix (it's server-only); the tester APK already handed to the owner is still the current, fully verified build.
+
+### S6: the guide teaches the route instead of driving it, and test data cleared (2026-09-23 evening to 2026-09-24)
+
+- **A new hole's first sample now defaults to start at 0 m** (`42b0e5a`).
+- **First-run guide: the geologist was stranded after saving an interval and after saving a sample**, with nothing saying where the next step was. A first fix made the guide navigate there automatically (`ab51012`); the owner rejected it because jumping for the geologist does not teach them how to use the app on their own. **Replaced by a breadcrumb trail** (`e7d463e`): when the next step's button is on the current screen it gets an accent border and every other control is greyed out and disabled; when it is on another screen, an info banner repeats the step and offers "Back", with the rest of the screen greyed out. Wired into the hole screen, the samples list (which had no guide wiring before) and the project home. `ActionTile`, `Card` and `Chip` gained `disabled` (and `ActionTile` a `highlighted`) prop for this. The export step's coachmark now closes with "Got it" so the geologist can look over the CSVs, and a card on the export screen holds the "Finish guide" button.
+- **The interval screen's quick-length chips skipped 4 m** (`[1, 2, 3, 5]`); now `[1, 2, 3, 4]` (`73a40dd`).
+- **Back on Home no longer exits the app at once** (`73a40dd`): the first press shows "Press back again to exit" and a second press within 2 seconds exits. Home only; other screens still go back normally.
+- **Verified on the real test phone:** the full guide route with the new breadcrumb trail, the 4 m chip, and the two-press exit. A release APK built from `73a40dd` was handed to the owner.
+- **Test data cleared, with the owner's confirmation:** the test phone's app data was wiped, and the two practice projects in `jjtgeo@corechain.test`, with all their child rows, were deleted from the live database in one transaction. Wiping the app data also signs the phone out, so the owner signed back in.
+- **Demo data for screenshots:** the synthetic Cordillera porphyry sample (`npm run sample:cordillera`) was loaded into `jjtgeo@corechain.test`; it must be labelled synthetic wherever it is shown. That account also still holds a "Practice project" from the owner's walkthrough recording and an empty "Copper Ridge Project" created by mistake; deleting the empty one was blocked by the session's safety check and is left for the owner to decide.
+- Items proposed during this work and during the first tester's feedback are listed, unscheduled, under "Proposed 2026-09-24, not scheduled" above.
 
 ---
 
