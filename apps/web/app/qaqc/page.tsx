@@ -2,6 +2,7 @@ import {
   coreLoggingExceptions,
   deviceStaleExceptions,
   exceptionKindFromKey,
+  laboratoryAssayExceptions,
   openExceptions,
   QAQC_EXCEPTION_KIND_LABELS,
   QAQC_STAGE_LABELS,
@@ -10,6 +11,8 @@ import {
   type QaqcException,
   type QaqcStage,
 } from "@corechain/domain";
+import type { Route } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireQaqc } from "@/lib/session";
 import {
@@ -71,7 +74,15 @@ export default async function QaqcPage() {
         runs: { where: { deletedAt: null }, select: { fromM: true, toM: true, recoveredM: true } },
         samples: {
           where: { deletedAt: null },
-          select: { id: true, sampleNumber: true, sampleType: true, status: true, createdAt: true },
+          select: {
+            id: true,
+            sampleNumber: true,
+            sampleType: true,
+            status: true,
+            standardRef: true,
+            parentSampleId: true,
+            createdAt: true,
+          },
         },
       },
     }),
@@ -85,6 +96,26 @@ export default async function QaqcPage() {
       orderBy: { decidedAt: "desc" },
     }),
   ]);
+
+  // E12-4: the laboratory stage also needs the results, the dispatches they
+  // came back in, and the team's standards-and-blanks list. Only loaded for
+  // that stage.
+  const [assayResults, dispatches, references] =
+    stage === "laboratory_assays"
+      ? await Promise.all([
+          prisma.assayResult.findMany({ where: { organizationId } }),
+          prisma.dispatch.findMany({
+            where: { organizationId, deletedAt: null },
+            select: {
+              id: true,
+              dispatchNumber: true,
+              resultsReturnedAt: true,
+              samples: { where: { deletedAt: null }, select: { sampleId: true } },
+            },
+          }),
+          prisma.qcReferenceValue.findMany({ where: { organizationId } }),
+        ])
+      : [[], [], []];
 
   const nameById = new Map(members.map((m) => [m.id, m.name]));
   const now = new Date();
@@ -118,7 +149,35 @@ export default async function QaqcPage() {
             })),
             { now, staleAfterDays: SAMPLE_STALE_AFTER_DAYS },
           )
-        : [];
+        : laboratoryAssayExceptions({
+            samples: holes.flatMap((h) =>
+              h.samples.map((s) => ({
+                id: s.id,
+                sampleNumber: s.sampleNumber,
+                type: s.sampleType,
+                standardRef: s.standardRef,
+                parentSampleId: s.parentSampleId,
+                drillholeId: h.id,
+                holeId: h.holeId,
+              })),
+            ),
+            results: assayResults.map((r) => ({
+              sampleId: r.sampleId,
+              dispatchId: r.dispatchId,
+              analyte: r.analyte,
+              value: r.value,
+              unit: r.unit,
+              belowDetection: r.belowDetection,
+              enteredAt: r.createdAt.toISOString(),
+            })),
+            batches: dispatches.map((d) => ({
+              dispatchId: d.id,
+              dispatchNumber: d.dispatchNumber,
+              resultsReturned: d.resultsReturnedAt !== null,
+              sampleIds: d.samples.map((ds) => ds.sampleId),
+            })),
+            references,
+          });
 
   const rawDeviceExceptions = deviceStaleExceptions(
     devices.map((d) => ({
@@ -244,7 +303,10 @@ export default async function QaqcPage() {
           <h1>QA/QC</h1>
           <p>
             {QAQC_STAGE_LABELS[stage]} · {holeRows.length} holes with
-            evidence to review
+            evidence to review ·{" "}
+            <Link href={"/qaqc/standards" as Route} className="admin-link">
+              Standards and blanks
+            </Link>
           </p>
         </div>
       </div>
