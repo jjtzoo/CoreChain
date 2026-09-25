@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Lithology dictionary mockup</title>
+<!--
+  MOCKUP, not the app. A lithology dictionary per project, and rock units per
+  hole (touching intervals with the same lithology merged). Every number is
+  computed from the synthetic Cordillera logs
+  (apps/web/data/demo/synthetic-cordillera-porphyry), by scratch script, using
+  the phone app's dark theme and hole-log colours.
+-->
+<style>
+:root{--canvas:#0b100f;--bg:#0F1615;--card:#182321;--sel:#243431;--bd:#2A3A37;--t1:#EEEAE1;--t2:#A8B0A9;--t3:#7E8983;--copper:#c98a5e;
+--sans:"Segoe UI","Helvetica Neue",Arial,sans-serif;--mono:"Cascadia Mono",Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--t1);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{width:min(1500px,100% - 32px);margin:0 auto}.top{padding:40px 0 18px;border-bottom:1px solid var(--bd)}
+.tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--copper);font-weight:700}
+h1{font-size:34px;line-height:1.15;margin:10px 0 10px;max-width:30ch}.lede{max-width:80ch;color:var(--t2);font-size:16px;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:28px;padding:28px 0 12px;align-items:flex-start}figure{margin:0;flex:none;width:340px}
+figcaption{margin-top:12px;font-size:14px;color:var(--t2)}figcaption b{display:block;color:var(--t1);font-size:15px}
+.phone{width:340px;height:760px;background:var(--bg);border-radius:30px;border:8px solid #1f2a28;overflow:hidden}
+.scr{height:100%;overflow:hidden;padding:0 14px 14px}.sb{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:10px 4px 4px}
+.bar2{display:flex;gap:14px;align-items:center;padding:6px 0 10px;font-size:17px;font-weight:700}.back{font-size:20px}
+.title{font-size:20px;font-weight:700;padding-top:4px}.sub{font-size:12px;color:var(--t2)}.mono{font-family:var(--mono)}
+.cap{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--t2);font-weight:600}
+.pill{display:inline-block;font-size:10.5px;font-weight:600;border-radius:999px;padding:1px 8px;vertical-align:1px}.pill.n{background:var(--sel);color:var(--t2)}
+.sw{display:inline-block;border-radius:6px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.stack{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:12px 0 0;gap:2px}
+.lrow{display:flex;gap:10px;align-items:center;min-height:56px;border-top:1px solid var(--bd);font-size:14px}
+.lmain{flex:1;min-width:0}.lnum{text-align:right;font-size:12px;color:var(--t2)}.lnum b{display:block;color:var(--t1);font-size:14px}
+.ehead{display:flex;gap:12px;align-items:center;margin-top:4px}.desc{font-size:13.5px;color:var(--t1);margin:10px 0 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.kpi{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:8px 10px}
+.kpi b{display:block;font-size:17px}.kpi span{font-size:11px;color:var(--t2)}
+.abar{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.abar div{height:8px;background:var(--sel);border-radius:999px;overflow:hidden}
+.abar i{display:block;height:100%}.abar em{font-style:normal;color:var(--t2);text-align:right}
+.occ{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;font-size:11px;margin:5px 0}.occbar{position:relative;height:12px;border-radius:4px;overflow:hidden;background:var(--sel)}
+.occbar i{position:absolute;top:0;bottom:0}.axis{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-left:70px}
+.seg{display:flex;border:1px solid var(--bd);border-radius:14px;overflow:hidden;background:var(--card)}.seg span{flex:1;text-align:center;padding:12px 6px;font-size:12.5px;font-weight:600;color:var(--t2)}
+.seg span.on{background:var(--t1);color:var(--bg)}.ustrip{display:flex;height:16px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:6px}
+.urow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--bd);font-size:13px}.urow .sw{margin-top:3px}.umain{flex:1}
+.notes{padding:12px 0 56px;max-width:90ch;color:var(--t2);font-size:15px}.notes h2{font-size:19px;margin:18px 0 8px;color:var(--t1)}.notes li{margin:5px 0}
+</style></head><body><div class="wrap">
+<div class="top"><p class="tag">Mockup · lithology dictionary and rock units</p>
+<h1>Every rock type in the project, and each hole as rock units</h1>
+<p class="lede">A dictionary of the project's lithologies, built from what was logged: how much of each, in which holes, at what depths, and its usual alteration and mineralisation. On each hole, touching intervals of the same rock merge into units, so 13 logged intervals read as 7 units. Data: the synthetic Cordillera porphyry project; every number here is calculated from its logs.</p></div>
+<div class="row">
+<figure><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>Up to date</span></div><div class="bar2"><span class="back">&#8592;</span><span class="bt">Lithology</span></div>
+<div class="title">Rock types in this project</div>
+<div class="sub">Cordillera porphyry sample (synthetic) · 6 holes · 1,417.9 m logged</div>
+<div class="stack"><i style="flex:636.8;background:#6E8B74"></i><i style="flex:482.80000000000007;background:#9B6FA8"></i><i style="flex:207.8;background:#A89B8C"></i><i style="flex:40.5;background:#4B5A5A"></i><i style="flex:31.400000000000002;background:#C9BC8C"></i><i style="flex:14.100000000000001;background:#8B6B4A"></i><i style="flex:4.5;background:#B5563F"></i></div>
+<div class="cap" style="margin:4px 0 6px">Share of logged core</div>
+<div class="lrow"><i class="sw" style="width:26px;height:26px;background:#6E8B74"></i><div class="lmain"><div><b class="mono">AND</b> Andesite <span class="pill n">Volcanic</span></div>
+<div class="sub">6 of 6 holes · 12 units · 1.6 to 302.5 m</div></div>
+<div class="lnum"><b>636.8 m</b><span>45%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#9B6FA8"></i><div class="lmain"><div><b class="mono">PORP</b> Porphyry <span class="pill n">Intrusive</span></div>
+<div class="sub">4 of 6 holes · 6 units · 48.0 to 210.0 m</div></div>
+<div class="lnum"><b>482.8 m</b><span>34%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#A89B8C"></i><div class="lmain"><div><b class="mono">DIO</b> Diorite <span class="pill n">Intrusive</span></div>
+<div class="sub">5 of 6 holes · 5 units · 160.2 to 276.0 m</div></div>
+<div class="lnum"><b>207.8 m</b><span>15%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#4B5A5A"></i><div class="lmain"><div><b class="mono">BAS</b> Basalt <span class="pill n">Volcanic</span></div>
+<div class="sub">1 of 6 holes · 1 unit · 71.5 to 112.0 m</div></div>
+<div class="lnum"><b>40.5 m</b><span>3%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#C9BC8C"></i><div class="lmain"><div><b class="mono">TUF</b> Tuff <span class="pill n">Volcanic</span></div>
+<div class="sub">2 of 6 holes · 2 units · 2.0 to 74.0 m</div></div>
+<div class="lnum"><b>31.4 m</b><span>2%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#8B6B4A"></i><div class="lmain"><div><b class="mono">OVB</b> Overburden / soil <span class="pill n">Cover</span></div>
+<div class="sub">6 of 6 holes · 6 units · 0.0 to 3.0 m</div></div>
+<div class="lnum"><b>14.1 m</b><span>1%</span></div></div><div class="lrow"><i class="sw" style="width:26px;height:26px;background:#B5563F"></i><div class="lmain"><div><b class="mono">BX</b> Breccia <span class="pill n">Breccia</span></div>
+<div class="sub">2 of 6 holes · 2 units · 118.0 to 153.1 m</div></div>
+<div class="lnum"><b>4.5 m</b><span><1%</span></div></div>
+</div></div><figcaption><b>1. The project's lithology dictionary</b>Opened from the project screen. Sorted by metres logged, with the share of core as one bar.</figcaption></figure>
+<figure><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>Up to date</span></div><div class="bar2"><span class="back">&#8592;</span><span class="bt">Lithology</span></div>
+<div class="ehead"><i class="sw" style="width:44px;height:44px;background:#9B6FA8"></i><div><div class="title" style="padding:0"><span class="mono">PORP</span> Porphyry</div><span class="pill n">Intrusive</span></div></div>
+<p class="desc">Intrusive rock with large crystals (phenocrysts) in a fine-grained groundmass. In a porphyry system, often the mineralising stock.</p>
+<div class="cap" style="margin-top:4px">Starter description · edit it in the code library</div>
+<div class="grid">
+<div class="kpi"><b>482.8 m</b><span>34% of logged core</span></div>
+<div class="kpi"><b>4 of 6</b><span>holes</span></div>
+<div class="kpi"><b>6</b><span>units</span></div>
+<div class="kpi"><b>116.0 m</b><span>thickest, CDL-002 60.5 to 176.5 m</span></div>
+</div>
+<div class="cap" style="margin:12px 0 6px">Typical alteration</div>
+<div class="abar"><span>Potassic</span><div><i style="width:71.8516984258492%;background:#D9527A"></i></div><em>72%</em></div><div class="abar"><span>Phyllic</span><div><i style="width:28.003314001656992%;background:#E6C84C"></i></div><em>28%</em></div><div class="abar"><span>Chlorite</span><div><i style="width:0.14498757249378386%;background:#2F7D5B"></i></div><em><1%</em></div>
+<div class="cap" style="margin:12px 0 4px">Mineralisation where logged</div>
+<div class="sub"><b class="mono">CPY</b> Chalcopyrite 1.6% over 337.2 m · <b class="mono">PY</b> Pyrite 3.5% over 103.7 m · <b class="mono">MAG</b> Magnetite 3.0% over 39.0 m</div>
+<div class="cap" style="margin:14px 0 6px">Where it occurs</div>
+<div class="occ"><b class="mono">CDL-001</b><div class="occbar" style="width:100%"><i style="left:0%;width:0.8264462809917356%;background:var(--sel)"></i><i style="left:0.8264462809917356%;width:15.041322314049587%;background:var(--sel)"></i><i style="left:15.867768595041323%;width:23.140495867768596%;background:#9B6FA8"></i><i style="left:39.00826446280992%;width:1.1239669421487621%;background:var(--sel)"></i><i style="left:40.13223140495868%;width:29.289256198347108%;background:#9B6FA8"></i><i style="left:69.42148760330579%;width:21.818181818181817%;background:var(--sel)"></i><i style="left:91.2396694214876%;width:8.760330578512397%;background:var(--sel)"></i></div></div><div class="occ"><b class="mono">CDL-002</b><div class="occbar" style="width:82.97520661157026%"><i style="left:0%;width:1.1952191235059761%;background:var(--sel)"></i><i style="left:1.1952191235059761%;width:22.90836653386454%;background:var(--sel)"></i><i style="left:24.10358565737052%;width:46.21513944223107%;background:#9B6FA8"></i><i style="left:70.3187250996016%;width:14.940239043824702%;background:var(--sel)"></i><i style="left:85.2589641434263%;width:14.741035856573706%;background:var(--sel)"></i></div></div><div class="occ"><b class="mono">CDL-003</b><div class="occbar" style="width:91.04132231404958%"><i style="left:0%;width:0.7262164124909223%;background:var(--sel)"></i><i style="left:0.7262164124909223%;width:5.737109658678287%;background:var(--sel)"></i><i style="left:6.4633260711692095%;width:17.501815541031227%;background:var(--sel)"></i><i style="left:23.965141612200437%;width:31.227305737109663%;background:#9B6FA8"></i><i style="left:55.1924473493101%;width:0.39941902687000524%;background:var(--sel)"></i><i style="left:55.5918663761801%;width:16.55773420479303%;background:#9B6FA8"></i><i style="left:72.14960058097313%;width:12.454611474219321%;background:var(--sel)"></i><i style="left:84.60421205519245%;width:15.395787944807546%;background:var(--sel)"></i></div></div><div class="occ"><b class="mono">CDL-004</b><div class="occbar" style="width:76.29752066115702%"><i style="left:0%;width:1.21317157712305%;background:var(--sel)"></i><i style="left:1.21317157712305%;width:35.008665511265164%;background:var(--sel)"></i><i style="left:36.221837088388206%;width:33.188908145580584%;background:#9B6FA8"></i><i style="left:69.4107452339688%;width:15.511265164644719%;background:var(--sel)"></i><i style="left:84.92201039861351%;width:15.077989601386484%;background:var(--sel)"></i></div></div><div class="occ"><b class="mono">CDL-005</b><div class="occbar" style="width:65.52066115702479%"><i style="left:0%;width:0.8072653884964682%;background:var(--sel)"></i><i style="left:0.8072653884964682%;width:28.65792129162462%;background:var(--sel)"></i><i style="left:29.465186680121093%;width:7.870837537840567%;background:var(--sel)"></i><i style="left:37.33602421796166%;width:45.408678102926345%;background:var(--sel)"></i><i style="left:82.744702320888%;width:17.255297679112005%;background:var(--sel)"></i></div></div><div class="occ"><b class="mono">CDL-006</b><div class="occbar" style="width:52.892561983471076%"><i style="left:0%;width:1.3750000000000002%;background:var(--sel)"></i><i style="left:1.3750000000000002%;width:43.3125%;background:var(--sel)"></i><i style="left:44.6875%;width:25.3125%;background:var(--sel)"></i><i style="left:70%;width:30%;background:var(--sel)"></i></div></div>
+<div class="axis"><span>0 m</span><span>302.5 m</span></div>
+</div></div><figcaption><b>2. One rock type</b>What it is, how much there is, its usual alteration and mineralisation, and where it sits in every hole.</figcaption></figure>
+<figure><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>Up to date</span></div><div class="bar2"><span class="back">&#8592;</span><span class="bt">Drillhole</span></div>
+<div class="title">CDL-001 rock units</div>
+<div class="sub">7 units from 13 logged intervals · 302.5 m</div>
+<div class="seg" style="margin:10px 0"><span class="on">Lithology</span><span class="">Lithology + alteration</span></div>
+<div class="ustrip"><i style="flex:2.5;background:#8B6B4A"></i><i style="flex:45.5;background:#6E8B74"></i><i style="flex:70;background:#9B6FA8"></i><i style="flex:3.4000000000000057;background:#B5563F"></i><i style="flex:88.6;background:#9B6FA8"></i><i style="flex:66;background:#A89B8C"></i><i style="flex:26.5;background:#6E8B74"></i></div>
+<div class="urow"><i class="sw" style="width:18px;height:18px;background:#8B6B4A"></i><div class="umain"><div><b class="mono">0.0 to 2.5 m</b> <span class="sub">2.5 m</span></div>
+<div>Overburden / soil</div>
+<div class="sub"></div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#6E8B74"></i><div class="umain"><div><b class="mono">2.5 to 48.0 m</b> <span class="sub">45.5 m</span></div>
+<div>Andesite <span class="pill n">3 intervals</span></div>
+<div class="sub">Argillic 64% · phyllic 36% · moderate alteration · PY 2.1%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">48.0 to 118.0 m</b> <span class="sub">70.0 m</span></div>
+<div>Porphyry <span class="pill n">2 intervals</span></div>
+<div class="sub">Potassic 61% · phyllic 39% · moderate alteration · CPY 1.5%, PY 4.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#B5563F"></i><div class="umain"><div><b class="mono">118.0 to 121.4 m</b> <span class="sub">3.4 m</span></div>
+<div>Breccia</div>
+<div class="sub">Potassic · strong alteration · BN 3.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">121.4 to 210.0 m</b> <span class="sub">88.6 m</span></div>
+<div>Porphyry <span class="pill n">3 intervals</span></div>
+<div class="sub">Potassic 99% · chlorite 1% · strong alteration · CPY 2.5%, MAG 3.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#A89B8C"></i><div class="umain"><div><b class="mono">210.0 to 276.0 m</b> <span class="sub">66.0 m</span></div>
+<div>Diorite <span class="pill n">2 intervals</span></div>
+<div class="sub">Potassic 58% · propylitic 42% · weak alteration · CPY 1.0%, PY 2.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#6E8B74"></i><div class="umain"><div><b class="mono">276.0 to 302.5 m</b> <span class="sub">26.5 m</span></div>
+<div>Andesite</div>
+<div class="sub">Epidote · moderate alteration · PY 1.0%</div></div></div>
+</div></div><figcaption><b>3. A hole as rock units</b>Touching intervals of the same lithology merge. The alteration and mineralisation across each unit are summarised, weighted by length.</figcaption></figure>
+<figure><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>Up to date</span></div><div class="bar2"><span class="back">&#8592;</span><span class="bt">Drillhole</span></div>
+<div class="title">CDL-001 rock units</div>
+<div class="sub">12 units from 13 logged intervals · 302.5 m</div>
+<div class="seg" style="margin:10px 0"><span class="">Lithology</span><span class="on">Lithology + alteration</span></div>
+<div class="ustrip"><i style="flex:2.5;background:#8B6B4A"></i><i style="flex:29;background:#6E8B74"></i><i style="flex:16.5;background:#6E8B74"></i><i style="flex:27.200000000000003;background:#9B6FA8"></i><i style="flex:42.8;background:#9B6FA8"></i><i style="flex:3.4000000000000057;background:#B5563F"></i><i style="flex:48.900000000000006;background:#9B6FA8"></i><i style="flex:0.6999999999999886;background:#9B6FA8"></i><i style="flex:39;background:#9B6FA8"></i><i style="flex:38.599999999999994;background:#A89B8C"></i><i style="flex:27.400000000000006;background:#A89B8C"></i><i style="flex:26.5;background:#6E8B74"></i></div>
+<div class="urow"><i class="sw" style="width:18px;height:18px;background:#8B6B4A"></i><div class="umain"><div><b class="mono">0.0 to 2.5 m</b> <span class="sub">2.5 m</span></div>
+<div>Overburden / soil</div>
+<div class="sub"></div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#6E8B74"></i><div class="umain"><div><b class="mono">2.5 to 31.5 m</b> <span class="sub">29.0 m</span></div>
+<div>Andesite, argillic <span class="pill n">2 intervals</span></div>
+<div class="sub">moderate alteration · PY 1.6%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#6E8B74"></i><div class="umain"><div><b class="mono">31.5 to 48.0 m</b> <span class="sub">16.5 m</span></div>
+<div>Andesite, phyllic</div>
+<div class="sub">moderate alteration · PY 3.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">48.0 to 75.2 m</b> <span class="sub">27.2 m</span></div>
+<div>Porphyry, phyllic</div>
+<div class="sub">strong alteration · PY 4.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">75.2 to 118.0 m</b> <span class="sub">42.8 m</span></div>
+<div>Porphyry, potassic</div>
+<div class="sub">moderate alteration · CPY 1.5%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#B5563F"></i><div class="umain"><div><b class="mono">118.0 to 121.4 m</b> <span class="sub">3.4 m</span></div>
+<div>Breccia, potassic</div>
+<div class="sub">strong alteration · BN 3.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">121.4 to 170.3 m</b> <span class="sub">48.9 m</span></div>
+<div>Porphyry, potassic</div>
+<div class="sub">strong alteration · CPY 2.5%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">170.3 to 171.0 m</b> <span class="sub">0.7 m</span></div>
+<div>Porphyry, chlorite</div>
+<div class="sub">strong alteration</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#9B6FA8"></i><div class="umain"><div><b class="mono">171.0 to 210.0 m</b> <span class="sub">39.0 m</span></div>
+<div>Porphyry, potassic</div>
+<div class="sub">moderate alteration · MAG 3.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#A89B8C"></i><div class="umain"><div><b class="mono">210.0 to 248.6 m</b> <span class="sub">38.6 m</span></div>
+<div>Diorite, potassic</div>
+<div class="sub">weak alteration · CPY 1.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#A89B8C"></i><div class="umain"><div><b class="mono">248.6 to 276.0 m</b> <span class="sub">27.4 m</span></div>
+<div>Diorite, propylitic</div>
+<div class="sub">moderate alteration · PY 2.0%</div></div></div><div class="urow"><i class="sw" style="width:18px;height:18px;background:#6E8B74"></i><div class="umain"><div><b class="mono">276.0 to 302.5 m</b> <span class="sub">26.5 m</span></div>
+<div>Andesite, epidote</div>
+<div class="sub">moderate alteration · PY 1.0%</div></div></div>
+</div></div><figcaption><b>4. Units by lithology and alteration</b>Split further where the alteration changes: the domains a geologist reports on.</figcaption></figure>
+</div>
+<div class="notes"><h2>Rules</h2><ul>
+<li>A unit is a run of touching intervals with the same lithology (or the same lithology and alteration type). A gap in the log, or an interval with no lithology, ends a unit. Nothing is changed in the log itself; units are a view.</li>
+<li>Alteration and mineral figures are weighted by interval length. Intensity is shown as the length-weighted average, in words.</li>
+<li>Rock groups (volcanic, intrusive, cover...) and descriptions come with the starter codes and can be edited in the code library. A code the team added has no group until someone sets one.</li>
+<li>Everything is calculated on the phone from its own data, so it works with no signal and updates as soon as an interval is saved.</li>
+</ul></div>
+</div></body></html>

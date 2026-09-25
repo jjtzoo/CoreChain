@@ -1,8 +1,11 @@
 import {
+  formatShare,
+  lithologyDictionary,
   loggedLengthM,
   loggingProgress,
   matchesDrillholeSearch,
   type FieldDrillhole,
+  type LogInterval,
   type Project,
 } from '@corechain/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,6 +14,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CollarMap } from '@/components/collar-map';
+import { CompositionBar } from '@/components/lithology';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -23,7 +27,10 @@ import { StatusPill } from '@/components/ui/status-pill';
 import { MinTap, Radius, Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { useGuideStep } from '@/guide/use-guide-step';
-import { listIntervalRangesByProject } from '@/data/intervalsRepository';
+import {
+  listIntervalRangesByProject,
+  listIntervalsByProject,
+} from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
@@ -48,6 +55,7 @@ export default function ProjectDetailScreen() {
   const [loggedMetres, setLoggedMetres] = useState<Map<string, number>>(
     new Map(),
   );
+  const [intervals, setIntervals] = useState<LogInterval[]>([]);
   const [query, setQuery] = useState('');
   const [holeView, setHoleView] = useState<HoleView>(
     () => holeViewByProject.get(projectId ?? '') ?? 'list',
@@ -70,6 +78,7 @@ export default function ProjectDetailScreen() {
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
     listDrillholes(projectId).then(setDrillholes);
+    listIntervalsByProject(projectId).then(setIntervals);
     listIntervalRangesByProject(projectId).then((byHole) => {
       setLoggedMetres(
         new Map(
@@ -83,6 +92,8 @@ export default function ProjectDetailScreen() {
   }, [projectId]);
 
   useFocusReload(reload);
+
+  const lithology = useMemo(() => lithologyDictionary(intervals), [intervals]);
 
   const visibleDrillholes = useMemo(
     () => drillholes.filter((d) => matchesDrillholeSearch(d, query)),
@@ -166,6 +177,33 @@ export default function ProjectDetailScreen() {
             })();
           }}
         />
+
+        {lithology.entries.length > 0 ? (
+          <Card
+            style={[styles.lithologyCard, guiding && styles.disabled]}
+            onPress={guiding ? undefined : () => router.push(`/projects/${projectId}/lithology`)}
+            accessibilityLabel="Open the project's lithology">
+            <View style={styles.lithologyTop}>
+              <ThemedText type="heading">Lithology</ThemedText>
+              <View style={styles.lithologyOpen}>
+                <ThemedText type="smallBold" themeColor="brand">
+                  Open
+                </ThemedText>
+                <Icon name="chevron-right" size={20} themeColor="brand" />
+              </View>
+            </View>
+            <CompositionBar entries={lithology.entries} />
+            <ThemedText type="small" themeColor="textSecondary">
+              {lithology.entries
+                .slice(0, 3)
+                .map((entry) => `${entry.code} ${formatShare(entry.share)}`)
+                .join(' · ')}
+              {lithology.entries.length > 3
+                ? ` · ${lithology.entries.length - 3} more`
+                : ''}
+            </ThemedText>
+          </Card>
+        ) : null}
 
         <View style={styles.section}>
           <View style={styles.sectionHead}>
@@ -331,6 +369,18 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderWidth: 1,
     borderRadius: Radius.card,
+  },
+  lithologyCard: {
+    gap: Spacing.two + 2,
+  },
+  lithologyTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  lithologyOpen: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   section: {
     gap: Spacing.two + 2,
