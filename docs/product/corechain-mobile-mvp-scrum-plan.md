@@ -83,7 +83,7 @@ Project → Drillhole → Core boxes & runs (recovery, RQD) → Interval logging
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Assay import and QA/QC review            | Desk work; lab results arrive weeks after the field test starts. Stays on the web app (Phase 1 views).                  |
 | Organisations, invites, roles, approvals | Need an admin, and the test has none. The schema is ready for them.                                                     |
-| QR scanning and label printing           | Listed in "validate before building" (`docs/discovery/mvp-validation-brief.md`). A typed sample tag is enough to learn. |
+| QR scanning and label printing           | Listed in "validate before building" in the MVP validation brief. A typed sample tag is enough to learn. |
 | iOS                                      | Philippine field teams mostly carry Android. Skipping it avoids Apple review and cost during the pilot.                 |
 | Maps, sections, 3D                       | Specialist tools do this; CoreChain exports to them.                                                                    |
 | Work plans and deadlines                 | Need a manager, and the test has none.                                                                                  |
@@ -1170,7 +1170,7 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
 
 ## 8. Field-test plan
 
-Adapted from `docs/discovery/day-1-to-day-30-pilot.md`.
+Adapted from the Day 1 to Day 30 pilot canvas.
 
 ### The official test script: "A day in the field"
 
@@ -1239,5 +1239,3 @@ Stop, revise, or proceed to the team features (roles, invites, assay import, QA/
 - `docs/product/corechain-website-overview.md` — product overview
 - `docs/product/mining-operations-context-and-roles.md` — who does what
 - `research/core-workflow-primer.md` — drill core to trusted assay workflow
-- `docs/discovery/mvp-validation-brief.md` — what to build first, validate, or defer
-- `docs/discovery/day-1-to-day-30-pilot.md` — pilot canvas
