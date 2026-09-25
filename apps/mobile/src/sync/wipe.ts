@@ -3,6 +3,7 @@ import type { PhoneHoldings } from '@corechain/domain';
 import { getSyncDatabase, wipeSyncedData } from '@/data/database';
 import { listPendingFeedback } from '@/data/feedbackRepository';
 import { deleteAllPhotoFiles, photoFile } from '@/data/photoFiles';
+import { deleteAllTerrainFiles } from '@/data/terrainFiles';
 import { listUnbackedFileNames } from '@/data/photoUploadsRepository';
 import { resetDeviceId } from './device';
 import { countOpenIssues } from './issues';
@@ -36,6 +37,7 @@ export async function phoneHoldings(): Promise<PhoneHoldings> {
 export async function wipeDevice(): Promise<void> {
   await wipeSyncedData();
   deleteAllPhotoFiles();
+  deleteAllTerrainFiles();
   await clearDataOwner();
   // The phone is handing itself to a different account: the old device id
   // belongs to whoever used it last and the server will never let this

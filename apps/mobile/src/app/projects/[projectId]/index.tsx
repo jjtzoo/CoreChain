@@ -32,6 +32,13 @@ import {
   listIntervalsByProject,
 } from '@/data/intervalsRepository';
 import { getProject } from '@/data/projectsRepository';
+import {
+  downloadTerrain,
+  keptTerrain,
+  terrainCovers,
+  type Terrain,
+} from '@/data/terrainFiles';
+import { useSession } from '@/auth/session-context';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
 import { useFocusReload } from '@/hooks/use-focus-reload';
@@ -41,6 +48,8 @@ import { ScreenLoader } from '@/components/screen-loader';
 const SEARCH_FROM_HOLES = 5;
 
 type HoleView = 'list' | 'map';
+/** Projects whose terrain was already fetched this session, so a failure isn't retried on every visit. */
+const terrainTried = new Set<string>();
 /** List or Map per project, remembered while the app is open (E15-1). */
 const holeViewByProject = new Map<string, HoleView>();
 
@@ -56,6 +65,8 @@ export default function ProjectDetailScreen() {
     new Map(),
   );
   const [intervals, setIntervals] = useState<LogInterval[]>([]);
+  const [terrain, setTerrain] = useState<Terrain | null>(null);
+  const { cookie } = useSession();
   const [query, setQuery] = useState('');
   const [holeView, setHoleView] = useState<HoleView>(
     () => holeViewByProject.get(projectId ?? '') ?? 'list',
@@ -77,7 +88,21 @@ export default function ProjectDetailScreen() {
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
-    listDrillholes(projectId).then(setDrillholes);
+    listDrillholes(projectId).then((holes) => {
+      setDrillholes(holes);
+      // The map's terrain: the kept copy, and a new one when there is none or
+      // the collars have moved outside it (E15-2).
+      const collars = holes.flatMap((h) => (h.collar ? [h.collar] : []));
+      const kept = keptTerrain(projectId);
+      setTerrain(kept);
+      const stale = !kept || !terrainCovers(kept, collars);
+      if (collars.length > 0 && cookie && stale && !terrainTried.has(projectId)) {
+        terrainTried.add(projectId);
+        void downloadTerrain(projectId, cookie).then((fresh) => {
+          if (fresh) setTerrain(fresh);
+        });
+      }
+    });
     listIntervalsByProject(projectId).then(setIntervals);
     listIntervalRangesByProject(projectId).then((byHole) => {
       setLoggedMetres(
@@ -89,7 +114,7 @@ export default function ProjectDetailScreen() {
         ),
       );
     });
-  }, [projectId]);
+  }, [projectId, cookie]);
 
   useFocusReload(reload);
 
@@ -243,6 +268,7 @@ export default function ProjectDetailScreen() {
 
           {showMap ? (
             <CollarMap
+              terrain={terrain}
               drillholes={drillholes}
               loggedMetres={loggedMetres}
               onOpenHole={(id) => router.push(`/projects/${projectId}/drillholes/${id}`)}
