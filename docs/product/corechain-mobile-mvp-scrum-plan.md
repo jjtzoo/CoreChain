@@ -588,7 +588,7 @@ Collected from the owner's own testing and from the first geologist tester's sug
 - **Engine: MapLibre React Native** (`@maplibre/maplibre-react-native`, Expo config plugin, works in the existing native build). Free, no API key, built-in offline support. Not `react-native-maps` (Google Maps: needs a billing-linked key, no reliable offline) and not Mapbox (account and paid token).
 - **Map data, the real decision.** OpenStreetMap's own tile servers and OpenFreeMap forbid bulk or offline downloading. Stadia allows offline caching only with an active paid subscription and at most 100 MB per device, which conflicts with the owner's no-ongoing-cost constraint. Chosen direction: cut one PMTiles file per project from the free Protomaps OpenStreetMap build (`pmtiles extract --bbox=...`), host it, and have the phone download it once. MapLibre Native reads `pmtiles://file://...`, but that source does not use MapLibre's own offline-pack system, so the app must download and manage the file itself.
 - **What exists today:** each hole's single collar latitude and longitude (`collar_latitude`, `collar_longitude`, plus source, accuracy and capture time) already sync to the phone, and `expo-location` and `expo-file-system` are already dependencies. There are **no planned collar coordinates**: only planned azimuth, inclination and depth (`schema.prisma`, `Drillhole`).
-- **E15-1 — Collars and a "you are here" dot on a plain background (about 1 to 2 sessions).** A project map screen, a shortcut to it, and a small map on the hole screen. No database or server change. Needs a new APK (native code cannot ship as an over-the-air patch). Risks: MapLibre's compatibility with Expo 57 / React Native 0.86 is unchecked; the APK grows.
+- **E15-1 — Collars and a "you are here" dot on a plain background. Built 2026-09-25 (see "Collar map, step 1" in section 7); checked in code only, not yet run on the test phone.** The owner chose to make the map how a geologist picks a hole: a project first, then its holes as a List or a Map. It is drawn with ordinary views, not MapLibre, so it needs no new APK and can ship as an over-the-air patch. MapLibre (11.4, which lists Expo 54+ and React Native 0.80+ as supported) is kept for E15-2, where a real background map needs it. Not built: the small map on the hole screen.
 - **E15-2 — Offline background map per project (about 3 to 5 sessions).** An extract script, somewhere to host the file, a new project field for its location (migration run by the owner), a Wi-Fi-only download with progress on the phone, the map style, and the required "© OpenStreetMap contributors" credit. Hidden cost: a vector style also needs its fonts and icon sprites available offline, either bundled in the APK or downloaded with the map. Caveat to tell testers: OpenStreetMap coverage around remote Philippine sites can be thin, so the map may show little beyond the collars.
 - **E15-3 — Planned collar positions (about 2 sessions), only if wanted.** New planned latitude and longitude on the drillhole: migration, the phone and web forms, and the upload rules in `apps/web/lib/sync/tables.ts`.
 - **E15-4 — Satellite or contours.** Not sized. Most imagery providers restrict offline use; licensing research first.
@@ -1025,6 +1025,26 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - The two-phone test (item 7) needs two devices.
   - The dependency advisories (item 8) are a separate, reviewed upgrade.
 - Automated tests went from 698 to 719.
+
+### Collar map, step 1 (E15-1, 2026-09-25)
+
+**Checked in code only** (typecheck, lint, domain tests, Android bundle). **Not yet run on the test phone, and not published as an over-the-air patch.** Mockup: `docs/product/mockups/collar-map.html`.
+
+- **Owner's decision (2026-09-25):** the map is how a geologist selects drillholes, after first choosing the project. The project screen's drillholes now switch between **List** (the default, still best in the core shed and with gloves) and **Map**. The choice is remembered per project while the app is open. The switch is hidden while the first-run guide is running, because the guide walks through the list.
+- **The map** (`apps/mobile/src/components/collar-map.tsx`, geometry in `packages/domain/src/collarMap.ts`):
+  - Collars sit on a plain grid in metres, coloured by status; an urgent hole is ringed in red.
+  - Holes within 10 m of each other are one pad marker with a count.
+  - It has a north arrow and a scale bar.
+  - Drag, pinch, and 52 px buttons for Fit all, Show where I am, and zoom in and out.
+  - Tapping a collar opens a card: depth, progress, status, urgent note, how far away and which way ("260 m E of you"), the collar's source and accuracy, and "Open". A pad lists its holes in 52 px rows.
+  - Holes with no collar are listed under "No location yet", never dropped.
+- **You are here** comes from the phone's GPS, with no signal needed, and a halo shows its accuracy. It is shown straight away only if the app already has location permission; otherwise "Show where I am" asks for it. More than 5 km from the collars, the map says how far away they are instead of zooming out.
+- **No background map** (roads, terrain). That is E15-2.
+- **Verify on the phone:**
+  - drag and pinch inside the scrolling screen;
+  - tapping small collars with gloves;
+  - the GPS prompt;
+  - light and dark themes.
 
 ---
 

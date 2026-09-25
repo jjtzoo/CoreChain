@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Collar map mockup</title>
+<!--
+  MOCKUP, not the app. The project's collar map (plan epic E15, step 1): open a
+  project, then pick a hole from the list or from the map. Collars on a plain
+  grid in metres, with no map tiles, so it works with no signal and needs no new
+  native code (it can reach the phone as an over-the-air patch). A real
+  background map is step 2 (E15-2).
+  Hole IDs, positions and progress are ILLUSTRATIVE. Colours are the phone
+  app's light theme (apps/mobile/src/constants/theme.ts), tuned for sun.
+-->
+<style>
+  :root {
+    --canvas: #e4dfd3; --ink: #182321; --text: #3a4642; --muted: #6b736e; --copper: #a66a43;
+    --bg: #eeeae1; --card: #faf8f3; --sel: #e2dcce; --bd: #d6cfc0; --t1: #182321; --t2: #49554f; --t3: #7a827c;
+    --ok: #1f7a55; --oksoft: #d9e9de; --warn: #9a5b00; --warnsoft: #f3e3c2; --bad: #b3261e; --badsoft: #f4dcd6;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif; --mono: "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, p { margin: 0; }
+  .wrap { width: min(1240px, 100% - 32px); margin: 0 auto; }
+  .top { padding: 48px 0 20px; border-bottom: 1px solid #cfc8b8; }
+  .tag { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 10px 0 12px; max-width: 26ch; }
+  .lede { max-width: 72ch; color: var(--text); font-size: 17px; }
+  .row { display: flex; gap: 32px; padding: 32px 0 12px; overflow-x: auto; align-items: flex-start; }
+  figure { margin: 0; flex: none; width: 340px; }
+  figcaption { margin-top: 14px; font-size: 14px; color: var(--text); }
+  figcaption b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 2px; }
+  .phone { width: 340px; height: 720px; background: var(--bg); border-radius: 30px; border: 8px solid #1b2422; box-shadow: 0 14px 34px rgba(24,35,33,.22); overflow: hidden; color: var(--t1); position: relative; }
+  .scr { height: 100%; overflow: hidden; padding: 0 14px 14px; }
+  .sb { display: flex; justify-content: space-between; font-size: 11px; color: var(--t2); padding: 10px 4px 4px; }
+  .title { font-size: 20px; font-weight: 700; padding-top: 6px; }
+  .sub { font-size: 12px; color: var(--t2); }
+  .cap { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--t2); font-weight: 600; }
+  .head { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 8px; }
+  .seg { display: flex; border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; background: var(--card); }
+  .seg span { min-width: 64px; text-align: center; padding: 10px 12px; font-size: 13px; font-weight: 600; color: var(--t2); }
+  .seg span.on { background: var(--t1); color: var(--bg); }
+  .map { position: relative; height: 330px; border: 1px solid var(--bd); border-radius: 18px; overflow: hidden;
+    background-color: var(--card);
+    background-image: linear-gradient(var(--sel) 1px, transparent 1px), linear-gradient(90deg, var(--sel) 1px, transparent 1px);
+    background-size: 55px 55px; background-position: -1px -1px; }
+  .pad { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
+  .dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 1.5px var(--t1); }
+  .dot.planned { background: var(--t3); } .dot.drilling { background: var(--t1); } .dot.complete { background: var(--warn); } .dot.logged { background: var(--ok); }
+  .dot.urgent { box-shadow: 0 0 0 1.5px var(--t1), 0 0 0 5px var(--badsoft), 0 0 0 6.5px var(--bad); }
+  .count { position: absolute; top: -9px; right: -12px; background: var(--t1); color: var(--bg); font-size: 10px; font-weight: 700; border-radius: 999px; padding: 0 5px; line-height: 16px; }
+  .lbl { margin-top: 3px; font-family: var(--mono); font-size: 10.5px; font-weight: 700; background: rgba(250,248,243,.9); padding: 0 4px; border-radius: 4px; white-space: nowrap; }
+  .pad.sel .dot { width: 24px; height: 24px; }
+  .pad.sel .lbl { background: var(--t1); color: var(--bg); }
+  .here { position: absolute; transform: translate(-50%, -50%); width: 16px; height: 16px; border-radius: 50%; background: #2f6fd6; border: 3px solid #fff; box-shadow: 0 0 0 10px rgba(47,111,214,.18); }
+  .north { position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 700; color: var(--t2); text-align: center; line-height: 1; }
+  .north i { display: block; width: 0; height: 0; margin: 0 auto 2px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 12px solid var(--t1); }
+  .scale { position: absolute; left: 12px; bottom: 10px; font-size: 10.5px; color: var(--t2); }
+  .scale i { display: block; width: 55px; height: 6px; border: 2px solid var(--t1); border-top: 0; margin-bottom: 2px; }
+  .tools { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .tool { width: 52px; height: 52px; border-radius: 14px; background: var(--card); border: 1px solid var(--bd); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--t1); text-align: center; line-height: 1.1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 11.5px; color: var(--t2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend b { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .near { margin-top: 8px; font-size: 12.5px; color: var(--t2); }
+  .near strong { color: var(--t1); }
+  .card { background: var(--card); border: 1px solid var(--bd); border-radius: 18px; padding: 12px 14px; margin-top: 10px; }
+  .card h3 { margin: 0; font-size: 17px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 9px; }
+  .pill.ok { background: var(--oksoft); color: var(--ok); } .pill.bad { background: var(--badsoft); color: var(--bad); } .pill.n { background: var(--sel); color: var(--t2); } .pill.acc { background: #e3ddcf; color: var(--t1); }
+  .bar { height: 6px; border-radius: 999px; background: var(--sel); margin: 8px 0; overflow: hidden; } .bar i { display: block; height: 100%; background: var(--t1); }
+  .btn { display: block; text-align: center; background: var(--t1); color: var(--bg); font-weight: 700; font-size: 14px; border-radius: 14px; padding: 15px 0; margin-top: 8px; }
+  .hrow { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-top: 1px solid var(--bd); font-size: 13px; }
+  .hrow:first-of-type { border-top: 0; }
+  .hrow b { font-family: var(--mono); font-size: 13.5px; }
+  .strip { display: flex; gap: 6px; overflow: hidden; margin-top: 6px; }
+  .chip { flex: none; min-height: 40px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; border: 1px dashed var(--bd); font-family: var(--mono); font-size: 12px; background: var(--card); }
+  .notes { padding: 12px 0 56px; max-width: 86ch; color: var(--text); font-size: 15px; }
+  .notes h2 { font-size: 20px; margin: 18px 0 8px; color: var(--ink); }
+  .notes li { margin: 5px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <p class="tag">Mockup · E15 collar map, step 1</p>
+    <h1>Pick a hole from the project's map</h1>
+    <p class="lede">Open a project first, as today. Its drillholes then show as a list or as a map of collars. Tap a collar to open the hole. The list stays, because most logging happens in the core shed, where position doesn't matter.</p>
+  </div>
+
+  <div class="row">
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>07:42</span><span>No signal · 81%</span></div>
+        <p class="title">Kalamansi Ridge</p>
+        <p class="sub">WGS 84 / UTM 51N · Cu-Au</p>
+        <div class="head"><span class="cap">Drillholes · 9</span><div class="seg"><span>List</span><span class="on">Map</span></div></div>
+        <div class="map">
+          <div class="north"><i></i>N</div>
+          <div class="tools"><div class="tool">Fit all</div><div class="tool">Me</div></div>
+          <div class="pad" style="left:22%;top:26%"><div class="dot logged"></div><div class="lbl">KR-01</div></div>
+          <div class="pad" style="left:48%;top:22%"><div class="dot logged"></div><div class="lbl">KR-02</div></div>
+          <div class="pad" style="left:40%;top:52%"><div class="dot drilling"><span class="count">3</span></div><div class="lbl">KR-04 +2</div></div>
+          <div class="pad" style="left:70%;top:48%"><div class="dot complete urgent"></div><div class="lbl">KR-03</div></div>
+          <div class="pad" style="left:62%;top:78%"><div class="dot planned"></div><div class="lbl">KR-07</div></div>
+          <div class="here" style="left:30%;top:74%"></div>
+          <div class="scale"><i></i>100 m</div>
+        </div>
+        <div class="legend"><span><b style="background:var(--t3)"></b>Planned</span><span><b style="background:var(--t1)"></b>Drilling</span><span><b style="background:var(--warn)"></b>Complete</span><span><b style="background:var(--ok)"></b>Logged</span><span><b style="background:#2f6fd6"></b>You</span></div>
+        <p class="near">Nearest collar: <strong>KR-04 pad, 140 m NE of you</strong> (GPS ± 6 m)</p>
+        <div class="head" style="margin-top:12px"><span class="cap">No location yet · 2</span></div>
+        <div class="strip"><span class="chip">KR-08</span><span class="chip">KR-09</span></div>
+      </div></div>
+      <figcaption><b>1. The project's map</b>Collars coloured by status; an urgent hole is ringed in red. Holes on one pad show as one marker with a count. Blue is you, from the phone's GPS, with no signal needed. Pinch to zoom and drag to move; "Fit all" brings every collar back.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>07:43</span><span>No signal · 81%</span></div>
+        <p class="title">Kalamansi Ridge</p>
+        <p class="sub">WGS 84 / UTM 51N · Cu-Au</p>
+        <div class="head"><span class="cap">Drillholes · 9</span><div class="seg"><span>List</span><span class="on">Map</span></div></div>
+        <div class="map" style="height:300px">
+          <div class="north"><i></i>N</div>
+          <div class="tools"><div class="tool">Fit all</div><div class="tool">Me</div></div>
+          <div class="pad" style="left:22%;top:26%"><div class="dot logged"></div><div class="lbl">KR-01</div></div>
+          <div class="pad" style="left:48%;top:22%"><div class="dot logged"></div><div class="lbl">KR-02</div></div>
+          <div class="pad" style="left:40%;top:52%"><div class="dot drilling"><span class="count">3</span></div><div class="lbl">KR-04 +2</div></div>
+          <div class="pad sel" style="left:70%;top:48%"><div class="dot complete urgent"></div><div class="lbl">KR-03</div></div>
+          <div class="pad" style="left:62%;top:78%"><div class="dot planned"></div><div class="lbl">KR-07</div></div>
+          <div class="here" style="left:30%;top:74%"></div>
+          <div class="scale"><i></i>100 m</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><h3>KR-03</h3><p class="sub">212 m final · 64% logged</p></div>
+            <div style="text-align:right"><span class="pill bad">Urgent</span><br><span class="pill n" style="margin-top:4px">Complete</span></div>
+          </div>
+          <div class="bar"><i style="width:64%"></i></div>
+          <p class="sub">Core waiting at the shed, re-log box 18 before dispatch</p>
+          <p class="sub" style="margin-top:4px">260 m E of you · GPS collar ± 4 m</p>
+          <span class="btn">Open KR-03</span>
+        </div>
+      </div></div>
+      <figcaption><b>2. Tap a collar</b>A card under the map gives the same facts as the list row: depth, progress, status and the urgent note. It adds how far away the hole is and which way. "Open" goes to the hole screen, the same as tapping it in the list.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>07:44</span><span>No signal · 81%</span></div>
+        <p class="title">Kalamansi Ridge</p>
+        <p class="sub">WGS 84 / UTM 51N · Cu-Au</p>
+        <div class="head"><span class="cap">Drillholes · 9</span><div class="seg"><span>List</span><span class="on">Map</span></div></div>
+        <div class="map" style="height:280px">
+          <div class="north"><i></i>N</div>
+          <div class="tools"><div class="tool">Fit all</div><div class="tool">Me</div></div>
+          <div class="pad" style="left:22%;top:26%"><div class="dot logged"></div><div class="lbl">KR-01</div></div>
+          <div class="pad" style="left:48%;top:22%"><div class="dot logged"></div><div class="lbl">KR-02</div></div>
+          <div class="pad sel" style="left:40%;top:52%"><div class="dot drilling"><span class="count">3</span></div><div class="lbl">KR-04 +2</div></div>
+          <div class="pad" style="left:70%;top:48%"><div class="dot complete urgent"></div><div class="lbl">KR-03</div></div>
+          <div class="pad" style="left:62%;top:78%"><div class="dot planned"></div><div class="lbl">KR-07</div></div>
+          <div class="here" style="left:30%;top:74%"></div>
+          <div class="scale"><i></i>100 m</div>
+        </div>
+        <div class="card">
+          <p class="cap">Pad of 3 holes · 140 m NE of you</p>
+          <div class="hrow"><b>KR-04</b><span class="sub">180 m final · 100%</span><span class="pill ok">Logged</span></div>
+          <div class="hrow"><b>KR-05</b><span class="sub">96 of 240 m</span><span class="pill acc">Drilling</span></div>
+          <div class="hrow"><b>KR-06</b><span class="sub">250 m planned</span><span class="pill n">Planned</span></div>
+        </div>
+      </div></div>
+      <figcaption><b>3. A pad with several holes</b>Angled holes drilled from one pad share a collar, so tapping the pad lists them. Each row is 52 px tall for gloved hands, and tapping one opens that hole.</figcaption>
+    </figure>
+  </div>
+
+  <div class="notes">
+    <h2>What this step does and doesn't do</h2>
+    <ul>
+      <li>It works with no signal: the collars are already on the phone, and GPS needs no data connection.</li>
+      <li>It has no background map (roads, terrain, satellite). The grid lines are the scale. An offline background map per project is step 2 (E15-2), which needs a map library, file hosting and a new APK.</li>
+      <li>Holes without a collar are never hidden; they are listed under "No location yet". A planned hole has no collar position in CoreChain yet. Planned collar positions, for finding new pads, are E15-3.</li>
+      <li>When you are more than 5 km from the collars (in the office, for example), the map says how far away they are instead of zooming out to fit you.</li>
+      <li>List or Map is remembered while the app is open; List is the default.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
