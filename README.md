@@ -4,7 +4,7 @@ Drill core passes through a lot of hands before it turns into an assay result. T
 
 CoreChain is our attempt to keep that whole chain in one place, built with exploration and mining teams in the Philippines in mind.
 
-Most of the work happens at the rig and in the core shed, often with no signal, so the main piece is CoreChain Field, an Android app. Geologists use it to log drillholes, core runs, intervals, photos, samples and custody on the phone, fully offline, and it syncs once a connection comes back. The website covers the desk side of the same work, for project managers, QA/QC and the laboratory.
+Most of the work happens at the rig and in the core shed, often with no signal, so the main piece is CoreChain Field, an Android app. It lets a geologist log drillholes, core runs, intervals, photos, samples and custody on the phone, fully offline, and it syncs once a connection comes back. The website covers the desk side of the same work, for project managers, QA/QC and the laboratory.
 
 CoreChain Field is in development testing and not yet released. If you log core or work with drilling data and would like to try it, you can request tester access at [corechain-orpin.vercel.app](https://corechain-orpin.vercel.app).
 
