@@ -6,6 +6,11 @@
 // Holes drilled from one pad share almost the same collar, so collars closer
 // than PAD_RADIUS_M are drawn as one marker listing every hole on it. Holes
 // with no collar yet are listed separately, never dropped.
+//
+// Each angled hole also gets its trace: the straight line it runs along seen
+// from above, from the collar in the planned azimuth, as long as the depth
+// times the cosine of the dip. It is the planned direction only; there is no
+// downhole survey to bend it.
 
 /** Collars closer than this are treated as one drill pad. */
 export const PAD_RADIUS_M = 10;
@@ -22,8 +27,27 @@ export type CollarMapHole<T> = {
   id: string;
   holeId: string;
   collar: LatLon | null;
+  /** Planned direction and the depth to draw the trace to, when known. */
+  plan?: TracePlan;
   /** Anything the caller wants back with the hole (status, progress...). */
   data: T;
+};
+
+export type TracePlan = {
+  azimuthDeg: number | null;
+  /** Dip, either sign: -60 and 60 both mean 60 degrees below horizontal. */
+  inclinationDeg: number | null;
+  depthM: number | null;
+};
+
+export type HoleTrace = {
+  /** The hole's id. */
+  id: string;
+  /** Collar and end of hole, metres east and north of the map's centre. */
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  /** Length seen from above, in metres. */
+  planLengthM: number;
 };
 
 export type CollarPad<T> = {
@@ -39,9 +63,11 @@ export type CollarMapLayout<T> = {
   pads: CollarPad<T>[];
   /** Holes with no collar recorded yet. */
   unlocated: CollarMapHole<T>[];
+  /** Traces of the located holes that are angled and have a direction and depth. */
+  traces: HoleTrace[];
   /** The map's centre, or null when no hole has a collar. */
   centre: LatLon | null;
-  /** Extent of the pads in metres from the centre: west, south, east, north. */
+  /** Extent of the pads and traces in metres from the centre: west, south, east, north. */
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
 };
 
@@ -105,6 +131,26 @@ const isValidCollar = (collar: LatLon | null): collar is LatLon =>
   Math.abs(collar.latitude) <= 90 &&
   Math.abs(collar.longitude) <= 180;
 
+/** Traces shorter than this from above are drawn as the collar alone. */
+const MIN_TRACE_M = 1;
+
+/**
+ * Where a straight hole ends, seen from above, relative to its collar: east
+ * and north in metres. Null when the direction or depth is missing, or when
+ * the hole is (near) vertical.
+ */
+export function traceOffset(plan: TracePlan | undefined): { x: number; y: number } | null {
+  if (!plan) return null;
+  const { azimuthDeg, inclinationDeg, depthM } = plan;
+  if (inclinationDeg == null || depthM == null || !Number.isFinite(inclinationDeg)) return null;
+  if (!(depthM > 0) || Math.abs(inclinationDeg) > 90) return null;
+  const planLength = depthM * Math.cos(toRadians(Math.abs(inclinationDeg)));
+  if (planLength < MIN_TRACE_M) return null;
+  if (azimuthDeg == null || !Number.isFinite(azimuthDeg)) return null;
+  const azimuth = toRadians(azimuthDeg);
+  return { x: planLength * Math.sin(azimuth), y: planLength * Math.cos(azimuth) };
+}
+
 const byHoleId = <T>(a: CollarMapHole<T>, b: CollarMapHole<T>) =>
   a.holeId.localeCompare(b.holeId, undefined, { numeric: true });
 
@@ -115,7 +161,7 @@ export function collarMapLayout<T>(
   const located = holes.filter((h) => isValidCollar(h.collar)).sort(byHoleId);
   const unlocated = holes.filter((h) => !isValidCollar(h.collar)).sort(byHoleId);
   if (located.length === 0) {
-    return { pads: [], unlocated, centre: null, bounds: null };
+    return { pads: [], unlocated, traces: [], centre: null, bounds: null };
   }
 
   const lats = located.map((h) => h.collar!.latitude);
@@ -144,15 +190,30 @@ export function collarMapLayout<T>(
   }
 
   const clean = pads.map(({ anchor: _anchor, ...pad }) => pad);
+  const traces: HoleTrace[] = [];
+  for (const hole of located) {
+    const offset = traceOffset(hole.plan);
+    if (!offset) continue;
+    const from = toLocalMetres(centre, hole.collar!);
+    traces.push({
+      id: hole.id,
+      from,
+      to: { x: from.x + offset.x, y: from.y + offset.y },
+      planLengthM: Math.hypot(offset.x, offset.y),
+    });
+  }
+  const xs = [...clean.map((p) => p.x), ...traces.map((t) => t.to.x)];
+  const ys = [...clean.map((p) => p.y), ...traces.map((t) => t.to.y)];
   return {
     pads: clean,
     unlocated,
+    traces,
     centre,
     bounds: {
-      minX: Math.min(...clean.map((p) => p.x)),
-      minY: Math.min(...clean.map((p) => p.y)),
-      maxX: Math.max(...clean.map((p) => p.x)),
-      maxY: Math.max(...clean.map((p) => p.y)),
+      minX: Math.min(...xs),
+      minY: Math.min(...ys),
+      maxX: Math.max(...xs),
+      maxY: Math.max(...ys),
     },
   };
 }
