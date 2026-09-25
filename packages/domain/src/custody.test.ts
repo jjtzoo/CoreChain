@@ -13,6 +13,7 @@ import {
   validateCorrection,
   validateCustodyEvent,
   validateDispatch,
+  sampleProgress,
   type CustodyEventType,
   type FieldCustodyEvent,
 } from "./custody";
@@ -448,5 +449,66 @@ describe("dispatchSheetPdf", () => {
     expect(pdf.html).toContain("Lab &amp; Sons");
     expect(pdf.html).toContain("Alberta &lt;sample&gt; project");
     expect(pdf.html).not.toContain("<sample>");
+  });
+});
+
+describe("sampleProgress", () => {
+  const event = (
+    id: string,
+    type: CustodyEventType,
+    occurredAt: string,
+    extra: Partial<FieldCustodyEvent> = {},
+  ): FieldCustodyEvent => ({
+    id,
+    projectId: "p",
+    sampleId: "s",
+    type,
+    occurredAt,
+    handledBy: "u",
+    location: null,
+    recipient: null,
+    note: null,
+    dispatchId: null,
+    correctsEventId: null,
+    createdAt: occurredAt,
+    ...extra,
+  });
+
+  it("times each step from the sample, its custody and its first result", () => {
+    const steps = sampleProgress(
+      { createdAt: "2026-09-20T01:00:00Z" },
+      [
+        event("a", "bagged", "2026-09-20T02:00:00Z"),
+        event("b", "dispatched", "2026-09-21T02:00:00Z"),
+        event("c", "received", "2026-09-22T02:00:00Z"),
+      ],
+      "2026-09-23T02:00:00Z",
+    );
+    expect(steps.map((s) => [s.key, s.at])).toEqual([
+      ["taken", "2026-09-20T01:00:00Z"],
+      ["bagged", "2026-09-20T02:00:00Z"],
+      ["dispatched", "2026-09-21T02:00:00Z"],
+      ["received", "2026-09-22T02:00:00Z"],
+      ["results", "2026-09-23T02:00:00Z"],
+    ]);
+  });
+
+  it("ignores a corrected event and leaves an unrecorded step empty", () => {
+    const steps = sampleProgress(
+      { createdAt: "2026-09-20T01:00:00Z" },
+      [
+        event("a", "bagged", "2026-09-20T02:00:00Z"),
+        event("x", "correction", "2026-09-20T03:00:00Z", { correctsEventId: "a" }),
+        event("b", "dispatched", "2026-09-21T02:00:00Z"),
+      ],
+      null,
+    );
+    expect(steps.map((s) => s.at)).toEqual([
+      "2026-09-20T01:00:00Z",
+      null,
+      "2026-09-21T02:00:00Z",
+      null,
+      null,
+    ]);
   });
 });
