@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CollarMap } from '@/components/collar-map';
 import { PrimaryButton } from '@/components/form/primary-button';
 import { TextField } from '@/components/form/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -19,7 +20,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { SyncBadge } from '@/components/sync-badge';
 import { StatusPill } from '@/components/ui/status-pill';
-import { Radius, Spacing } from '@/constants/theme';
+import { MinTap, Radius, Spacing } from '@/constants/theme';
 import { listDrillholes } from '@/data/drillholesRepository';
 import { useGuideStep } from '@/guide/use-guide-step';
 import { listIntervalRangesByProject } from '@/data/intervalsRepository';
@@ -31,6 +32,10 @@ import { ScreenLoader } from '@/components/screen-loader';
 
 /** Only show the search box once there are enough holes to need it. */
 const SEARCH_FROM_HOLES = 5;
+
+type HoleView = 'list' | 'map';
+/** List or Map per project, remembered while the app is open (E15-1). */
+const holeViewByProject = new Map<string, HoleView>();
 
 export default function ProjectDetailScreen() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
@@ -44,11 +49,23 @@ export default function ProjectDetailScreen() {
     new Map(),
   );
   const [query, setQuery] = useState('');
+  const [holeView, setHoleView] = useState<HoleView>(
+    () => holeViewByProject.get(projectId ?? '') ?? 'list',
+  );
+  // Off while a finger is on the map, so dragging the map doesn't scroll the screen.
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const chooseView = (next: HoleView) => {
+    holeViewByProject.set(projectId ?? '', next);
+    setHoleView(next);
+  };
   const guide = useGuideStep('open-hole-list', projectId ?? null);
   const exportGuide = useGuideStep('export', projectId ?? null);
   // The guide's next tap is Export, elsewhere on this same screen: highlight
   // it and grey everything else so it can't be mistaken for the next step.
   const guidingToExport = 'step' in exportGuide;
+  // The first-run guide walks through the list, so the map waits until it's done.
+  const guiding = guidingToExport || 'step' in guide;
+  const showMap = holeView === 'map' && !guiding && drillholes.length > 0;
 
   const reload = useCallback(() => {
     getProject(projectId).then(setProject);
@@ -92,6 +109,7 @@ export default function ProjectDetailScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={scrollEnabled}
       >
         <View style={styles.title}>
           <ThemedText type="subtitle">{project.name}</ThemedText>
@@ -150,11 +168,51 @@ export default function ProjectDetailScreen() {
         />
 
         <View style={styles.section}>
-          <ThemedText type="caption" themeColor="textSecondary">
-            DRILLHOLES · {drillholes.length}
-          </ThemedText>
+          <View style={styles.sectionHead}>
+            <ThemedText type="caption" themeColor="textSecondary">
+              DRILLHOLES · {drillholes.length}
+            </ThemedText>
+            {drillholes.length > 0 && !guiding ? (
+              <View
+                style={[styles.segmented, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+                accessibilityRole="tablist"
+              >
+                {(['list', 'map'] as const).map((option) => {
+                  const active = holeView === option;
+                  return (
+                    <Pressable
+                      key={option}
+                      onPress={() => chooseView(option)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={option === 'list' ? 'Show holes as a list' : 'Show holes on a map'}
+                      style={[styles.segment, active && { backgroundColor: theme.accent }]}
+                    >
+                      <Icon
+                        name={option === 'list' ? 'format-list-bulleted' : 'map-marker-radius-outline'}
+                        size={18}
+                        themeColor={active ? 'onAccent' : 'textSecondary'}
+                      />
+                      <ThemedText type="smallBold" themeColor={active ? 'onAccent' : 'textSecondary'}>
+                        {option === 'list' ? 'List' : 'Map'}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
 
-          {drillholes.length >= SEARCH_FROM_HOLES ? (
+          {showMap ? (
+            <CollarMap
+              drillholes={drillholes}
+              loggedMetres={loggedMetres}
+              onOpenHole={(id) => router.push(`/projects/${projectId}/drillholes/${id}`)}
+              onGestureActive={(active) => setScrollEnabled(!active)}
+            />
+          ) : null}
+
+          {!showMap && drillholes.length >= SEARCH_FROM_HOLES ? (
             <TextField
               label="Search holes"
               value={query}
@@ -163,7 +221,7 @@ export default function ProjectDetailScreen() {
             />
           ) : null}
 
-          {drillholes.length === 0 ? (
+          {showMap ? null : drillholes.length === 0 ? (
             <Card style={styles.empty}>
               <Icon name="target" size={32} themeColor="accent" />
               <ThemedText type="heading">Add your first hole</ThemedText>
@@ -277,6 +335,27 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.two + 2,
     paddingTop: Spacing.two,
+  },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  segmented: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: Radius.control,
+    overflow: 'hidden',
+  },
+  segment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one + 2,
+    minHeight: MinTap,
+    minWidth: 84,
+    paddingHorizontal: Spacing.three,
   },
   holeCard: {
     gap: Spacing.three,
