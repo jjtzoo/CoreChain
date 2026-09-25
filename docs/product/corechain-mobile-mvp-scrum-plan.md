@@ -1039,6 +1039,22 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
 - **Accept, hold and reject decisions** keep the reviewer's stage and the exceptions open for the hole at that moment. They show in the decision history as "Open at the time". Decisions made before this change show "Not recorded".
 - The QA/QC exception calculation moved to `apps/web/lib/qaqc/stage-exceptions.ts`, so the QA/QC screen and its actions use the same code.
 
+### Change register items 8 and 11: dependency advisories and repository policy (2026-09-25)
+
+- **Added `SECURITY.md`** (report privately through the Security tab's "Report a vulnerability") **and `.github/CODEOWNERS`** (`* @jjtzoo`).
+  - The reporting button only appears once the owner turns on private vulnerability reporting (Settings, Security, "Private vulnerability reporting").
+  - Don't turn on "Require review from Code Owners" in branch protection: with one maintainer it would block every merge, since nobody can approve their own pull request.
+- **Licence: not added. The owner decides** between an open licence, source-available for evaluation, or all rights reserved. Until then no licence means all rights reserved by default, but a written notice is clearer.
+- **Production dependency audit, 22 advisories (4 high, 18 moderate). None is exploitable in how CoreChain uses the package today:**
+  - **PostCSS, high, via Next.js.** The flaws need attacker-written CSS or source maps. PostCSS here only processes CoreChain's own stylesheets at build time.
+  - **deepmerge-ts, high, via Prisma's command-line tool.** The flaw needs a recursive object graph. The tool only reads CoreChain's own schema and config, on the developer's machine and in CI; it doesn't run in the live site.
+  - **decode-uri-component, via Expo Router's query-string.** It can slow down on a malformed link. Only links into the app itself reach it.
+  - **uuid.** Only affected when a buffer is passed in, which CoreChain never does.
+  - The other moderate advisories come from Expo SDK packages (expo, expo-router, expo-sharing, expo-splash-screen, datetimepicker, Sentry) and are inherited from the items above.
+  - `npm audit fix --force` would force major version changes, some of them downgrades to years-old versions (for example expo@46, and Next.js 16 without the migration work), so it must not be run.
+  - **Tried and undone:** a version override for deepmerge-ts broke Prisma's install step (`prisma generate` could no longer load its config). Overrides for these are not safe.
+  - **Plan:** take the fixes with the next planned framework upgrades: Next.js 15 to 16 (it ships a fixed PostCSS), Prisma 6 to 7, and Expo SDK patch releases through `npx expo install --check`. Each is its own branch, with the full checks and a phone build for Expo.
+
 ### Collar map, step 1 (E15-1, 2026-09-25)
 
 **Checked in code only** (typecheck, lint, domain tests, Android bundle). **Not yet run on the test phone, and not published as an over-the-air patch.** Mockup: `docs/product/mockups/collar-map.html`.
