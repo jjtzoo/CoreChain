@@ -22,3 +22,7 @@ The local application is also being developed as a pilot-quality Phase 1 demonst
 Choose the one workflow failure that a real 30-day pilot should test. Identify who experiences it daily, who would pay to remove it, and what evidence would justify a 90-day MVP build.
 
 See [the MVP validation brief](docs/discovery/mvp-validation-brief.md) and [the outreach draft](docs/outreach/CoreChain-MVP-outreach.md).
+
+## Licence
+
+All rights reserved. The code is public to read, not to reuse; see [LICENSE](LICENSE). To report a security problem, see [SECURITY.md](SECURITY.md).
