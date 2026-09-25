@@ -4,14 +4,36 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "apps/web"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "apps/web"
+      ],
       "port": 3000
     },
     {
       "name": "mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--workspace", "apps/mobile", "--", "--port", "8090"],
+      "runtimeArgs": [
+        "run",
+        "web",
+        "--workspace",
+        "apps/mobile",
+        "--",
+        "--port",
+        "8090"
+      ],
       "port": 8090
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const h=require('http'),f=require('fs'),p=require('path');const d=p.join(process.cwd(),'docs/product/mockups');h.createServer((q,r)=>{const n=p.join(d,decodeURIComponent(q.url.split('?')[0]));if(!n.startsWith(d)||!f.existsSync(n)||f.statSync(n).isDirectory()){r.writeHead(404);return r.end('Not found')}r.writeHead(200,{'Content-Type':n.endsWith('.html')?'text/html; charset=utf-8':n.endsWith('.png')?'image/png':'application/octet-stream'});f.createReadStream(n).pipe(r)}).listen(8095)"
+      ],
+      "port": 8095
     }
   ]
 }

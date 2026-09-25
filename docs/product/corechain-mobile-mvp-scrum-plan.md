@@ -1143,6 +1143,29 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - the code-library link.
 - **Not checked:** light theme, and a project with nothing logged (the empty state).
 
+### Terrain on the collar map (E15-2, first step, 2026-09-25)
+
+**Owner's decision:** build terrain now (the first part of E15-2), instead of a full background map with MapLibre.
+
+- **Server:** `GET /api/projects/[projectId]/terrain` (`apps/web/lib/terrain/render.ts`) renders shaded relief and 20 m contours (heavier every 100 m) as a transparent north-up PNG.
+  - The area is the collars and planned hole ends plus 1.5 km.
+  - The data is the free Copernicus DEM GLO-30 (30 m), read in place from its public AWS copy by range requests. There's no key, no storage and no ongoing cost.
+  - Only the project's own workspace can fetch it.
+- **Phone** (`apps/mobile/src/data/terrainFiles.ts`):
+  - It downloads the image once and keeps it in the app's documents folder, so the map has terrain with no signal.
+  - It fetches a new copy only when there is none, or a collar has moved outside the kept area.
+  - The image is drawn under the grid and collars and moves and zooms with them. The legend adds "Contours every 20 m" and the required Copernicus credit.
+  - "Sign out and remove my data" deletes the kept images.
+- **Run on the test phone** (development build, dark theme, synthetic Cordillera project, against the live server):
+  - the terrain downloaded and lines up under the collars;
+  - fit, zoom out and selecting a hole all work with it.
+- **Not checked:**
+  - light theme;
+  - offline after download (the map with airplane mode on);
+  - a project spanning two elevation tiles, or at sea;
+  - contour lines look stepped when zoomed well in (the image is about 3 m per pixel); sharper contours when zoomed in are a later step.
+- Roads, rivers and imagery would still need the full background map (the rest of E15-2).
+
 ---
 
 ## 8. Field-test plan

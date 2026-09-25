@@ -15,6 +15,7 @@ import {
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Image,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -30,6 +31,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { StatusPill } from '@/components/ui/status-pill';
 import { Fonts, MinTap, Radius, Spacing, type ThemeColor } from '@/constants/theme';
+import type { Terrain } from '@/data/terrainFiles';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
 
@@ -176,8 +178,11 @@ export function CollarMap({
   loggedMetres,
   onOpenHole,
   onGestureActive,
+  terrain,
 }: {
   drillholes: readonly FieldDrillhole[];
+  /** Shaded relief and contours under the collars, when downloaded (E15-2). */
+  terrain?: Terrain | null;
   loggedMetres: ReadonlyMap<string, number>;
   onOpenHole: (id: string) => void;
   /** True while a finger is on the map, so the screen can stop scrolling. */
@@ -392,6 +397,31 @@ export function CollarMap({
         onTouchEnd={() => onGestureActive?.(false)}
         onTouchCancel={() => onGestureActive?.(false)}
         {...responder.panHandlers}>
+        {terrain && layout.centre
+          ? (() => {
+              const { south, west, north, east } = terrain.bounds;
+              const nw = toLocalMetres(layout.centre, { latitude: north, longitude: west });
+              const se = toLocalMetres(layout.centre, { latitude: south, longitude: east });
+              const topLeft = project(nw.x, nw.y);
+              const bottomRight = project(se.x, se.y);
+              if (!topLeft || !bottomRight) return null;
+              return (
+                <Image
+                  source={{ uri: terrain.uri }}
+                  accessibilityIgnoresInvertColors
+                  style={{
+                    position: 'absolute',
+                    left: topLeft.left,
+                    top: topLeft.top,
+                    width: bottomRight.left - topLeft.left,
+                    height: bottomRight.top - topLeft.top,
+                  }}
+                  resizeMode="stretch"
+                />
+              );
+            })()
+          : null}
+
         {gridLines.vertical.map((left, i) => (
           <View
             key={`v${i}`}
@@ -553,6 +583,14 @@ export function CollarMap({
             You
           </ThemedText>
         </View>
+        {terrain ? (
+          <View style={styles.legendItem}>
+            <View style={[styles.legendLine, { backgroundColor: theme.muted }]} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Contours every 20 m
+            </ThemedText>
+          </View>
+        ) : null}
         {layout.traces.length > 0 ? (
           <View style={styles.legendItem}>
             <View style={[styles.legendLine, { backgroundColor: theme.textSecondary }]} />
@@ -562,6 +600,14 @@ export function CollarMap({
           </View>
         ) : null}
       </View>
+
+      {terrain ? (
+        <ThemedText type="caption" themeColor="textSecondary">
+          Terrain: Copernicus DEM GLO-30 © DLR e.V. 2010–2014 and © Airbus Defence
+          and Space GmbH 2014–2018, provided under COPERNICUS by the European Union
+          and ESA.
+        </ThemedText>
+      ) : null}
 
       <ThemedText type="small" themeColor="textSecondary">
         {locating === 'busy' && !here
