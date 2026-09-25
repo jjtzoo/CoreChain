@@ -1,4 +1,5 @@
 import { coerceValue, isUuid } from "./coerce";
+import { recordRuleError } from "./rules";
 import { SYNC_TABLES, type ColumnType, type TableSpec } from "./tables";
 
 // Turns one operation from a phone into something safe to run, or a reason it
@@ -15,7 +16,8 @@ export type Rejection =
   | "missing-value"
   | "immutable-column"
   | "append-only"
-  | "missing-version";
+  | "missing-version"
+  | "invalid-record";
 
 export type Prepared =
   | {
@@ -78,6 +80,10 @@ export function prepareOperation(raw: unknown): Prepared {
       if (values[name] === undefined)
         return { ok: false, reason: "missing-value", detail: name };
     }
+    // A change to part of a record is checked in upload.ts, against the
+    // stored record with the change applied.
+    const error = recordRuleError(spec.name, values);
+    if (error) return { ok: false, reason: "invalid-record", detail: error };
   } else if (spec.columns.version && values.version === undefined) {
     // A change must say which version it makes, so an old edit can't overwrite a newer one.
     return { ok: false, reason: "missing-version" };

@@ -19,6 +19,23 @@ import type { SampleType } from "./sampling";
 //   below detection are not compared, since the difference means nothing
 //   there.
 // - Any sample in a batch the laboratory marked complete that has no result.
+//
+// Units: a result is compared with a certified value or limit only when both
+// are in the same unit (case and spacing aside), and a duplicate only with an
+// original in the same unit. Nothing is converted, and a missing unit is never
+// assumed to match: either case is raised as `unit_mismatch`, and the result
+// is not scored until the unit is put right.
+//
+// Blank limits: a blank that names its material uses only that material's
+// limit. A blank that doesn't (the phone doesn't ask) uses the team's limit
+// for the element only when there is exactly one; with several blank
+// materials for one element the choice is ambiguous, so the blank is raised
+// as `qc_reference_missing` rather than checked against a guess.
+//
+// Batch order: a laboratory runs a batch in the order of its dispatch sheet,
+// which lists samples by sample number with numbers compared as numbers
+// (S-2 before S-10). The "two in a row" rule uses that order, within one
+// dispatch only.
 
 export const STANDARD_WARNING_SD = 2;
 export const STANDARD_FAILURE_SD = 3;
@@ -80,6 +97,32 @@ export type LabQcInput = {
 const norm = (text: string | null | undefined) =>
   (text ?? "").trim().toLowerCase();
 
+/** A unit as compared: case and spacing ignored; blank means no unit. */
+export function normalizeUnit(unit: string | null | undefined): string | null {
+  const text = (unit ?? "").replace(/\s+/g, "").toLowerCase();
+  return text || null;
+}
+
+/** Whether two units are the same. A missing unit never matches anything. */
+export function sameUnit(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const left = normalizeUnit(a);
+  return left !== null && left === normalizeUnit(b);
+}
+
+/**
+ * The order a dispatch sheet lists samples in, and so the order the
+ * laboratory runs them: by sample number, with numbers compared as numbers.
+ */
+export function compareSampleNumbers(a: string, b: string): number {
+  return (
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }) ||
+    (a < b ? -1 : a > b ? 1 : 0)
+  );
+}
+
 /** The error, if any, in one line of the standards-and-blanks list. */
 export function validateQcReferenceValue(
   value: QcReferenceValue,
@@ -93,6 +136,9 @@ export function validateQcReferenceValue(
   if (value.reference.trim().length > 60) return "The name is too long (60 characters at most).";
   if (!value.analyte.trim()) return "Enter the element, for example Cu.";
   if (value.analyte.trim().length > 20) return "The element is too long (20 characters at most).";
+  if (!(value.unit ?? "").trim()) {
+    return "Enter the unit the laboratory reports in, for example ppm.";
+  }
   if ((value.unit ?? "").trim().length > 20) return "The unit is too long (20 characters at most).";
   const finite = (n: number | null) => n != null && Number.isFinite(n);
   if (value.kind === "standard") {
@@ -117,6 +163,9 @@ function formatNumber(value: number): string {
 function withUnit(value: number, unit: string | null | undefined): string {
   return unit ? `${formatNumber(value)} ${unit}` : formatNumber(value);
 }
+
+const unitLabel = (unit: string | null | undefined) =>
+  unit?.trim() ? unit.trim() : "no unit";
 
 /** The latest result per sample and element; an earlier entry is replaced. */
 function latestResults(results: readonly LabQcResult[]) {
@@ -145,6 +194,10 @@ type StandardReading = {
   deviations: number;
 };
 
+type BlankMatch =
+  | { reference: QcReferenceValue }
+  | { missing: "none" | "ambiguous"; candidates: readonly QcReferenceValue[] };
+
 /** E12-4: failed and doubtful controls, and missing results. */
 export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
   const exceptions: QaqcException[] = [];
@@ -157,18 +210,39 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
     standards.find(
       (r) => norm(r.reference) === norm(name) && norm(r.analyte) === norm(analyte),
     );
-  const findBlank = (material: string | null, analyte: string) =>
-    blanks.find(
-      (r) =>
-        norm(r.analyte) === norm(analyte) &&
-        (!material || norm(r.reference) === norm(material)),
-    ) ?? blanks.find((r) => norm(r.analyte) === norm(analyte));
+  const findBlank = (material: string | null, analyte: string): BlankMatch => {
+    const forAnalyte = blanks.filter((r) => norm(r.analyte) === norm(analyte));
+    if (material?.trim()) {
+      const named = forAnalyte.find((r) => norm(r.reference) === norm(material));
+      return named ? { reference: named } : { missing: "none", candidates: [] };
+    }
+    if (forAnalyte.length === 1) return { reference: forAnalyte[0]! };
+    return forAnalyte.length === 0
+      ? { missing: "none", candidates: [] }
+      : { missing: "ambiguous", candidates: forAnalyte };
+  };
 
   const push = (sample: LabQcSample, exception: Omit<QaqcException, "drillholeId" | "holeId">) =>
     exceptions.push({ ...exception, drillholeId: sample.drillholeId, holeId: sample.holeId });
 
+  const unitMismatch = (
+    sample: LabQcSample,
+    result: LabQcResult,
+    against: { label: string; unit: string | null; value: number | null },
+  ) =>
+    push(sample, {
+      key: `unit_mismatch:${sample.id}:${norm(result.analyte)}:${normalizeUnit(result.unit) ?? "none"}:${normalizeUnit(against.unit) ?? "none"}`,
+      kind: "unit_mismatch",
+      summary: `Units don't match for ${result.analyte}: ${sample.sampleNumber}`,
+      evidence: `${sample.sampleNumber}: ${result.analyte} reported as ${
+        result.value == null ? "below detection" : formatNumber(result.value)
+      } (${unitLabel(result.unit)}); ${against.label}${
+        against.value == null ? "" : ` ${formatNumber(against.value)}`
+      } (${unitLabel(against.unit)}). Not checked until both are in the same unit: correct the result's unit, or the line under Standards and blanks.`,
+    });
+
   // Standards: collect every reading first, so the "two in a row" rule can
-  // look at the batch's readings in sample-number order.
+  // look at the batch's readings in dispatch-sheet order.
   const readings: StandardReading[] = [];
   for (const sample of input.samples) {
     if (sample.type !== "standard") continue;
@@ -183,13 +257,20 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
       }
       const expected = reference.expectedValue as number;
       const sd = reference.standardDeviation as number;
-      const unit = reference.unit ?? result.unit;
       if (result.belowDetection || result.value == null) {
         push(sample, {
           key: `standard_failed:${sample.id}:${norm(result.analyte)}:bdl`,
           kind: "standard_failed",
           summary: `Standard ${name} failed for ${result.analyte}: ${sample.sampleNumber}`,
-          evidence: `Reported below detection; certified ${withUnit(expected, unit)}. A standard must always be detected.`,
+          evidence: `Reported below detection; certified ${withUnit(expected, reference.unit)}. A standard must always be detected.`,
+        });
+        continue;
+      }
+      if (!sameUnit(result.unit, reference.unit)) {
+        unitMismatch(sample, result, {
+          label: `certified value for ${reference.reference}`,
+          unit: reference.unit,
+          value: expected,
         });
         continue;
       }
@@ -214,7 +295,6 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
     }
   }
 
-  const order = (sampleNumber: string) => sampleNumber.padStart(12, "0");
   const groups = new Map<string, StandardReading[]>();
   for (const reading of readings) {
     const key = [
@@ -227,12 +307,12 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
     groups.set(key, list);
   }
   for (const list of groups.values()) {
-    list.sort((a, b) => order(a.sample.sampleNumber).localeCompare(order(b.sample.sampleNumber)));
+    list.sort((a, b) => compareSampleNumbers(a.sample.sampleNumber, b.sample.sampleNumber));
     list.forEach((reading, index) => {
       const { sample, result, reference, deviations } = reading;
       const expected = reference.expectedValue as number;
       const sd = reference.standardDeviation as number;
-      const unit = reference.unit ?? result.unit;
+      const unit = reference.unit;
       const value = result.value as number;
       const size = Math.abs(deviations);
       const band = (n: number) =>
@@ -269,22 +349,39 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
   // Blanks.
   for (const sample of input.samples) {
     if (sample.type !== "blank") continue;
+    const material = sample.standardRef?.trim() || null;
     const missing: string[] = [];
+    const ambiguous: { analyte: string; materials: string[] }[] = [];
     for (const result of resultsBySample.get(sample.id) ?? []) {
-      const reference = findBlank(sample.standardRef, result.analyte);
-      if (!reference) {
-        missing.push(result.analyte);
+      const match = findBlank(material, result.analyte);
+      if ("missing" in match) {
+        if (match.missing === "ambiguous") {
+          ambiguous.push({
+            analyte: result.analyte,
+            materials: match.candidates.map((r) => r.reference),
+          });
+        } else {
+          missing.push(result.analyte);
+        }
         continue;
       }
+      const reference = match.reference;
       if (result.belowDetection || result.value == null) continue;
       const limit = reference.maxValue as number;
+      if (!sameUnit(result.unit, reference.unit)) {
+        unitMismatch(sample, result, {
+          label: `limit for ${reference.reference}`,
+          unit: reference.unit,
+          value: limit,
+        });
+        continue;
+      }
       if (result.value > limit) {
-        const unit = reference.unit ?? result.unit;
         push(sample, {
           key: `blank_failed:${sample.id}:${norm(result.analyte)}:${result.value}`,
           kind: "blank_failed",
           summary: `Blank failed for ${result.analyte}: ${sample.sampleNumber}`,
-          evidence: `${sample.sampleNumber}: ${result.analyte} ${withUnit(result.value, unit)}, limit ${withUnit(limit, unit)}. Possible contamination during preparation; check the samples prepared just before it.`,
+          evidence: `${sample.sampleNumber}: ${result.analyte} ${withUnit(result.value, reference.unit)}, limit ${withUnit(limit, reference.unit)} (${reference.reference}). Possible contamination during preparation; check the samples prepared just before it.`,
         });
       }
     }
@@ -292,8 +389,23 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
       push(sample, {
         key: `qc_reference_missing:${sample.id}:${missing.map(norm).join(",")}`,
         kind: "qc_reference_missing",
-        summary: `No blank limit for ${missing.join(", ")}`,
-        evidence: `${sample.sampleNumber} can't be checked. Add a blank limit for ${missing.join(", ")} under Standards and blanks.`,
+        summary: material
+          ? `No ${material} limit for ${missing.join(", ")}`
+          : `No blank limit for ${missing.join(", ")}`,
+        evidence: material
+          ? `${sample.sampleNumber} is a ${material} blank, and there is no ${material} limit for ${missing.join(", ")} under Standards and blanks. Another material's limit is never used in its place.`
+          : `${sample.sampleNumber} can't be checked. Add a blank limit for ${missing.join(", ")} under Standards and blanks.`,
+      });
+    }
+    if (ambiguous.length > 0) {
+      const analytes = ambiguous.map((a) => a.analyte);
+      push(sample, {
+        key: `qc_reference_missing:${sample.id}:ambiguous:${analytes.map(norm).join(",")}`,
+        kind: "qc_reference_missing",
+        summary: `Which blank limit applies to ${sample.sampleNumber}?`,
+        evidence: `${sample.sampleNumber} doesn't say which blank material it is, and ${ambiguous
+          .map((a) => `${a.analyte} has limits for ${a.materials.join(" and ")}`)
+          .join("; ")}. Not checked, rather than checked against the wrong limit.`,
       });
     }
   }
@@ -311,11 +423,19 @@ export function laboratoryAssayExceptions(input: LabQcInput): QaqcException[] {
       if (!pair) continue;
       if (result.belowDetection || pair.belowDetection) continue;
       if (result.value == null || pair.value == null) continue;
+      if (!sameUnit(result.unit, pair.unit)) {
+        unitMismatch(sample, result, {
+          label: `original ${original.sampleNumber}`,
+          unit: pair.unit,
+          value: pair.value,
+        });
+        continue;
+      }
       const mean = (result.value + pair.value) / 2;
       if (mean <= 0) continue;
       const difference = (Math.abs(result.value - pair.value) / mean) * 100;
       if (difference > FIELD_DUPLICATE_MAX_DIFFERENCE_PCT) {
-        const unit = result.unit ?? pair.unit;
+        const unit = result.unit;
         push(sample, {
           key: `duplicate_failed:${sample.id}:${norm(result.analyte)}:${pair.value}:${result.value}`,
           kind: "duplicate_failed",

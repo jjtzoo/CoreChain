@@ -39,6 +39,7 @@ export type QaqcExceptionKind =
   | "run_past_final_depth"
   | "qc_rate_short"
   | "custody_stalled"
+  | "sample_overlap"
   | "device_stale"
   // E12-4, laboratory and assays (labQc.ts)
   | "standard_failed"
@@ -46,6 +47,7 @@ export type QaqcExceptionKind =
   | "blank_failed"
   | "duplicate_failed"
   | "qc_reference_missing"
+  | "unit_mismatch"
   | "result_missing";
 
 /**
@@ -74,12 +76,14 @@ export const QAQC_EXCEPTION_KIND_LABELS: Record<QaqcExceptionKind, string> = {
   run_past_final_depth: "Run past the final depth",
   qc_rate_short: "QC rate below target",
   custody_stalled: "Sample stalled before dispatch",
+  sample_overlap: "Primary samples overlap",
   device_stale: "Device quiet for a while",
   standard_failed: "Standard failed",
   standard_warning: "Standard near its limit",
   blank_failed: "Blank failed",
   duplicate_failed: "Duplicate failed",
   qc_reference_missing: "No certified values or limit",
+  unit_mismatch: "Units don't match",
   result_missing: "Result missing",
 };
 
@@ -174,9 +178,15 @@ export type HoleSamplesInput = {
     type: SampleType;
     status: SampleStatus;
     createdAt: string;
+    /** Primary samples' depths, for the overlap check. */
+    fromM?: number | null;
+    toM?: number | null;
   }[];
   qcRates: QcRates;
 };
+
+/** Depths closer than this are the same depth (as in core.ts). */
+const SAMPLE_DEPTH_TOLERANCE_M = 0.005;
 
 export type SamplingCustodyOptions = {
   now: Date;
@@ -185,8 +195,11 @@ export type SamplingCustodyOptions = {
 };
 
 /**
- * E12-2: QC insertion rates below target and samples stalled before dispatch,
- * for the sampling-and-custody stage. QC rates use the project's own targets
+ * E12-2: QC insertion rates below target, samples stalled before dispatch, and
+ * primary samples whose depths overlap, for the sampling-and-custody stage.
+ * The phone refuses an overlapping sample, but two phones offline can each
+ * record one over the same core; the server keeps both (each is a real bag
+ * with a real tag) and raises the overlap here for a person to settle. QC rates use the project's own targets
  * (`Project.qcStandardEveryN` etc.), the same numbers the field reminder uses.
  */
 export function samplingCustodyExceptions(
@@ -211,6 +224,28 @@ export function samplingCustodyExceptions(
         }
       }
     }
+    const primaries = hole.samples
+      .filter(
+        (s): s is typeof s & { fromM: number; toM: number } =>
+          s.type === "primary" && s.fromM != null && s.toM != null,
+      )
+      .sort((a, b) => a.fromM - b.fromM || a.toM - b.toM);
+    primaries.forEach((a, i) => {
+      for (const b of primaries.slice(i + 1)) {
+        if (b.fromM >= a.toM - SAMPLE_DEPTH_TOLERANCE_M) break;
+        const [first, second] = [a, b].sort((x, y) =>
+          x.sampleNumber < y.sampleNumber ? -1 : 1,
+        );
+        exceptions.push({
+          key: `sample_overlap:${first!.id}:${second!.id}`,
+          drillholeId: hole.drillholeId,
+          holeId: hole.holeId,
+          kind: "sample_overlap",
+          summary: `${a.sampleNumber} and ${b.sampleNumber} overlap at ${b.fromM}–${Math.min(a.toM, b.toM)} m`,
+          evidence: `${a.sampleNumber} is ${a.fromM}–${a.toM} m and ${b.sampleNumber} is ${b.fromM}–${b.toM} m in ${hole.holeId}. The same core can't be in two primary samples: check the bags, then void or correct one.`,
+        });
+      }
+    });
     for (const sample of hole.samples) {
       if (sample.status === "dispatched") continue;
       const ageDays =
