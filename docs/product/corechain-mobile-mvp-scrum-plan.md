@@ -1102,6 +1102,17 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - light theme.
 - Still JavaScript only, but main is app version 0.1.1 while testers have 0.1.0, so the map reaches testers in the next APK, not as an over-the-air patch.
 
+### An email for every feedback message (E10-6, 2026-09-25)
+
+- **Owner's request:** an email for each piece of feedback a tester sends.
+- **How:** when feedback is saved (phone or website, `app/api/feedback/route.ts`), the server emails the owner through Resend's free tier, after answering the phone, so the tester never waits for it.
+  - The email carries the message, who sent it and their role, phone or website, app version, phone model, screen, and a link to the feedback inbox.
+  - Screenshots stay in the inbox; the email doesn't carry them.
+  - A retry never sends a second email (Resend idempotency key), and a failed email never stops the feedback being saved.
+  - Code: `apps/web/lib/feedback/email.ts`, with 6 tests.
+- **Off until the owner switches it on:** create a Resend account with the address that should receive the emails, then set `RESEND_API_KEY` and `FEEDBACK_NOTIFY_EMAIL` in Vercel.
+- **Note:** the feedback text passes through Resend on its way to the owner.
+
 ---
 
 ## 8. Field-test plan

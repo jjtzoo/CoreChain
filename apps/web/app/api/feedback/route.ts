@@ -1,12 +1,13 @@
 import { toUserRole, validateFeedback } from "@corechain/domain";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/lib/auth";
+import { sendFeedbackEmail } from "@/lib/feedback/email";
 import { prisma } from "@/lib/prisma";
 
 // Feedback from the phone app. The phone signs in with the same cookie session
 // it uses for everything else, queues a message offline, and retries until this
 // answers. `clientId` (made on the phone) makes a retry harmless: the same
-// message is stored once.
+// message is stored once, and the owner is emailed once, after the answer.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PER_HOUR_LIMIT = 30;
@@ -72,8 +73,20 @@ export async function POST(request: Request) {
       category,
       message: message.trim(),
     },
-    select: { id: true },
+    select: {
+      id: true,
+      category: true,
+      message: true,
+      tier: true,
+      source: true,
+      appVersion: true,
+      device: true,
+      screen: true,
+      createdAt: true,
+    },
   });
+  const person = { name: session.user.name, email: session.user.email };
+  after(() => sendFeedbackEmail({ ...created, person }));
   return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
 }
 
