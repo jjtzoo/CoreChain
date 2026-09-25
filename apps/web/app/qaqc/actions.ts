@@ -1,8 +1,13 @@
 "use server";
 
-import { isQaqcDecision } from "@corechain/domain";
+import { isQaqcDecision, type QaqcStage } from "@corechain/domain";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import {
+  computeDeviceExceptions,
+  computeStageExceptions,
+  loadStageHoles,
+} from "@/lib/qaqc/stage-exceptions";
 import { requireQaqc } from "@/lib/session";
 
 export type ActionResult<T = object> =
@@ -12,16 +17,37 @@ export type ActionResult<T = object> =
 // organization_id, same isolation as the team overview and sync rules.
 
 async function requireOwnOrganization(): Promise<
-  { userId: string; organizationId: string } | { error: string }
+  | { userId: string; organizationId: string; stage: QaqcStage | null }
+  | { error: string }
 > {
   const session = await requireQaqc();
   const self = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { organizationId: true },
+    select: { organizationId: true, qaqcStage: true },
   });
   const organizationId = self?.organizationId ?? null;
   if (!organizationId) return { error: "You aren't on a team yet." };
-  return { userId: session.user.id, organizationId };
+  return {
+    userId: session.user.id,
+    organizationId,
+    stage: (self?.qaqcStage as QaqcStage | null) ?? null,
+  };
+}
+
+/**
+ * The reviewer's stage's exceptions as they stand now, so a resolution or a
+ * decision keeps the evidence it was made on (change register item 2).
+ */
+async function currentExceptions(organizationId: string, stage: QaqcStage | null) {
+  // Every hole, not just the one decided on: the laboratory checks read a
+  // whole dispatch ("two in a row"), which can span holes.
+  const now = new Date();
+  const holes = await loadStageHoles(organizationId);
+  const [stageExceptions, deviceExceptions] = await Promise.all([
+    stage ? computeStageExceptions(organizationId, stage, holes, now) : [],
+    computeDeviceExceptions(organizationId, now),
+  ]);
+  return [...stageExceptions, ...deviceExceptions];
 }
 
 /** E12-2: dismiss an exception from the queue with a reason. */
@@ -37,6 +63,18 @@ export async function resolveExceptionAction(
     return { ok: false, error: "Explain why this is resolved." };
   }
 
+  const exception = (
+    await currentExceptions(context.organizationId, context.stage)
+  ).find((e) => e.key === exceptionKey);
+  // Resolving again after the condition has gone keeps the earlier copy.
+  const snapshot = exception
+    ? {
+        drillholeId: exception.drillholeId || null,
+        summary: exception.summary,
+        evidence: exception.evidence,
+      }
+    : {};
+
   await prisma.qaqcExceptionResolution.upsert({
     where: {
       organizationId_exceptionKey: {
@@ -49,8 +87,10 @@ export async function resolveExceptionAction(
       exceptionKey,
       reason: trimmedReason.slice(0, 500),
       resolvedBy: context.userId,
+      ...snapshot,
     },
     update: {
+      ...snapshot,
       reason: trimmedReason.slice(0, 500),
       resolvedBy: context.userId,
       resolvedAt: new Date(),
@@ -81,8 +121,24 @@ export async function recordQaqcDecisionAction(
     return { ok: false, error: "That hole isn't on your team." };
   }
 
+  const resolved = new Set(
+    (
+      await prisma.qaqcExceptionResolution.findMany({
+        where: { organizationId: context.organizationId },
+        select: { exceptionKey: true },
+      })
+    ).map((r) => r.exceptionKey),
+  );
+  const openForHole = (
+    await currentExceptions(context.organizationId, context.stage)
+  )
+    .filter((e) => e.drillholeId === drillholeId && !resolved.has(e.key))
+    .map(({ key, kind, summary, evidence }) => ({ key, kind, summary, evidence }));
+
   await prisma.qaqcReviewDecision.create({
     data: {
+      stage: context.stage,
+      evidence: openForHole,
       organizationId: context.organizationId,
       drillholeId,
       decision,

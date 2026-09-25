@@ -248,6 +248,11 @@ model QaqcExceptionResolution {
   reason         String
   resolvedBy     String   @map("resolved_by")
   resolvedAt     DateTime @default(now()) @map("resolved_at")
+  // What the exception said when it was resolved, and its hole, kept for when
+  // the data (or a certified value) later changes and it no longer recomputes.
+  drillholeId    String?  @map("drillhole_id")
+  summary        String?
+  evidence       String?
 
   @@unique([organizationId, exceptionKey])
   @@map("qaqc_exception_resolutions")
@@ -266,6 +271,10 @@ model QaqcReviewDecision {
   note           String?
   decidedBy      String           @map("decided_by")
   decidedAt      DateTime         @default(now()) @map("decided_at")
+  // The reviewer's stage, and the exceptions open for the hole in that stage
+  // when the decision was made: [{ key, kind, summary, evidence }].
+  stage          String?
+  evidence       Json?
 
   drillhole Drillhole @relation(fields: [drillholeId], references: [id], onDelete: Cascade)
 
@@ -515,6 +524,20 @@ model QcReferenceValue {
   createdBy         String          @map("created_by")
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
+  // Change register item 2: a line is never edited in place or deleted. An
+  // edit adds the next revision (supersedesId points at the one it replaces)
+  // and retires the old one; a removal retires the line. Only lines with no
+  // retiredAt are used to check results. One current line per team, kind,
+  // name and element (a partial unique index in the migration).
+  revision          Int             @default(1)
+  supersedesId      String?         @unique @map("supersedes_id")
+  changeReason      String?         @map("change_reason")
+  retiredAt         DateTime?       @map("retired_at")
+  retiredBy         String?         @map("retired_by")
+  retireReason      String?         @map("retire_reason")
+
+  supersedes   QcReferenceValue? @relation("QcReferenceRevision", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy QcReferenceValue? @relation("QcReferenceRevision")
 
   @@map("qc_reference_values")
 }

@@ -7,7 +7,11 @@ import type { Route } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { qcReferenceAccess } from "./access";
-import { QcReferenceEditor, type QcReferenceRow } from "./qc-reference-editor";
+import {
+  QcReferenceEditor,
+  type QcReferenceRevision,
+  type QcReferenceRow,
+} from "./qc-reference-editor";
 
 // E12-4: the team's standards-and-blanks list, shown to the project manager
 // (/team/standards) and to QA/QC (/qaqc/standards). The laboratory checks on
@@ -47,27 +51,66 @@ export async function StandardsPage({
     );
   }
 
-  const lines = await prisma.qcReferenceValue.findMany({
-    where: { organizationId: access.organizationId },
-    orderBy: [{ kind: "asc" }, { reference: "asc" }, { analyte: "asc" }],
-  });
-  const rows: QcReferenceRow[] = lines.map((line) => ({
+  const [lines, members] = await Promise.all([
+    prisma.qcReferenceValue.findMany({
+      where: { organizationId: access.organizationId },
+      orderBy: [{ kind: "asc" }, { reference: "asc" }, { analyte: "asc" }],
+    }),
+    prisma.user.findMany({
+      where: { organizationId: access.organizationId },
+      select: { id: true, name: true },
+    }),
+  ]);
+  const nameOf = (userId: string | null) =>
+    (userId && members.find((m) => m.id === userId)?.name) || "Someone no longer on the team";
+
+  // Change register item 2: every revision is kept. The current lines are
+  // the ones not retired; each one's earlier revisions follow supersedesId.
+  type Line = (typeof lines)[number];
+  const byId = new Map(lines.map((line) => [line.id, line]));
+  const revision = (line: Line): QcReferenceRevision => ({
     id: line.id,
-    kind: line.kind,
-    reference: line.reference,
-    analyte: line.analyte,
+    revision: line.revision,
     unit: line.unit,
     expectedValue: line.expectedValue,
     standardDeviation: line.standardDeviation,
     maxValue: line.maxValue,
-  }));
+    reference: line.reference,
+    analyte: line.analyte,
+    changeReason: line.changeReason,
+    createdByName: nameOf(line.createdBy),
+    createdAt: line.createdAt.toISOString(),
+  });
+  const history = (line: Line): QcReferenceRevision[] => {
+    const earlier: QcReferenceRevision[] = [];
+    let previous = line.supersedesId ? byId.get(line.supersedesId) : undefined;
+    while (previous && earlier.length < 50) {
+      earlier.push(revision(previous));
+      previous = previous.supersedesId ? byId.get(previous.supersedesId) : undefined;
+    }
+    return earlier;
+  };
+  const toRow = (line: Line): QcReferenceRow => ({
+    ...revision(line),
+    kind: line.kind,
+    earlier: history(line),
+    retiredAt: line.retiredAt?.toISOString() ?? null,
+    retiredByName: line.retiredAt ? nameOf(line.retiredBy) : null,
+    retireReason: line.retireReason,
+  });
+  const replaced = new Set(lines.flatMap((line) => (line.supersedesId ? [line.supersedesId] : [])));
+  const rows = lines.filter((line) => !line.retiredAt).map(toRow);
+  const removed = lines
+    .filter((line) => line.retiredAt && !replaced.has(line.id))
+    .map(toRow)
+    .sort((a, b) => (b.retiredAt ?? "").localeCompare(a.retiredAt ?? ""));
 
   return (
     <>
       {header}
       <div className="admin-columns">
         <div className="admin-list-column">
-          <QcReferenceEditor rows={rows} canEdit={access.canEdit} />
+          <QcReferenceEditor rows={rows} removed={removed} canEdit={access.canEdit} />
         </div>
         <aside className="admin-sidebar-column">
           <section className="admin-card" aria-labelledby="sop-title">
@@ -86,6 +129,11 @@ export async function StandardsPage({
                 Names are matched ignoring capitals, so &quot;OREAS 45e&quot;
                 here matches &quot;oreas 45E&quot; recorded on the phone.
               </li>
+              <li>
+                A change is saved as a new revision with the reason, and a
+                removed line is kept as no longer used. Earlier QA/QC
+                decisions keep the values they were made on.
+              </li>
             </ul>
           </section>
           <section className="admin-card" aria-labelledby="rules-title">
@@ -101,7 +149,19 @@ export async function StandardsPage({
                 Two warnings in a row for the same standard and element, on the
                 same side, in one dispatch, also fail.
               </li>
+              <li>
+                A result is checked only when its unit matches the line&apos;s
+                unit (capitals and spaces aside). Nothing is converted: 0.0742
+                % against a ppm line shows as &quot;Units don&apos;t match&quot;
+                until one of them is corrected.
+              </li>
               <li>A blank above its limit fails. Below detection passes.</li>
+              <li>
+                A blank the phone recorded without a material uses the
+                element&apos;s blank limit only when there is one. With
+                several blank materials for an element, it is shown as not
+                checked rather than checked against the wrong one.
+              </li>
               <li>
                 A field duplicate more than {FIELD_DUPLICATE_MAX_DIFFERENCE_PCT}%
                 from its original sample fails.

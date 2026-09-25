@@ -1,12 +1,8 @@
 import {
-  coreLoggingExceptions,
-  deviceStaleExceptions,
   exceptionKindFromKey,
-  laboratoryAssayExceptions,
   openExceptions,
   QAQC_EXCEPTION_KIND_LABELS,
   QAQC_STAGE_LABELS,
-  samplingCustodyExceptions,
   type QaqcDecision,
   type QaqcException,
   type QaqcStage,
@@ -14,6 +10,11 @@ import {
 import type { Route } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import {
+  computeDeviceExceptions,
+  computeStageExceptions,
+  loadStageHoles,
+} from "@/lib/qaqc/stage-exceptions";
 import { requireQaqc } from "@/lib/session";
 import {
   QaqcWorkspace,
@@ -21,11 +22,15 @@ import {
   type QaqcHoleRow,
 } from "./qaqc-workspace";
 
-// A device that has gone quiet this long is worth a reviewer's attention.
-// Generous on purpose: weeks offline are normal for this app (CLAUDE.md).
-const DEVICE_STALE_AFTER_DAYS = 21;
-// A sample sitting uncustodied this long is worth a reviewer's attention.
-const SAMPLE_STALE_AFTER_DAYS = 14;
+/** The exception summaries saved with a decision, or null for a decision made before they were kept. */
+function openAtDecision(evidence: unknown): string[] | null {
+  if (!Array.isArray(evidence)) return null;
+  return evidence.flatMap((item) =>
+    item && typeof item === "object" && typeof (item as { summary?: unknown }).summary === "string"
+      ? [(item as { summary: string }).summary]
+      : [],
+  );
+}
 
 export default async function QaqcPage() {
   const session = await requireQaqc();
@@ -61,137 +66,24 @@ export default async function QaqcPage() {
     );
   }
 
-  const [members, holes, devices, resolutions, decisions] = await Promise.all([
+  const now = new Date();
+  const [members, holes, resolutions, decisions] = await Promise.all([
     prisma.user.findMany({
       where: { organizationId },
       select: { id: true, name: true },
     }),
-    prisma.drillhole.findMany({
-      where: { organizationId, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: {
-        project: { select: { name: true, qcStandardEveryN: true, qcBlankEveryN: true, qcDuplicateEveryN: true } },
-        runs: { where: { deletedAt: null }, select: { fromM: true, toM: true, recoveredM: true } },
-        samples: {
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            sampleNumber: true,
-            sampleType: true,
-            status: true,
-            standardRef: true,
-            parentSampleId: true,
-            fromM: true,
-            toM: true,
-            createdAt: true,
-          },
-        },
-      },
-    }),
-    prisma.device.findMany({
-      where: { organizationId, revokedAt: null },
-      select: { id: true, name: true, lastSeenAt: true },
-    }),
+    loadStageHoles(organizationId),
     prisma.qaqcExceptionResolution.findMany({ where: { organizationId } }),
     prisma.qaqcReviewDecision.findMany({
       where: { organizationId },
       orderBy: { decidedAt: "desc" },
     }),
   ]);
-
-  // E12-4: the laboratory stage also needs the results, the dispatches they
-  // came back in, and the team's standards-and-blanks list. Only loaded for
-  // that stage.
-  const [assayResults, dispatches, references] =
-    stage === "laboratory_assays"
-      ? await Promise.all([
-          prisma.assayResult.findMany({ where: { organizationId } }),
-          prisma.dispatch.findMany({
-            where: { organizationId, deletedAt: null },
-            select: {
-              id: true,
-              dispatchNumber: true,
-              resultsReturnedAt: true,
-              samples: { where: { deletedAt: null }, select: { sampleId: true } },
-            },
-          }),
-          prisma.qcReferenceValue.findMany({ where: { organizationId } }),
-        ])
-      : [[], [], []];
-
+  const [rawExceptions, rawDeviceExceptions] = await Promise.all([
+    computeStageExceptions(organizationId, stage, holes, now),
+    computeDeviceExceptions(organizationId, now),
+  ]);
   const nameById = new Map(members.map((m) => [m.id, m.name]));
-  const now = new Date();
-
-  const rawExceptions =
-    stage === "core_logging"
-      ? coreLoggingExceptions(
-          holes.map((h) => ({
-            drillholeId: h.id,
-            holeId: h.holeId,
-            runs: h.runs,
-            actualFinalDepthM: h.actualFinalDepthM,
-          })),
-        )
-      : stage === "sampling_custody"
-        ? samplingCustodyExceptions(
-            holes.map((h) => ({
-              drillholeId: h.id,
-              holeId: h.holeId,
-              samples: h.samples.map((s) => ({
-                id: s.id,
-                sampleNumber: s.sampleNumber,
-                type: s.sampleType,
-                status: s.status,
-                createdAt: s.createdAt.toISOString(),
-                fromM: s.fromM,
-                toM: s.toM,
-              })),
-              qcRates: {
-                standardEveryN: h.project.qcStandardEveryN,
-                blankEveryN: h.project.qcBlankEveryN,
-                duplicateEveryN: h.project.qcDuplicateEveryN,
-              },
-            })),
-            { now, staleAfterDays: SAMPLE_STALE_AFTER_DAYS },
-          )
-        : laboratoryAssayExceptions({
-            samples: holes.flatMap((h) =>
-              h.samples.map((s) => ({
-                id: s.id,
-                sampleNumber: s.sampleNumber,
-                type: s.sampleType,
-                standardRef: s.standardRef,
-                parentSampleId: s.parentSampleId,
-                drillholeId: h.id,
-                holeId: h.holeId,
-              })),
-            ),
-            results: assayResults.map((r) => ({
-              sampleId: r.sampleId,
-              dispatchId: r.dispatchId,
-              analyte: r.analyte,
-              value: r.value,
-              unit: r.unit,
-              belowDetection: r.belowDetection,
-              enteredAt: r.createdAt.toISOString(),
-            })),
-            batches: dispatches.map((d) => ({
-              dispatchId: d.id,
-              dispatchNumber: d.dispatchNumber,
-              resultsReturned: d.resultsReturnedAt !== null,
-              sampleIds: d.samples.map((ds) => ds.sampleId),
-            })),
-            references,
-          });
-
-  const rawDeviceExceptions = deviceStaleExceptions(
-    devices.map((d) => ({
-      deviceId: d.id,
-      name: d.name,
-      lastSeenAt: d.lastSeenAt?.toISOString() ?? null,
-    })),
-    { now, staleAfterDays: DEVICE_STALE_AFTER_DAYS },
-  );
 
   const resolvedKeys = new Set(resolutions.map((r) => r.exceptionKey));
   const open = openExceptions(rawExceptions, { resolvedKeys });
@@ -200,10 +92,11 @@ export default async function QaqcPage() {
   });
 
   // E12-5: a resolution's evidence is looked up from the current computation
-  // when the same condition still recomputes; when it no longer does (the
-  // data has since changed), the resolution itself is still shown — it is
-  // never hidden — just without the depth/sample detail, only the kind of
-  // exception it was.
+  // when the same condition still recomputes. When it no longer does (the
+  // data, or a certified value, has since changed), the resolution is still
+  // shown, never hidden, with the summary and evidence saved when it was
+  // resolved. Resolutions made before that copy was kept show only the kind
+  // of exception it was.
   const exceptionByKey = new Map<string, QaqcException>(
     [...rawExceptions, ...rawDeviceExceptions].map((e) => [e.key, e]),
   );
@@ -224,20 +117,22 @@ export default async function QaqcPage() {
       key: resolution.exceptionKey,
       summary:
         matched?.summary ??
+        resolution.summary ??
         (() => {
           const kind = exceptionKindFromKey(resolution.exceptionKey);
           return kind ? QAQC_EXCEPTION_KIND_LABELS[kind] : "Exception";
         })(),
-      evidence: matched?.evidence ?? null,
+      evidence: matched?.evidence ?? resolution.evidence ?? null,
       reason: resolution.reason,
       resolvedByName:
         nameById.get(resolution.resolvedBy) ?? "Someone no longer on the team",
       resolvedAt: resolution.resolvedAt.toISOString(),
     };
-    if (matched && matched.drillholeId) {
-      const list = resolvedByHole.get(matched.drillholeId) ?? [];
+    const drillholeId = matched?.drillholeId || resolution.drillholeId;
+    if (drillholeId) {
+      const list = resolvedByHole.get(drillholeId) ?? [];
       list.push(row);
-      resolvedByHole.set(matched.drillholeId, list);
+      resolvedByHole.set(drillholeId, list);
     } else {
       resolvedOther.push(row);
     }
@@ -277,6 +172,7 @@ export default async function QaqcPage() {
           note: d.note,
           decidedByName: nameById.get(d.decidedBy) ?? "Someone no longer on the team",
           decidedAt: d.decidedAt.toISOString(),
+          openAtDecision: openAtDecision(d.evidence),
         })),
       };
     })

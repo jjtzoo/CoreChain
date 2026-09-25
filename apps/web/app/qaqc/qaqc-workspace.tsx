@@ -21,6 +21,8 @@ export type DecisionRow = {
   note: string | null;
   decidedByName: string;
   decidedAt: string;
+  /** What was still open for the hole when the decision was made; null before this was kept. */
+  openAtDecision: string[] | null;
 };
 
 export type ResolvedExceptionRow = {
@@ -249,6 +251,7 @@ function HoleDetail({ hole }: { hole: QaqcHoleRow }) {
                 <th style={{ fontWeight: 600, padding: "6px 10px" }}>Reviewer</th>
                 <th style={{ fontWeight: 600, padding: "6px 10px" }}>Decision</th>
                 <th style={{ fontWeight: 600, padding: "6px 10px" }}>Note</th>
+                <th style={{ fontWeight: 600, padding: "6px 10px" }}>Open at the time</th>
               </tr>
             </thead>
             <tbody>
@@ -262,6 +265,22 @@ function HoleDetail({ hole }: { hole: QaqcHoleRow }) {
                     <span className={decisionPillClass(d.decision)}>{QAQC_DECISION_LABELS[d.decision]}</span>
                   </td>
                   <td style={{ padding: "9px 10px", color: "var(--muted)" }}>{d.note ?? ""}</td>
+                  <td style={{ padding: "9px 10px", color: "var(--muted)" }}>
+                    {d.openAtDecision === null ? (
+                      "Not recorded"
+                    ) : d.openAtDecision.length === 0 ? (
+                      "None"
+                    ) : (
+                      <details>
+                        <summary>{d.openAtDecision.length} open</summary>
+                        <ul style={{ margin: "6px 0 0", paddingLeft: 16 }}>
+                          {d.openAtDecision.map((summary, j) => (
+                            <li key={j}>{summary}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
