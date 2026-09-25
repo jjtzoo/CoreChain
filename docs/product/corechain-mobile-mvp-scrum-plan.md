@@ -1026,6 +1026,19 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - The dependency advisories (item 8) are a separate, reviewed upgrade.
 - Automated tests went from 698 to 719.
 
+### Change register item 2: standards and blanks keep their history (2026-09-25)
+
+**Needs the migration `20260925120000_qc_reference_history` applied before it is merged. Checked in code only; not yet opened in a browser.**
+
+- **Standards and blanks.** A line is never edited in place or deleted.
+  - "Change line" asks why, retires the current revision and adds the next one, recording who, when and why, and which revision it replaces.
+  - "Stop using" asks why and retires the line. It moves to a "No longer used" list and is no longer used to check results.
+  - Each line has a history showing every revision and its values, including for read-only reviewers. Revised lines show "rev N".
+  - Only current lines are used to check results. A partial unique index keeps one current line per team, kind, name and element.
+- **Resolved exceptions** keep the hole, summary and evidence they were resolved on, including the certified value and ± used. If the data or a certified value changes later, the resolution still shows what it was.
+- **Accept, hold and reject decisions** keep the reviewer's stage and the exceptions open for the hole at that moment. They show in the decision history as "Open at the time". Decisions made before this change show "Not recorded".
+- The QA/QC exception calculation moved to `apps/web/lib/qaqc/stage-exceptions.ts`, so the QA/QC screen and its actions use the same code.
+
 ### Change register items 8 and 11: dependency advisories and repository policy (2026-09-25)
 
 - **Added `SECURITY.md`** (report privately through the Security tab's "Report a vulnerability") **and `.github/CODEOWNERS`** (`* @jjtzoo`).

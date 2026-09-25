@@ -4256,6 +4256,68 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   gap: 12px;
 }
 
+.qc-reason-field {
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.qc-reference-reason {
+  grid-column: 1 / -1;
+}
+
+.qc-revision-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+
+.qc-table tbody tr.qc-history-row {
+  border-top: 0;
+  background: var(--surface-muted);
+}
+
+.qc-history,
+.qc-removed-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qc-history li,
+.qc-removed-list li {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) minmax(140px, auto) 1fr;
+  gap: 4px 16px;
+  align-items: baseline;
+  font-size: 0.8rem;
+}
+
+.qc-history-revision {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.qc-history-meta {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .qc-history li,
+  .qc-removed-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-button.is-danger {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, transparent);

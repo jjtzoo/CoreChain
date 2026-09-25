@@ -955,7 +955,7 @@ async function addDemoQcReferences(db: Db, organizationId: string, by: DemoPerso
          (id, organization_id, kind, reference, analyte, unit, expected_value,
           standard_deviation, max_value, created_by, updated_at)
        VALUES ($1, $2, $3::"QcReferenceKind", $4, $5, 'ppm', $6, $7, $8, $9, now())
-       ON CONFLICT (organization_id, kind, lower(reference), lower(analyte)) DO NOTHING`,
+       ON CONFLICT (organization_id, kind, lower(reference), lower(analyte)) WHERE retired_at IS NULL DO NOTHING`,
       randomUUID(),
       organizationId,
       line.kind,
