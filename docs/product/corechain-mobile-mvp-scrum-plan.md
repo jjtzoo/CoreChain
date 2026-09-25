@@ -1038,7 +1038,7 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - **decode-uri-component, via Expo Router's query-string.** It can slow down on a malformed link. Only links into the app itself reach it.
   - **uuid.** Only affected when a buffer is passed in, which CoreChain never does.
   - The other moderate advisories come from Expo SDK packages (expo, expo-router, expo-sharing, expo-splash-screen, datetimepicker, Sentry) and are inherited from the items above.
-  - `npm audit fix --force` would downgrade to years-old majors (for example expo@46 and next@16 previews), so it must not be run.
+  - `npm audit fix --force` would force major version changes, some of them downgrades to years-old versions (for example expo@46, and Next.js 16 without the migration work), so it must not be run.
   - **Tried and undone:** a version override for deepmerge-ts broke Prisma's install step (`prisma generate` could no longer load its config). Overrides for these are not safe.
   - **Plan:** take the fixes with the next planned framework upgrades: Next.js 15 to 16 (it ships a fixed PostCSS), Prisma 6 to 7, and Expo SDK patch releases through `npx expo install --check`. Each is its own branch, with the full checks and a phone build for Expo.
 
