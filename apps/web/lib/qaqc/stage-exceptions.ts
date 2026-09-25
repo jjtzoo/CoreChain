@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 // copy of the evidence a reviewer's resolution or decision was made on.
 
 // A device that has gone quiet this long is worth a reviewer's attention.
-// Generous on purpose: weeks offline are normal for this app (CLAUDE.md).
+// Generous on purpose: weeks offline are normal for this app.
 export const DEVICE_STALE_AFTER_DAYS = 21;
 // A sample sitting uncustodied this long is worth a reviewer's attention.
 export const SAMPLE_STALE_AFTER_DAYS = 14;

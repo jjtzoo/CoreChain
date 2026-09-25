@@ -32,3 +32,6 @@ apps/mobile/ios/
 # Pilot tester logins (passwords). Never commit.
 tester-accounts.private.txt
 *.private.txt
+
+# Working instructions for the coding agent. Kept on the owner's computer only.
+/CLAUDE.md
