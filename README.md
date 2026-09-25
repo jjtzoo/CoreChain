@@ -1,28 +1,49 @@
 # CoreChain
 
-CoreChain is a workflow-validation project for Philippine exploration and mining teams. It begins by proving a daily operational problem is worth solving before production software is built.
+CoreChain is an offline-first workflow platform for exploration and mining teams. It keeps the chain from drillhole to core box, logged interval, sample, custody and laboratory dispatch connected and traceable, including at the rig with no signal.
 
-## Current focus
+It has two parts:
 
-Run a **Day 1–Day 30 pilot** for the highest-value workflow between drill-core receipt, logging, sampling, laboratory results, QA/QC review, and reporting. If the pilot demonstrates real value, use its evidence to define a focused **90-day MVP build**.
+- **CoreChain Field**, an Android app for geologists at the rig and in the core shed: drillholes, core runs, interval logging, photos, samples and custody, working offline and syncing when a connection returns.
+- **The CoreChain website**, for desk work: project managers, QA/QC and the laboratory.
 
-The local application is also being developed as a pilot-quality Phase 1 demonstration using licensed public drillhole data. Its governing build brief is the [Phase 1 masterplan prompt](docs/product/corechain-phase-1-masterplan-prompt.md).
+CoreChain Field is in development testing, not yet released. More about the project, and the tester sign-up: [corechain-orpin.vercel.app](https://corechain-orpin.vercel.app).
 
-## Project map
+## Repository
 
-- `docs/discovery/` — customer, workflow, pilot, and MVP decisions.
-- `docs/outreach/` — messages and materials for customer discovery.
-- `docs/product/` — product pillars, operating context, and the Phase 1 masterplan.
-- `app/`, `components/`, and `lib/` — the CoreChain web application.
-- `data/demo/` — attributed public source data and curated development datasets.
-- `research/` — future market, standards, and field research.
+| Folder            | Contents                                                                  |
+| ----------------- | ------------------------------------------------------------------------- |
+| `apps/mobile`     | CoreChain Field, the Android app (Expo, React Native)                     |
+| `apps/web`        | The website and its server (Next.js)                                      |
+| `packages/domain` | Rules shared by both apps: depths, recovery, samples, custody, validation |
+| `docs/product`    | Product and design documents, the sprint plan, and screen mockups         |
+| `research`        | Background notes on the drill core workflow                               |
 
-## First decision to make
+## Development
 
-Choose the one workflow failure that a real 30-day pilot should test. Identify who experiences it daily, who would pay to remove it, and what evidence would justify a 90-day MVP build.
+```bash
+npm install
+npm run dev          # website, http://localhost:3000
+npm run dev:mobile   # Expo dev server; the app needs a development build, not Expo Go
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
 
-See [the MVP validation brief](docs/discovery/mvp-validation-brief.md) and [the outreach draft](docs/outreach/CoreChain-MVP-outreach.md).
+The website needs a local `apps/web/.env`. Copy `apps/web/.env.example` and fill it in. Never commit it.
+
+## Demo data
+
+All data shown in demos and screenshots is either public or made up:
+
+- `apps/web/data/demo/synthetic-cordillera-porphyry`: a fictional porphyry prospect, written for demos. Not real data.
+- `apps/web/data/demo/alberta-dig-2024-0022`: public drillhole data from the Alberta Energy Regulator / Alberta Geological Survey, under the Open Government Licence – Alberta. See the folder's README for the full attribution.
+
+## Security
+
+Please report a vulnerability privately; see [SECURITY.md](SECURITY.md).
 
 ## Licence
 
-All rights reserved. The code is public to read, not to reuse; see [LICENSE](LICENSE). To report a security problem, see [SECURITY.md](SECURITY.md).
+All rights reserved. The code is public to read, not to reuse; see [LICENSE](LICENSE).
