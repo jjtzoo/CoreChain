@@ -33,9 +33,9 @@ import { Fonts, MinTap, Radius, Spacing, type ThemeColor } from '@/constants/the
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel, statusTone } from '@/utils/status';
 
-// E15-1: the project's collars on a plain grid, drawn with ordinary views (no
-// map library, no map tiles), so it works with no signal and needs no new
-// native code. See packages/domain/src/collarMap.ts for the geometry and
+// E15-1: the project's collars on a plain grid, with each angled hole's trace
+// seen from above, drawn with ordinary views (no map library, no map tiles),
+// so it works with no signal and needs no new native code. See packages/domain/src/collarMap.ts for the geometry and
 // docs/product/mockups/collar-map.html for the design.
 
 const MAP_HEIGHT = 340;
@@ -43,9 +43,14 @@ const MAP_HEIGHT = 340;
 const FIT_PADDING = 48;
 /** A lone collar (or a tight pad) is shown this many metres across. */
 const MIN_SPAN_M = 150;
+// The column of map buttons on the right. Fitting leaves it clear, so no
+// collar sits behind a button.
+const TOOLS_STRIP = MinTap + 2 * Spacing.two;
 const MIN_SCALE = 0.002; // pixels per metre: about 170 km across
 const MAX_SCALE = 20; // about 17 m across
 const DOT = 18;
+/** Half the length of the bar across the end of a hole's trace. */
+const END_TICK = 6;
 /** The usual colour of a "you are here" dot on any map. */
 const HERE_COLOR = '#2F6FD6';
 
@@ -71,13 +76,15 @@ function fitBounds(
   const box = bounds ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 };
   const spanX = Math.max(box.maxX - box.minX, MIN_SPAN_M);
   const spanY = Math.max(box.maxY - box.minY, MIN_SPAN_M);
+  const scale = clamp(
+    Math.min((width - TOOLS_STRIP - 2 * FIT_PADDING) / spanX, (height - 2 * FIT_PADDING) / spanY),
+    MIN_SCALE,
+    MAX_SCALE,
+  );
   return {
-    scale: clamp(
-      Math.min((width - 2 * FIT_PADDING) / spanX, (height - 2 * FIT_PADDING) / spanY),
-      MIN_SCALE,
-      MAX_SCALE,
-    ),
-    cx: (box.minX + box.maxX) / 2,
+    scale,
+    // Centred in the space left of the buttons.
+    cx: (box.minX + box.maxX) / 2 + TOOLS_STRIP / 2 / scale,
     cy: (box.minY + box.maxY) / 2,
   };
 }
@@ -96,6 +103,45 @@ function depthText(hole: FieldDrillhole, progress: number): string {
     hole.actualFinalDepthM == null ? ' planned' : ' final'
   }`;
   return `${depth} · ${Math.round(progress * 100)}% logged`;
+}
+
+function directionText(hole: FieldDrillhole): string | null {
+  const parts = [
+    hole.plannedAzimuthDeg != null ? `Azimuth ${hole.plannedAzimuthDeg}°` : null,
+    hole.plannedInclinationDeg != null ? `dip ${hole.plannedInclinationDeg}°` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/** A straight line between two points on the map, as a rotated bar. */
+function Segment({
+  from,
+  to,
+  color,
+  thickness,
+}: {
+  from: { left: number; top: number };
+  to: { left: number; top: number };
+  color: string;
+  thickness: number;
+}) {
+  const length = Math.hypot(to.left - from.left, to.top - from.top);
+  const angle = Math.atan2(to.top - from.top, to.left - from.left);
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: (from.left + to.left) / 2 - length / 2,
+        top: (from.top + to.top) / 2 - thickness / 2,
+        width: length,
+        height: thickness,
+        borderRadius: thickness / 2,
+        backgroundColor: color,
+        transform: [{ rotate: `${angle}rad` }],
+      }}
+    />
+  );
 }
 
 function MapButton({
@@ -146,6 +192,11 @@ export function CollarMap({
           id: hole.id,
           holeId: hole.holeId,
           collar: hole.collar,
+          plan: {
+            azimuthDeg: hole.plannedAzimuthDeg,
+            inclinationDeg: hole.plannedInclinationDeg,
+            depthM: hole.actualFinalDepthM ?? hole.plannedDepthM,
+          },
           data: { hole, progress: loggingProgress(loggedMetres.get(hole.id) ?? 0, hole) },
         })),
       ),
@@ -307,6 +358,10 @@ export function CollarMap({
     return { vertical, horizontal, step };
   })();
 
+  const holesById = new Map(
+    layout.pads.flatMap((pad) => pad.holes.map((h) => [h.id, h.data.hole] as const)),
+  );
+
   const selectedPad: CollarPad<HoleData> | undefined = layout.pads.find(
     (pad) => pad.key === selected,
   );
@@ -351,6 +406,33 @@ export function CollarMap({
             style={[styles.gridH, { top, backgroundColor: theme.backgroundSelected }]}
           />
         ))}
+
+        {layout.traces.map((trace) => {
+          const from = project(trace.from.x, trace.from.y);
+          const to = project(trace.to.x, trace.to.y);
+          const hole = holesById.get(trace.id);
+          if (!from || !to || !hole) return null;
+          const color = theme[STATUS_DOT[hole.status]];
+          // The tapped hole's trace stands out; the others step back.
+          const onSelected = selectedPad?.holes.some((h) => h.id === trace.id) ?? false;
+          const thickness = onSelected ? 5 : 3;
+          const opacity = selectedPad && !onSelected ? 0.4 : 1;
+          // A short bar across the end of the hole, as on a drill plan.
+          const along = Math.hypot(to.left - from.left, to.top - from.top) || 1;
+          const nx = -(to.top - from.top) / along;
+          const ny = (to.left - from.left) / along;
+          return (
+            <View key={trace.id} pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity }]}>
+              <Segment from={from} to={to} color={color} thickness={thickness} />
+              <Segment
+                from={{ left: to.left - nx * END_TICK, top: to.top - ny * END_TICK }}
+                to={{ left: to.left + nx * END_TICK, top: to.top + ny * END_TICK }}
+                color={color}
+                thickness={thickness}
+              />
+            </View>
+          );
+        })}
 
         {hereLocal && here && view
           ? (() => {
@@ -471,6 +553,14 @@ export function CollarMap({
             You
           </ThemedText>
         </View>
+        {layout.traces.length > 0 ? (
+          <View style={styles.legendItem}>
+            <View style={[styles.legendLine, { backgroundColor: theme.textSecondary }]} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Planned direction, seen from above
+            </ThemedText>
+          </View>
+        ) : null}
       </View>
 
       <ThemedText type="small" themeColor="textSecondary">
@@ -534,6 +624,11 @@ function SelectedPad({
           </View>
         </View>
         <ProgressBar value={progress} label={`${hole.holeId} logging progress`} />
+        {directionText(hole) ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {directionText(hole)}
+          </ThemedText>
+        ) : null}
         {hole.priority === 'urgent' && hole.priorityNote ? (
           <ThemedText type="small" themeColor="danger">
             {hole.priorityNote}
@@ -757,6 +852,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     columnGap: Spacing.three,
     rowGap: Spacing.one,
+  },
+  legendLine: {
+    width: 16,
+    height: 3,
+    borderRadius: 1.5,
   },
   legendItem: {
     flexDirection: 'row',

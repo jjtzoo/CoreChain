@@ -110,6 +110,7 @@ Project → Drillhole → Core boxes & runs (recovery, RQD) → Interval logging
 | D14 | **The phone keeps its own tables and syncs into them with PowerSync raw tables** | Proven on the phone in the Sprint 4 spike: PowerSync opened the app's own encrypted database, downloaded a project into the existing tables, and the app showed it without any screen change. The fallback of moving the repositories onto PowerSync-managed tables is not needed. |
 | D15 | **Five tiers: field geologist, QA/QC, laboratory, resident / project manager, admin** | These are the people who touch a hole's evidence, in the order the chain runs (the operations document says QA/QC starts in the field and continues through sampling, custody and the lab, so it is not one sign-off role). Admin is not a mining role: it looks after accounts. Only admin has extra rights today; the other tiers are stored and used to choose what each person sees and which guide they get. QA/QC is expected to be scoped to a stage (core and logging, sampling and custody, laboratory and assays); the scope is added with the QA/QC screens, after the field test. |
 | D16 | **Testers install a signed APK sent directly, not through Google Play internal testing** (2026-09-23) | A tester may want to keep their own copy of the app going forward, and listing it on the Play Store could work against that. This is separate from, and does not require resolving, the unfunded Play developer account (E10-4 stays deferred either way). |
+| D17 | **A team is the people working around one drill rig, not one hole** (2026-09-25, owner) | They work the rig's holes one after another. The real make-up is not known and is probably several parties with their own decision-making (for example the company's geologists, the drilling contractor, the laboratory and management) that appear as one team in the app. Only the people whose work touches CoreChain get an account, each with one role set by the admin. The app does not fix which roles or companies make up a team. There is no rig record yet; adding one (for example a rig on each hole) is a separate decision. |
 
 ---
 
@@ -588,7 +589,7 @@ Collected from the owner's own testing and from the first geologist tester's sug
 - **Engine: MapLibre React Native** (`@maplibre/maplibre-react-native`, Expo config plugin, works in the existing native build). Free, no API key, built-in offline support. Not `react-native-maps` (Google Maps: needs a billing-linked key, no reliable offline) and not Mapbox (account and paid token).
 - **Map data, the real decision.** OpenStreetMap's own tile servers and OpenFreeMap forbid bulk or offline downloading. Stadia allows offline caching only with an active paid subscription and at most 100 MB per device, which conflicts with the owner's no-ongoing-cost constraint. Chosen direction: cut one PMTiles file per project from the free Protomaps OpenStreetMap build (`pmtiles extract --bbox=...`), host it, and have the phone download it once. MapLibre Native reads `pmtiles://file://...`, but that source does not use MapLibre's own offline-pack system, so the app must download and manage the file itself.
 - **What exists today:** each hole's single collar latitude and longitude (`collar_latitude`, `collar_longitude`, plus source, accuracy and capture time) already sync to the phone, and `expo-location` and `expo-file-system` are already dependencies. There are **no planned collar coordinates**: only planned azimuth, inclination and depth (`schema.prisma`, `Drillhole`).
-- **E15-1 — Collars and a "you are here" dot on a plain background. Built 2026-09-25 (see "Collar map, step 1" in section 7); checked in code only, not yet run on the test phone.** The owner chose to make the map how a geologist picks a hole: a project first, then its holes as a List or a Map. It is drawn with ordinary views, not MapLibre, so it needs no new APK and can ship as an over-the-air patch. MapLibre (11.4, which lists Expo 54+ and React Native 0.80+ as supported) is kept for E15-2, where a real background map needs it. Not built: the small map on the hole screen.
+- **E15-1 — Collars and a "you are here" dot on a plain background. Built 2026-09-25, with hole traces added the same day, and run on the test phone (see "Collar map, step 1" and "Collar map: hole traces" in section 7).** The owner chose to make the map how a geologist picks a hole: a project first, then its holes as a List or a Map. It is drawn with ordinary views, not MapLibre, so it needs no new APK and can ship as an over-the-air patch. MapLibre (11.4, which lists Expo 54+ and React Native 0.80+ as supported) is kept for E15-2, where a real background map needs it. Not built: the small map on the hole screen.
 - **E15-2 — Offline background map per project (about 3 to 5 sessions).** An extract script, somewhere to host the file, a new project field for its location (migration run by the owner), a Wi-Fi-only download with progress on the phone, the map style, and the required "© OpenStreetMap contributors" credit. Hidden cost: a vector style also needs its fonts and icon sprites available offline, either bundled in the APK or downloaded with the map. Caveat to tell testers: OpenStreetMap coverage around remote Philippine sites can be thin, so the map may show little beyond the collars.
 - **E15-3 — Planned collar positions (about 2 sessions), only if wanted.** New planned latitude and longitude on the drillhole: migration, the phone and web forms, and the upload rules in `apps/web/lib/sync/tables.ts`.
 - **E15-4 — Satellite or contours.** Not sized. Most imagery providers restrict offline use; licensing research first.
@@ -1074,6 +1075,32 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - tapping small collars with gloves;
   - the GPS prompt;
   - light and dark themes.
+
+### Collar map: hole traces, and first run on the phone (E15-1, 2026-09-25)
+
+- **Run on the test phone** (Infinix, development build 0.1.1, on the synthetic Cordillera project), in dark theme:
+  - the List / Map switch;
+  - collars and labels, the north arrow, the scale bar and the legend;
+  - dragging the map without scrolling the page;
+  - zoom in;
+  - tapping a collar opens its card, and "Open" goes to the hole;
+  - "Fit all";
+  - "you are here" more than 5 km away shows the distance instead.
+- **A bug found on the phone and fixed:** "Fit all" used the map's full width, so the easternmost collar (CDL-006) sat behind the buttons. Fitting now leaves the button column clear.
+- **Owner's decision:** the plain grid looked too empty. Rather than a background map now (E15-2: a new APK, map files to host, 3 to 5 sessions), each angled hole gets its **trace**:
+  - a line from the collar in the planned azimuth, as long as the depth (final, else planned) times the cosine of the dip, with a short bar at the end of the hole, as on a drill plan;
+  - a vertical hole, or one with no azimuth, dip or depth, stays a dot;
+  - it shows the planned direction only; there is no downhole survey;
+  - the map fits around where the holes end, not just the collars;
+  - the tapped hole's trace is drawn bolder and the others fade;
+  - the card shows "Azimuth 90° · dip -55°".
+  - The geometry is `traceOffset` and `collarMapLayout(...).traces` in `packages/domain/src/collarMap.ts`, with 3 new tests. Also run on the test phone.
+- **Not yet checked on the phone:**
+  - pinch to zoom (it needs two fingers; the phone was driven over USB);
+  - tapping with gloves;
+  - the first-time GPS prompt (location was already allowed);
+  - light theme.
+- Still JavaScript only, but main is app version 0.1.1 while testers have 0.1.0, so the map reaches testers in the next APK, not as an over-the-air patch.
 
 ---
 

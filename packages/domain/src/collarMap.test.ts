@@ -11,6 +11,7 @@ import {
   nearestPad,
   scaleBarMetres,
   toLocalMetres,
+  traceOffset,
   type CollarMapHole,
   type LatLon,
 } from "./collarMap";
@@ -106,5 +107,39 @@ describe("scaleBarMetres", () => {
     expect(scaleBarMetres(1_900)).toBe(1_000);
     expect(scaleBarMetres(4)).toBe(2);
     expect(scaleBarMetres(0)).toBe(1);
+  });
+});
+
+describe("hole traces", () => {
+  it("runs along the azimuth for the depth times the cosine of the dip", () => {
+    const south = traceOffset({ azimuthDeg: 180, inclinationDeg: -60, depthM: 250 });
+    expect(south!.x).toBeCloseTo(0, 6);
+    expect(south!.y).toBeCloseTo(-125, 6);
+    const east = traceOffset({ azimuthDeg: 90, inclinationDeg: 60, depthM: 100 });
+    expect(east!.x).toBeCloseTo(50, 6);
+    expect(east!.y).toBeCloseTo(0, 6);
+  });
+
+  it("draws no trace for a vertical hole or a missing direction, dip or depth", () => {
+    expect(traceOffset({ azimuthDeg: 0, inclinationDeg: -90, depthM: 300 })).toBeNull();
+    expect(traceOffset({ azimuthDeg: null, inclinationDeg: -90, depthM: 300 })).toBeNull();
+    expect(traceOffset({ azimuthDeg: null, inclinationDeg: -60, depthM: 300 })).toBeNull();
+    expect(traceOffset({ azimuthDeg: 45, inclinationDeg: null, depthM: 300 })).toBeNull();
+    expect(traceOffset({ azimuthDeg: 45, inclinationDeg: -60, depthM: null })).toBeNull();
+    expect(traceOffset({ azimuthDeg: 45, inclinationDeg: -60, depthM: 0 })).toBeNull();
+    expect(traceOffset(undefined)).toBeNull();
+  });
+
+  it("starts each trace at its own collar and fits the map around where the holes end", () => {
+    const layout = collarMapLayout([
+      { ...hole("a", offset(0, 0)), plan: { azimuthDeg: 90, inclinationDeg: -60, depthM: 400 } },
+      { ...hole("b", offset(100, 0)), plan: { azimuthDeg: 0, inclinationDeg: -90, depthM: 300 } },
+    ]);
+    expect(layout.traces).toHaveLength(1);
+    const [trace] = layout.traces;
+    expect(trace!.id).toBe("a");
+    expect(trace!.planLengthM).toBeCloseTo(200, 6);
+    expect(trace!.to.x - trace!.from.x).toBeCloseTo(200, 6);
+    expect(layout.bounds!.maxX - layout.bounds!.minX).toBeCloseTo(200, 0);
   });
 });
