@@ -8,7 +8,10 @@
   ],
   "overrides": {
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "next": {
+      "postcss": "^8.5.23"
+    }
   },
   "scripts": {
     "dev": "npm run dev --workspace apps/web",
