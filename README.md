@@ -1,49 +1,34 @@
 # CoreChain
 
-CoreChain is an offline-first workflow platform for exploration and mining teams. It keeps the chain from drillhole to core box, logged interval, sample, custody and laboratory dispatch connected and traceable, including at the rig with no signal.
+Drill core passes through a lot of hands before it turns into an assay result. The driller boxes it, a geologist logs it, someone cuts and bags the samples, and weeks later a laboratory sends back numbers. Along the way the record usually ends up split between a field notebook, a few spreadsheets, a chat thread and the lab's own files. When a result looks wrong, tracing it back to the hole, the box, the depth and the person who handled it takes far longer than it should.
 
-It has two parts:
+CoreChain is our attempt to keep that whole chain in one place, built with exploration and mining teams in the Philippines in mind.
 
-- **CoreChain Field**, an Android app for geologists at the rig and in the core shed: drillholes, core runs, interval logging, photos, samples and custody, working offline and syncing when a connection returns.
-- **The CoreChain website**, for desk work: project managers, QA/QC and the laboratory.
+Most of the work happens at the rig and in the core shed, often with no signal, so the main piece is CoreChain Field, an Android app. Geologists use it to log drillholes, core runs, intervals, photos, samples and custody on the phone, fully offline, and it syncs once a connection comes back. The website covers the desk side of the same work, for project managers, QA/QC and the laboratory.
 
-CoreChain Field is in development testing, not yet released. More about the project, and the tester sign-up: [corechain-orpin.vercel.app](https://corechain-orpin.vercel.app).
+CoreChain Field is in development testing and not yet released. If you log core or work with drilling data and would like to try it, you can request tester access at [corechain-orpin.vercel.app](https://corechain-orpin.vercel.app).
 
-## Repository
+## Inside this repository
 
-| Folder            | Contents                                                                  |
-| ----------------- | ------------------------------------------------------------------------- |
-| `apps/mobile`     | CoreChain Field, the Android app (Expo, React Native)                     |
-| `apps/web`        | The website and its server (Next.js)                                      |
-| `packages/domain` | Rules shared by both apps: depths, recovery, samples, custody, validation |
-| `docs/product`    | Product and design documents, the sprint plan, and screen mockups         |
-| `research`        | Background notes on the drill core workflow                               |
+The phone app lives in `apps/mobile` (Expo and React Native), and the website and its server in `apps/web` (Next.js). The rules both of them share, such as depth checks, recovery, sample numbering and custody, sit in `packages/domain`, so the phone and the website apply them the same way. Product and design notes, the sprint plan and screen mockups are in `docs/product`.
 
-## Development
+To run it locally:
 
 ```bash
 npm install
-npm run dev          # website, http://localhost:3000
-npm run dev:mobile   # Expo dev server; the app needs a development build, not Expo Go
+npm run dev          # the website, at http://localhost:3000
+npm run dev:mobile   # the phone app; it needs a development build, Expo Go won't work
 npm test
-npm run typecheck
-npm run lint
-npm run build
 ```
 
-The website needs a local `apps/web/.env`. Copy `apps/web/.env.example` and fill it in. Never commit it.
+The website reads its settings from `apps/web/.env`. Start from `apps/web/.env.example`, and keep the real file out of git.
 
-## Demo data
+## About the data you'll see
 
-All data shown in demos and screenshots is either public or made up:
+Nothing in the demos or screenshots comes from a real client. The Cordillera porphyry project in `apps/web/data/demo/synthetic-cordillera-porphyry` is made up from start to finish. The Alberta drillholes in `apps/web/data/demo/alberta-dig-2024-0022` are public data from the Alberta Energy Regulator and Alberta Geological Survey, used under the Open Government Licence – Alberta; that folder's README has the full credit.
 
-- `apps/web/data/demo/synthetic-cordillera-porphyry`: a fictional porphyry prospect, written for demos. Not real data.
-- `apps/web/data/demo/alberta-dig-2024-0022`: public drillhole data from the Alberta Energy Regulator / Alberta Geological Survey, under the Open Government Licence – Alberta. See the folder's README for the full attribution.
+## Security and licence
 
-## Security
+If you find a security problem, please report it privately rather than in a public issue. [SECURITY.md](SECURITY.md) explains how.
 
-Please report a vulnerability privately; see [SECURITY.md](SECURITY.md).
-
-## Licence
-
-All rights reserved. The code is public to read, not to reuse; see [LICENSE](LICENSE).
+The code is public so it can be read and reviewed, but all rights are reserved. See [LICENSE](LICENSE).
