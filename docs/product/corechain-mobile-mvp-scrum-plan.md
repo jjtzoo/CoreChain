@@ -1113,6 +1113,36 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
 - **Off until the owner switches it on:** create a Resend account with the address that should receive the emails, then set `RESEND_API_KEY` and `FEEDBACK_NOTIFY_EMAIL` in Vercel.
 - **Note:** the feedback text passes through Resend on its way to the owner.
 
+### Lithology dictionary and rock units (phone, 2026-09-25)
+
+**Owner's request, for the showcase:** a lithology dictionary, and aggregating depths of the same rock and properties. Mockup: `docs/product/mockups/lithology-dictionary.html`, with every number calculated from the synthetic Cordillera logs.
+
+- **Lithology, from the project screen.** A card shows the core's make-up as one bar ("AND 45% · PORP 34% · DIO 15%").
+  - It opens the project's dictionary: every rock type logged, most first, with metres, share of core, holes, units, depth range, and a rock group (volcanic, intrusive, cover...).
+  - A link at the bottom opens the code library, where the team adds or renames its own codes.
+- **One rock type:**
+  - a short starter description;
+  - metres, holes, units, and the thickest unit;
+  - typical alteration by length, with the usual intensity;
+  - mineralisation where logged, as length-weighted percentages;
+  - "where it occurs": each hole to scale, with this rock's units marked. Tapping a hole opens its rock units.
+- **Rock units, a new tile on each hole.** Touching intervals of the same lithology merge into units. For example, CDL-001's 13 intervals read as 7 units.
+  - "Lithology + alteration" splits them again wherever the alteration type changes (12 domains).
+  - A gap in the log, or an interval with no lithology, ends a unit. The log itself is never changed.
+- **Rules and code:**
+  - Everything is calculated on the phone from its own data, so it works offline. There's no database change.
+  - The descriptions and rock groups exist only for the starter codes. A team's own codes show their code-library name and no group; editing groups would need a synced field (a migration).
+  - Code: `packages/domain/src/lithology.ts` (`rockUnits`, `lithologyDictionary`), with 8 tests. Screens: `lithology/index.tsx`, `lithology/[code].tsx` and `drillholes/[drillholeId]/units.tsx`.
+- **Run on the test phone** (development build, dark theme, synthetic Cordillera project):
+  - the card;
+  - the dictionary;
+  - Porphyry;
+  - "where it occurs" through to a hole's units;
+  - both unit modes;
+  - the hole tile;
+  - the code-library link.
+- **Not checked:** light theme, and a project with nothing logged (the empty state).
+
 ---
 
 ## 8. Field-test plan

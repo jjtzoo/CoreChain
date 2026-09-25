@@ -184,6 +184,18 @@ function AppStackScreens({
           options={{ title: 'Hole log' }}
         />
         <Stack.Screen
+          name="projects/[projectId]/drillholes/[drillholeId]/units"
+          options={{ title: 'Rock units' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/lithology/index"
+          options={{ title: 'Lithology' }}
+        />
+        <Stack.Screen
+          name="projects/[projectId]/lithology/[code]"
+          options={{ title: 'Rock type' }}
+        />
+        <Stack.Screen
           name="projects/[projectId]/samples/[sampleId]"
           options={{ title: 'Sample' }}
         />

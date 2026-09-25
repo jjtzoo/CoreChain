@@ -64,6 +64,19 @@ export async function listIntervals(drillholeId: string): Promise<LogInterval[]>
   return (rows as unknown as IntervalRow[]).map(rowToInterval);
 }
 
+/** Every logged interval in a project, for the lithology dictionary. */
+export async function listIntervalsByProject(projectId: string): Promise<LogInterval[]> {
+  const db = await getDatabase();
+  const { rows } = await db.execute(
+    `SELECT i.* FROM log_intervals i
+     JOIN drillholes d ON d.id = i.drillhole_id
+     WHERE d.project_id = ? AND i.deleted_at IS NULL AND d.deleted_at IS NULL
+     ORDER BY i.drillhole_id, i.from_m, i.to_m`,
+    [projectId],
+  );
+  return (rows as unknown as IntervalRow[]).map(rowToInterval);
+}
+
 /**
  * Total metres logged per drillhole in a project, overlaps counted once — the
  * "% logged" on the drillhole list (E2-4).

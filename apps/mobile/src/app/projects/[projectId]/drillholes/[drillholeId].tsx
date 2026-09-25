@@ -7,6 +7,7 @@ import {
   loggingProgress,
   normaliseDateInput,
   overallRecoveryPercent,
+  rockUnits,
   validateActualDates,
   type FieldCoreBox,
   type FieldCoreRun,
@@ -327,6 +328,15 @@ export default function DrillholeDetailScreen() {
             disabled={guiding}
             onPress={() => go('/log')}
           />
+          {intervals.length > 0 ? (
+            <ActionTile
+              icon="layers-triple-outline"
+              title="Rock units"
+              detail={count(rockUnits(intervals).length, 'unit', 'units')}
+              disabled={guiding}
+              onPress={() => go('/units')}
+            />
+          ) : null}
           <ActionTile
             icon="flask-outline"
             title="Samples"
