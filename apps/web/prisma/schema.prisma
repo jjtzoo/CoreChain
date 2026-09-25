@@ -20,11 +20,12 @@
 // personal workspace uses the user's own id as its organization id and never
 // gets an organizations row of its own.
 //
-// hole_assignments, qaqc_exception_resolutions, qaqc_review_decisions and
-// assay_results (E11-6, E12-2, E12-3, E13-3) are web-only records about the
-// work, not part of it: none of them appear in sync-streams.yaml, so a
-// manager's assignment, a QA/QC reviewer's note, or a laboratory result can
-// never block or depend on a geologist's own offline logging.
+// hole_assignments, qaqc_exception_resolutions, qaqc_review_decisions,
+// assay_results and qc_reference_values (E11-6, E12-2, E12-3, E13-3, E12-4)
+// are web-only records about the work, not part of it: none of them appear in
+// sync-streams.yaml, so a manager's assignment, a QA/QC reviewer's note, a
+// laboratory result or a standard's certified value can never block or
+// depend on a geologist's own offline logging.
 //
 // Rules the migration adds in raw SQL, because Prisma can't express them:
 //   - sample_number_blocks: an EXCLUDE constraint on int4range(start_number,
@@ -94,6 +95,12 @@ enum ControlType {
   standard
   blank
   duplicate
+}
+
+// E12-4: which kind of control a qc_reference_values line describes.
+enum QcReferenceKind {
+  standard
+  blank
 }
 
 enum PhotoSubjectType {
@@ -482,6 +489,34 @@ model AssayResult {
   @@index([dispatchId])
   @@index([sampleId])
   @@map("assay_results")
+}
+
+// E12-4: the team's standards-and-blanks list, used to check the laboratory's
+// results for the control samples (packages/domain/src/labQc.ts). A standard
+// line holds the certified value and standard deviation from its certificate;
+// a blank line holds the highest acceptable value. Web-only, like
+// assay_results: the phone records which standard was inserted
+// (samples.standard_ref), never the certified values.
+//
+// One line per team, kind, name and element, ignoring case, because the
+// checks match names ignoring case: a unique index on
+// (organization_id, kind, lower(reference), lower(analyte)) is added in the
+// migration's raw SQL, since Prisma can't express it.
+model QcReferenceValue {
+  id                String          @id @default(cuid())
+  organizationId    String          @map("organization_id")
+  kind              QcReferenceKind
+  reference         String
+  analyte           String
+  unit              String?
+  expectedValue     Float?          @map("expected_value")
+  standardDeviation Float?          @map("standard_deviation")
+  maxValue          Float?          @map("max_value")
+  createdBy         String          @map("created_by")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("qc_reference_values")
 }
 
 // E7-2: which samples are in which dispatch. A row is removed (deleted_at) when

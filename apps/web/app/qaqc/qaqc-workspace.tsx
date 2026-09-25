@@ -164,7 +164,7 @@ const STAGE_EMPTY_HINT: Record<QaqcStage, string> = {
   sampling_custody:
     "No open exceptions. QC insertion rates are on target and no sample has stalled before dispatch.",
   laboratory_assays:
-    "Laboratory results aren't tracked in the app yet, so there is nothing to review for this stage.",
+    "No open exceptions. Every standard, blank and duplicate with results is within its limits, and no returned batch is missing a result.",
 };
 
 const STAGE_HELP: Record<QaqcStage, string> = {
@@ -509,7 +509,7 @@ export function QaqcWorkspace({
           <section className="admin-card" aria-labelledby="how-title">
             <h2 id="how-title">How this screen works</h2>
             <ol style={{ margin: 0, paddingLeft: 18, fontSize: "0.8rem", color: "var(--muted)", lineHeight: 1.6 }}>
-              <li>Exceptions are computed from evidence the field already logged for {STAGE_HELP[stage]} — nothing here is entered by hand.</li>
+              <li>Exceptions are computed from evidence already recorded for {STAGE_HELP[stage]} — nothing here is entered by hand.</li>
               <li>Resolve one with a reason, or leave it open for the next reviewer.</li>
               <li>Record Accept, Hold or Reject on the hole once you&apos;ve reviewed its evidence.</li>
             </ol>

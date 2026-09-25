@@ -26,6 +26,9 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 // the laboratory in two batches, the first received with results entered
 // (illustrative values, not the survey's assays), the second still in transit.
 // The Cordillera samples are left unbagged so custody can be tried by hand.
+// The team's standards-and-blanks list gets the demo standard and blank, and
+// the first dispatch's standard reads high for copper, so the laboratory
+// QA/QC check has one failure to show.
 //
 // Loading again replaces the earlier copy in that workspace; nothing else is
 // touched. All of it happens in one transaction, so a failure never leaves
@@ -888,8 +891,12 @@ function addAlbertaChain(
 /**
  * Illustrative copper and zinc results (ppm), not the survey's assays: a blank
  * below detection, a standard, and a duplicate within a few per cent of its
- * original, so the laboratory and QA/QC screens have realistic numbers.
+ * original, so the laboratory and QA/QC screens have realistic numbers. The
+ * standard's copper reads high (910 against a certified 742 ± 20, beyond
+ * 3 SD), so the laboratory QA/QC check has one failed standard to review.
  */
+export const DEMO_STANDARD_GRADE = { cu: 910, zn: 131 };
+
 function addResults(
   rows: RowBuffer,
   org: string,
@@ -915,7 +922,7 @@ function addResults(
   samples.forEach((sample, i) => {
     let grade: { cu: number | null; zn: number | null };
     if (sample.sampleType === "blank") grade = { cu: null, zn: null };
-    else if (sample.sampleType === "standard") grade = { cu: 742, zn: 131 };
+    else if (sample.sampleType === "standard") grade = DEMO_STANDARD_GRADE;
     else if (sample.sampleType === "duplicate") {
       const original = primary.get(sample.parentId ?? "") ?? { cu: 400, zn: 90 };
       grade = { cu: Math.round(original.cu * 1.04), zn: Math.round(original.zn * 0.97) };
@@ -927,6 +934,48 @@ function addResults(
     result(sample, "Cu", grade.cu);
     result(sample, "Zn", grade.zn);
   });
+}
+
+/**
+ * The certified values and blank limits the demo's control samples are
+ * checked against (illustrative, not taken from a certificate). A team's own
+ * line for the same standard or blank and element is kept, never overwritten.
+ */
+export const DEMO_QC_REFERENCES = [
+  { kind: "standard", reference: "OREAS 45e", analyte: "Cu", expected: 742, sd: 20, max: null },
+  { kind: "standard", reference: "OREAS 45e", analyte: "Zn", expected: 131, sd: 6, max: null },
+  { kind: "blank", reference: "Blank", analyte: "Cu", expected: null, sd: null, max: 10 },
+  { kind: "blank", reference: "Blank", analyte: "Zn", expected: null, sd: null, max: 10 },
+] as const;
+
+async function addDemoQcReferences(db: Db, organizationId: string, by: DemoPerson): Promise<void> {
+  for (const line of DEMO_QC_REFERENCES) {
+    await db.$executeRawUnsafe(
+      `INSERT INTO qc_reference_values
+         (id, organization_id, kind, reference, analyte, unit, expected_value,
+          standard_deviation, max_value, created_by, updated_at)
+       VALUES ($1, $2, $3::"QcReferenceKind", $4, $5, 'ppm', $6, $7, $8, $9, now())
+       ON CONFLICT (organization_id, kind, lower(reference), lower(analyte)) DO NOTHING`,
+      randomUUID(),
+      organizationId,
+      line.kind,
+      line.reference,
+      line.analyte,
+      line.expected,
+      line.sd,
+      line.max,
+      by.id,
+    );
+  }
+}
+
+/** Removes the standards-and-blanks lines the demo crew added. */
+async function removeDemoQcReferences(db: Db, organizationId: string): Promise<void> {
+  await db.$executeRawUnsafe(
+    `DELETE FROM qc_reference_values WHERE organization_id = $1 AND starts_with(created_by, $2)`,
+    organizationId,
+    demoAccountPrefix(organizationId),
+  );
 }
 
 const BUILDERS: Record<DemoProjectKey, (rows: RowBuffer, org: string, crew: Crew) => DemoSummary> = {
@@ -952,6 +1001,15 @@ export async function loadDemoProjects(
       await removeDemoProjects(tx, target.organizationId, which.map((k) => DEMO_PROJECTS[k]));
       if (team) await upsertDemoCrew(tx, target.organizationId);
       await rows.flush(tx);
+      if (which.includes("alberta")) {
+        // A fresh copy puts back the demo's own lines, as first loaded.
+        if (team) await removeDemoQcReferences(tx, target.organizationId);
+        await addDemoQcReferences(
+          tx,
+          target.organizationId,
+          crew.qaqc?.laboratory_assays ?? crew.laboratory,
+        );
+      }
     },
     { timeout: 60_000, maxWait: 10_000 },
   );
@@ -961,6 +1019,7 @@ export async function loadDemoProjects(
 /** Removes a team's demo projects and its demo crew. */
 export async function removeDemo(db: Db, organizationId: string): Promise<number> {
   const removed = await removeDemoProjects(db, organizationId);
+  await removeDemoQcReferences(db, organizationId);
   await removeDemoCrew(db, organizationId);
   return removed;
 }
