@@ -990,6 +990,42 @@ The live server and sign-in are also up: the web app is on Vercel (`corechain-or
     - Export on the Cordillera sample opened, and Share brought up the share sheet with the right file name.
   - **Not seen on the phone:** the small looping C inside a button, because Share finished too quickly to catch it. Typecheck, lint and the Android bundle also pass.
 
+### Change register, first batch: laboratory QA/QC and server checks (2026-09-25)
+
+An engineering change register reviewed the code at `d25db2f`. This batch covers its items that need no database change. **Checked in code only (tests, typecheck, lint, build); nothing here runs on the phone.**
+
+- **Units (item 1).** A standard, blank or duplicate is compared only when both sides are in the same unit (case and spacing ignored). Nothing is converted. A different or missing unit raises a new `unit_mismatch` exception ("Units don't match") showing both values and units, and the result is not scored until someone fixes it. A standards-and-blanks line now needs a unit.
+- **Blank limits (item 3).** A blank that names its material uses only that material's limit. A blank that names none uses the team's limit for the element only when there is exactly one; if there are several, it is raised as `qc_reference_missing` ("Which blank limit applies?") instead of being checked against a guess.
+- **Batch order (item 4).** "Two warnings in a row" now follows the dispatch sheet's order: sample numbers compared as numbers, so S-2 comes before S-10. The rule and the sheet share one `compareSampleNumbers`. It stays within one dispatch, and a corrected result keeps its sample's place. A stored sequence per batch is not needed while the sheet sets the laboratory's order.
+- **Server checks (item 6).**
+  - The upload now refuses any record that breaks a rule the phone also refuses (`apps/web/lib/sync/rules.ts`). For a change to part of a record, it checks the stored record with the change applied. The rules are:
+    - depths of 0 m or more, with "to" past "from";
+    - RQD pieces no longer than the core recovered;
+    - box number 1 or higher;
+    - angles, latitude/longitude and mineral % in range;
+    - a primary sample has both depths.
+  - References must stay in the record's own project (for a photo, its own hole): a duplicate's original, a dispatch's samples, and custody events' samples, dispatch and corrected step.
+  - New refusal codes `invalid-record` and `reference-not-found` have plain descriptions on the phone's Account screen. Older builds show the generic text, with the code and the rule as detail.
+- **Overlaps are not refused, on purpose.** Two offline phones can each bag the same core, and both bags are real. A refused change is not sent again by itself, so refusing one would lose a real record. Overlapping primary samples are a new `sample_overlap` exception in the sampling-and-custody queue. Run gaps, overlaps and runs past the final depth were already exceptions.
+- **Tests for who may edit standards and blanks (item 5):**
+  - the project manager and the laboratory QA/QC reviewer can edit, and only their own team's lines;
+  - other QA/QC stages, geologists and laboratory accounts cannot;
+  - a signed-out person or one with no team is refused;
+  - values that aren't numbers or are infinite, and a line with no unit, are refused;
+  - a second line with the same name and element gets a clear message.
+- **CI and deploy (items 9, 10).**
+  - The workflow's token is read-only (`permissions: contents: read`).
+  - The actions are pinned to their v4 commits.
+  - The build gets placeholder sign-in settings, so auth errors fail CI instead of being logged and ignored.
+  - Expo Doctor runs the version pinned in `apps/mobile` (1.20.4), with no download.
+  - `apps/web/scripts/check-env.mjs` stops a Vercel production build when `DATABASE_URL` or `BETTER_AUTH_SECRET` is missing, so the previous deployment stays live. Elsewhere it only warns.
+- **Not in this batch:**
+  - Versioned standards and blanks (item 2) need a migration, on their own branch.
+  - Licence, security policy and code owners (item 11), and the GitHub settings (item 12), are the owner's to decide or click.
+  - The two-phone test (item 7) needs two devices.
+  - The dependency advisories (item 8) are a separate, reviewed upgrade.
+- Automated tests went from 698 to 719.
+
 ---
 
 ## 8. Field-test plan

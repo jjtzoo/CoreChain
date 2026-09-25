@@ -129,6 +129,99 @@ describe("laboratoryAssayExceptions", () => {
     expect(kinds({ ...base, results: [result("o", 2), result("d", null, { belowDetection: true })] })).toEqual([]);
   });
 
+  it("orders a batch by sample number as the dispatch sheet does, numbers as numbers", () => {
+    // S-2 comes before S-10: two high readings in a row fail the second one.
+    const samples = [std("a", "S-10"), std("b", "S-2")];
+    const out = laboratoryAssayExceptions({
+      samples,
+      batches: [],
+      references: [oreas],
+      results: [result("b", 790), result("a", 795)],
+    });
+    expect(out.map((e) => [e.kind, e.summary.split(": ")[1]])).toEqual([
+      ["standard_warning", "S-2"],
+      ["standard_failed", "S-10"],
+    ]);
+    // Readings from separate dispatches are never consecutive.
+    expect(
+      kinds({
+        samples,
+        batches: [],
+        references: [oreas],
+        results: [result("b", 790), result("a", 795, { dispatchId: "d2" })],
+      }),
+    ).toEqual(["standard_warning", "standard_warning"]);
+  });
+
+  it("keeps a corrected result in the same place in the batch", () => {
+    const samples = [std("a", "S-1"), std("b", "S-2")];
+    const out = kinds({
+      samples,
+      batches: [],
+      references: [oreas],
+      results: [
+        result("a", 790),
+        result("b", 700),
+        result("b", 795, { enteredAt: "2026-09-25T00:00:00Z" }),
+      ],
+    });
+    expect(out).toEqual(["standard_warning", "standard_failed"]);
+  });
+
+  it("checks results only against a certified value or limit in the same unit", () => {
+    const base = { batches: [], references: [oreas, blankLimit] };
+    // Same unit, any case or spacing: checked as usual.
+    expect(kinds({ ...base, samples: [std("s", "5")], results: [result("s", 742, { unit: " PPM " })] })).toEqual([]);
+    // 0.0742 % is 742 ppm, but nothing is converted: raised, not scored.
+    const percent = laboratoryAssayExceptions({
+      ...base,
+      samples: [std("s", "5")],
+      results: [result("s", 0.0742, { unit: "%" })],
+    });
+    expect(percent.map((e) => e.kind)).toEqual(["unit_mismatch"]);
+    expect(percent[0]!.evidence).toContain("0.0742 (%)");
+    expect(percent[0]!.evidence).toContain("742 (ppm)");
+    // A missing unit never passes silently.
+    expect(kinds({ ...base, samples: [std("s", "5")], results: [result("s", 742, { unit: null })] })).toEqual(["unit_mismatch"]);
+    expect(kinds({ ...base, samples: [std("s", "5")], results: [result("s", 742, { unit: "  " })] })).toEqual(["unit_mismatch"]);
+    // A line with no unit can't vouch for a result either.
+    expect(
+      kinds({ batches: [], references: [{ ...oreas, unit: null }], samples: [std("s", "5")], results: [result("s", 742)] }),
+    ).toEqual(["unit_mismatch"]);
+    // Blanks and duplicates follow the same rule.
+    expect(kinds({ ...base, samples: [sample("b", "7", "blank")], results: [result("b", 0.002, { unit: "%" })] })).toEqual(["unit_mismatch"]);
+    const pair = [sample("o", "8", "primary"), sample("d", "9", "duplicate", { parentSampleId: "o" })];
+    expect(kinds({ ...base, samples: pair, results: [result("o", 1200), result("d", 0.12, { unit: "%" })] })).toEqual(["unit_mismatch"]);
+    expect(kinds({ ...base, samples: pair, results: [result("o", 1200, { unit: "PPM" }), result("d", 1250)] })).toEqual([]);
+  });
+
+  it("uses only a named blank's own limit, and never guesses between blank materials", () => {
+    const quartz: QcReferenceValue = { ...blankLimit, reference: "Quartz blank", maxValue: 50 };
+    const named = sample("b", "7", "blank", { standardRef: "Quartz blank" });
+    // A named material uses its own limit (50), not the other blank's (10).
+    expect(kinds({ samples: [named], batches: [], references: [blankLimit, quartz], results: [result("b", 30)] })).toEqual([]);
+    // A named material with no line of its own is raised, not checked against another.
+    const unknown = laboratoryAssayExceptions({
+      samples: [sample("b", "7", "blank", { standardRef: "Basalt blank" })],
+      batches: [],
+      references: [blankLimit],
+      results: [result("b", 30)],
+    });
+    expect(unknown.map((e) => e.kind)).toEqual(["qc_reference_missing"]);
+    expect(unknown[0]!.summary).toBe("No Basalt blank limit for Cu");
+    // No material named: the only limit for the element applies...
+    expect(kinds({ samples: [sample("b", "7", "blank")], batches: [], references: [blankLimit], results: [result("b", 30)] })).toEqual(["blank_failed"]);
+    // ...but with several, the choice is ambiguous and raised.
+    const ambiguous = laboratoryAssayExceptions({
+      samples: [sample("b", "7", "blank")],
+      batches: [],
+      references: [blankLimit, quartz],
+      results: [result("b", 30)],
+    });
+    expect(ambiguous.map((e) => e.kind)).toEqual(["qc_reference_missing"]);
+    expect(ambiguous[0]!.evidence).toContain("Cu has limits for Blank and Quartz blank");
+  });
+
   it("flags a sample with no result only once the batch is marked complete", () => {
     const samples = [sample("o", "8", "primary")];
     const batch = { dispatchId: "d1", dispatchNumber: "DSP-001", sampleIds: ["o"] };
@@ -146,5 +239,8 @@ describe("validateQcReferenceValue", () => {
     expect(validateQcReferenceValue({ ...oreas, reference: " " })).toMatch(/name/);
     expect(validateQcReferenceValue({ ...blankLimit, maxValue: null })).toMatch(/limit/);
     expect(validateQcReferenceValue({ ...oreas, analyte: "" })).toMatch(/element/);
+    expect(validateQcReferenceValue({ ...oreas, unit: " " })).toMatch(/unit/);
+    expect(validateQcReferenceValue({ ...oreas, expectedValue: Number.NaN })).toMatch(/certified value/);
+    expect(validateQcReferenceValue({ ...blankLimit, maxValue: Number.POSITIVE_INFINITY })).toMatch(/limit/);
   });
 });

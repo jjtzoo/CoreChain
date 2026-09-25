@@ -125,6 +125,36 @@ describe("samplingCustodyExceptions", () => {
     );
   });
 
+  it("flags primary samples that overlap, once per pair, and not ones end to end", () => {
+    const primary = (id: string, fromM: number, toM: number) => ({
+      id,
+      sampleNumber: id.toUpperCase(),
+      type: "primary" as const,
+      status: "dispatched" as const,
+      createdAt: "2026-09-20T00:00:00Z",
+      fromM,
+      toM,
+    });
+    const hole: HoleSamplesInput = {
+      drillholeId: "h1",
+      holeId: "DDH-01",
+      samples: [
+        primary("a", 0, 1),
+        primary("b", 1, 2),
+        primary("c", 1.5, 2.5),
+        { ...primary("s", 0, 0), type: "standard", fromM: null, toM: null },
+      ],
+      qcRates: { standardEveryN: 0, blankEveryN: 0, duplicateEveryN: 0 },
+    };
+    const overlaps = samplingCustodyExceptions([hole], {
+      now,
+      staleAfterDays: 14,
+    }).filter((e) => e.kind === "sample_overlap");
+    expect(overlaps.map((e) => [e.key, e.summary])).toEqual([
+      ["sample_overlap:b:c", "B and C overlap at 1.5–2 m"],
+    ]);
+  });
+
   it("flags a sample stalled before dispatch past the threshold", () => {
     const hole: HoleSamplesInput = {
       drillholeId: "h1",

@@ -6,14 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+# The workflow only reads the code; its token can't push, comment or release.
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Typecheck, lint, test, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Pinned to the reviewed commit of each v4 release, not a moving tag.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -30,9 +37,17 @@ jobs:
       - name: Test (apps/web, packages/domain)
         run: npm test
 
+      # Placeholder sign-in settings for the build only, so a missing or broken
+      # auth setting shows up as an error here instead of being logged and
+      # ignored. They are not secrets and are never used by a running site;
+      # the real values live in Vercel's environment settings.
       - name: Build (apps/web)
         run: npm run build
+        env:
+          BETTER_AUTH_SECRET: ci-build-placeholder-not-a-secret-0123456789abcdef
+          BETTER_AUTH_URL: http://localhost:3000
 
+      # The version pinned in apps/mobile/package.json, never a fresh download.
       - name: Expo config sanity check (apps/mobile)
         working-directory: apps/mobile
-        run: npx expo-doctor
+        run: npx --no-install expo-doctor

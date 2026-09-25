@@ -81,6 +81,8 @@ export default async function QaqcPage() {
             status: true,
             standardRef: true,
             parentSampleId: true,
+            fromM: true,
+            toM: true,
             createdAt: true,
           },
         },
@@ -141,6 +143,8 @@ export default async function QaqcPage() {
                 type: s.sampleType,
                 status: s.status,
                 createdAt: s.createdAt.toISOString(),
+                fromM: s.fromM,
+                toM: s.toM,
               })),
               qcRates: {
                 standardEveryN: h.project.qcStandardEveryN,

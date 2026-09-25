@@ -9,6 +9,12 @@ import {
   updateStatement,
   type Prepared,
 } from "./prepare";
+import {
+  REFERENCES,
+  checkedColumns,
+  recordRuleError,
+  touchesRuleColumns,
+} from "./rules";
 import { currentDeviceWorkspace } from "../devices";
 import { prisma } from "../prisma";
 
@@ -89,6 +95,39 @@ async function projectIdOf(
   return rows[0]?.project_id ?? null;
 }
 
+/**
+ * The first reference column pointing outside the record's own project (or,
+ * for a photo, its own hole) or organization, or null. The row is the record
+ * as it would be stored.
+ */
+async function referenceError(
+  tx: Tx,
+  table: string,
+  row: Record<string, unknown>,
+  projectId: string | null,
+  orgId: string,
+): Promise<string | null> {
+  for (const reference of REFERENCES[table] ?? []) {
+    const id = row[reference.column];
+    if (typeof id !== "string") continue;
+    const target = reference.target(row);
+    if (!target) continue;
+    const [scopeColumn, scopeValue] =
+      reference.within === "drillhole"
+        ? ["drillhole_id", row.drillhole_id]
+        : ["project_id", projectId];
+    if (typeof scopeValue !== "string") return reference.column;
+    const found = await tx.$queryRawUnsafe<unknown[]>(
+      `SELECT 1 FROM "${target}" WHERE id = $1::uuid AND organization_id = $2 AND "${scopeColumn}" = $3::uuid`,
+      id,
+      orgId,
+      scopeValue,
+    );
+    if (found.length === 0) return reference.column;
+  }
+  return null;
+}
+
 async function audit(
   tx: Tx,
   entry: {
@@ -163,6 +202,16 @@ async function applyPut(
     server.project_id = projectId;
   }
 
+  const badReference = await referenceError(
+    tx,
+    spec.name,
+    values,
+    projectId,
+    ctx.orgId,
+  );
+  if (badReference)
+    return rejected(id, spec.name, "reference-not-found", badReference);
+
   const statement = insertStatement(spec, id, values, server);
   const inserted = await tx.$executeRawUnsafe(
     statement.sql,
@@ -198,6 +247,36 @@ async function applyPatch(
   op: Extract<Prepared, { ok: true }>,
 ): Promise<OpResult> {
   const { spec, id, values } = op;
+
+  // A change to part of a record: check the record as it would be stored.
+  const references = (REFERENCES[spec.name] ?? []).some(
+    (r) => r.column in values,
+  );
+  if (touchesRuleColumns(spec.name, values) || references) {
+    const columns = checkedColumns(spec.name);
+    const stored = await tx.$queryRawUnsafe<Record<string, unknown>[]>(
+      `SELECT ${columns.map((c) => `"${c}"`).join(", ")} FROM "${spec.name}" WHERE id = $1::uuid AND organization_id = $2`,
+      id,
+      ctx.orgId,
+    );
+    if (stored[0]) {
+      const row = { ...stored[0], ...values };
+      const error = recordRuleError(spec.name, row);
+      if (error) return rejected(id, spec.name, "invalid-record", error);
+      if (references) {
+        const badReference = await referenceError(
+          tx,
+          spec.name,
+          row,
+          await projectIdOf(tx, spec.name, id, ctx.orgId),
+          ctx.orgId,
+        );
+        if (badReference)
+          return rejected(id, spec.name, "reference-not-found", badReference);
+      }
+    }
+  }
+
   const update = updateStatement(spec, id, values, ctx.orgId);
   const changed = await tx.$executeRawUnsafe(update.sql, ...update.params);
   const projectId = await projectIdOf(tx, spec.name, id, ctx.orgId);

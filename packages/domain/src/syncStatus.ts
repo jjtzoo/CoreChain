@@ -135,6 +135,10 @@ export function describeSyncIssue(
       return "The record it changes is not on the server.";
     case "not-allowed":
       return "The server does not allow this change.";
+    case "invalid-record":
+      return "A depth or value is outside what the app allows, so the server did not accept it. The rule is shown below.";
+    case "reference-not-found":
+      return "Points at a sample, dispatch, box or interval that is not in the same project on the server.";
     default:
       return "The server could not accept this change.";
   }

@@ -7,6 +7,7 @@
 // that still count, so it can always be checked against the record.
 
 import { csvEscape } from "./export";
+import { compareSampleNumbers } from "./labQc";
 import type { SyncableRecord } from "./field";
 import type { FieldSample, SampleStatus, SampleType } from "./sampling";
 
@@ -391,7 +392,7 @@ function qcNote(sample: DispatchSheetSample): string {
 export function dispatchSheet(input: DispatchSheetInput): DispatchSheet {
   const { dispatch } = input;
   const samples = [...input.samples].sort((a, b) =>
-    a.sampleNumber.localeCompare(b.sampleNumber, undefined, { numeric: true }),
+    compareSampleNumbers(a.sampleNumber, b.sampleNumber),
   );
   const byType: Record<SampleType, number> = {
     primary: 0,
@@ -468,7 +469,7 @@ export type DispatchSheetPdf = {
 export function dispatchSheetPdf(input: DispatchSheetInput): DispatchSheetPdf {
   const { dispatch } = input;
   const samples = [...input.samples].sort((a, b) =>
-    a.sampleNumber.localeCompare(b.sampleNumber, undefined, { numeric: true }),
+    compareSampleNumbers(a.sampleNumber, b.sampleNumber),
   );
   const count = (type: SampleType) =>
     samples.filter((sample) => sample.type === type).length;
