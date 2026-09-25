@@ -1,7 +1,7 @@
 # CoreChain mobile MVP — product and Scrum plan
 
 > Status: approved plan, 2026-09-19. Source of truth for the mobile MVP build.
-> Supersedes the "offline entry is not part of Phase 1" note in `corechain-phase-1-masterplan-prompt.md` for everything after Phase 1.
+> Supersedes the "offline entry is not part of Phase 1" note in the Phase 1 plan for everything after Phase 1.
 
 ---
 
@@ -1237,7 +1237,6 @@ Stop, revise, or proceed to the team features (roles, invites, assay import, QA/
 ## References
 
 - `docs/product/corechain-website-overview.md` — product overview
-- `docs/product/corechain-phase-1-masterplan-prompt.md` — Phase 1 plan and data model
 - `docs/product/mining-operations-context-and-roles.md` — who does what
 - `research/core-workflow-primer.md` — drill core to trusted assay workflow
 - `docs/discovery/mvp-validation-brief.md` — what to build first, validate, or defer
