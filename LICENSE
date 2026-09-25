@@ -1,0 +1,17 @@
+Copyright (c) 2026 Jorge Jacob Toledo. All rights reserved.
+
+This repository is public so that its code can be read and reviewed. That does
+not grant a licence to it. No part of CoreChain, including the source code,
+the CoreChain Field app, the designs and the documentation, may be copied,
+modified, distributed, published or used in another product or service without
+prior written permission from the copyright holder.
+
+Reporting a security problem is welcome; see SECURITY.md.
+
+Third-party material keeps its own terms. The open-source packages the project
+depends on are covered by their own licences. The public drillhole data under
+apps/web/data/demo/alberta-dig-2024-0022 is used under the licence given in
+that folder's README. Terrain images are generated from the Copernicus DEM
+GLO-30, (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH
+2014-2018, provided under COPERNICUS by the European Union and ESA; all rights
+reserved.
