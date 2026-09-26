@@ -10,7 +10,9 @@ import {
   type PhotoBackupCounts,
   type Project,
 } from '@corechain/domain';
+import Constants from 'expo-constants';
 import { useRouter, type Href } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -60,6 +62,21 @@ function formatDate(iso: string): string {
     month: 'short',
     year: 'numeric',
   });
+}
+
+/**
+ * Which copy of the app is running: the version and, once an over-the-air
+ * update has been applied, the date it was published. Lets a tester and the
+ * owner confirm that a fix has reached the phone.
+ */
+function installedVersionLabel(): string {
+  const version = Constants.expoConfig?.version ?? 'unknown';
+  if (!Updates.isEnabled || Updates.isEmbeddedLaunch || !Updates.createdAt) {
+    return `CoreChain Field ${version}`;
+  }
+  return `CoreChain Field ${version} · update of ${formatDate(
+    Updates.createdAt.toISOString(),
+  )}`;
 }
 
 /**
@@ -508,6 +525,10 @@ export default function AccountScreen() {
             on this phone.
           </ThemedText>
         </View>
+
+        <ThemedText type="caption" themeColor="muted" style={styles.version}>
+          {installedVersionLabel()}
+        </ThemedText>
       </ScrollView>
     </SafeAreaView>
   );
@@ -543,6 +564,9 @@ const styles = StyleSheet.create({
   },
   issues: {
     gap: Spacing.three,
+  },
+  version: {
+    textAlign: 'center',
   },
   photoControls: {
     // Lines up with the status text above, which is pushed right by its
