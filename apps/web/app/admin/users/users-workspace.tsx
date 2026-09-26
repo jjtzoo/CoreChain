@@ -62,6 +62,8 @@ export type RequestRow = {
   name: string;
   company: string;
   email: string;
+  /** "Tester" or "Team pilot": what the person asked for. */
+  interest: string;
   createdAt: string;
 };
 
@@ -885,8 +887,8 @@ function RequestsCard({
         <span className="admin-count">{requests.length}</span>
       </div>
       <p className="admin-hint">
-        People who asked for pilot access on the landing page. Create their
-        account, or dismiss the request.
+        People who asked on the landing page to test CoreChain Field or to
+        discuss a team pilot. Create their account, or dismiss the request.
       </p>
       <ul className="admin-users">
         {requests.map((request) => (
@@ -895,6 +897,10 @@ function RequestsCard({
               <span className="admin-user-name">{request.name}</span>
               <span className="admin-user-email">{request.email}</span>
               <span className="admin-user-email">{request.company}</span>
+            </div>
+            <div className="admin-status">
+              <span className="admin-meta-label">Wants</span>
+              <span>{request.interest}</span>
             </div>
             <div className="admin-status">
               <span className="admin-meta-label">Asked</span>

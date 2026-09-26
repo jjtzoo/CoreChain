@@ -1167,6 +1167,37 @@ An engineering change register reviewed the code at `d25db2f`. This batch covers
   - contour lines look stepped when zoomed well in (the image is about 3 m per pixel); sharper contours when zoomed in are a later step.
 - Roads, rivers and imagery would still need the full background map (the rest of E15-2).
 
+### Landing page rebuilt (web, 2026-09-26)
+
+- **Why:** the old page said the team workspace would come "after the field test", but QA/QC review, the laboratory page and the manager dashboard are built. It also showed one drawn phone and no real screens.
+- **What changed** (PRs #35, #36 and #37):
+  - The page answers one question per section:
+    - the six-step workflow, with what each step carries forward;
+    - who uses the phone and who uses the web;
+    - the field app's own screens: graphic log, collar map, My work, and waiting to send;
+    - one sample's record (LQC-00005);
+    - the laboratory upload, with its problem rows and then the re-assay;
+    - the three QA/QC stages;
+    - PMRC 2020 and record integrity;
+    - the status table;
+    - two ways in: test the field app, or discuss a team pilot.
+  - Title and link preview: "Core logging and sample traceability for exploration teams".
+- **Honesty:**
+  - Phone images are real screens from the demo projects, with the status bar cropped.
+  - Web panels are labelled as simplified and use the laboratory demo project's values, worked out with the app's own rules.
+  - `components/landing/content.test.ts` fails on wording the product can't back up: customers, tester counts, iOS or Google Play, Leapfrog or GEOVIA, offline-first as the pitch, compliance claims and em-dashes.
+- **Access requests:**
+  - The form asks "Test CoreChain Field" or "Discuss a pilot", stored as `access_requests.interest` (migration `20260926120000_access_request_interest`, applied by the owner).
+  - The admin list shows the choice.
+- **Checked in the browser:**
+  - 1440, 1024 and 768 px (screenshots).
+  - 360 px:
+    - nothing wider than the screen;
+    - the menu opens within the screen and closes after a link;
+    - every button is 44 px or more.
+  - Sending the form without a choice asks again. The live site served the new page and images.
+- **Not checked:** a real form submission on the live site, and the page on a physical phone.
+
 ---
 
 ## 8. Field-test plan
