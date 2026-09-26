@@ -67,8 +67,8 @@ export default function OpenGraphImage() {
           </div>
           <div style={{ fontSize: 32, lineHeight: 1.35, color: TEXT, maxWidth: 960 }}>
             Core logging, sampling and chain of custody for exploration teams.
-            Hole, depth and sample number carried through every step, with or
-            without signal.
+            Hole, depth and sample number entered once and carried forward
+            to the laboratory and QA/QC.
           </div>
         </div>
 

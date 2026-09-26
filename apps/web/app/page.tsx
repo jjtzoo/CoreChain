@@ -58,7 +58,7 @@ const roles = [
     text: "Logs core, photographs and samples at the rig or core yard, with or without signal.",
   },
   {
-    where: "Phone and web",
+    where: "Web",
     title: "QA/QC",
     text: "Checks the evidence and exceptions for one stage: core and logging, sampling and custody, or the laboratory.",
   },
@@ -68,7 +68,7 @@ const roles = [
     text: "Receives dispatched samples, prepares and assays them, and returns results against the batch.",
   },
   {
-    where: "Web and phone",
+    where: "Web",
     title: "Resident / project manager",
     text: "Follows the team’s holes and logs, and the state of the whole chain, without chasing updates.",
   },
@@ -94,10 +94,22 @@ const status = [
     tone: "now",
   },
   {
-    stage: "Team workspace",
-    what: "Project-manager dashboard, QA/QC review, laboratory view",
-    state: "After the field test",
-    tone: "later",
+    stage: "QA/QC review",
+    what: "Three review stages: core and logging, sampling and custody, laboratory assays",
+    state: "Working in development testing",
+    tone: "now",
+  },
+  {
+    stage: "Laboratory",
+    what: "Receive dispatched samples, upload results, and flag problem rows before they are accepted",
+    state: "Working in development testing",
+    tone: "now",
+  },
+  {
+    stage: "Manager dashboard",
+    what: "The team's holes, samples and activity, code lists, standards and tags",
+    state: "Working in development testing",
+    tone: "now",
   },
 ] as const;
 
@@ -306,7 +318,7 @@ export default function Home() {
                 <h3>One workflow, start to finish</h3>
                 <p>
                   A sample number, once assigned, follows the sample through
-                  logging, custody and dispatch automatically — nobody re-keys
+                  logging, custody and dispatch automatically. Nobody re-keys
                   it from a chalk mark or a paper sheet, and it doesn&rsquo;t
                   wait on a separate round of office checking to be trusted.
                 </p>
