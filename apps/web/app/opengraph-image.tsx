@@ -63,7 +63,7 @@ export default function OpenGraphImage() {
               maxWidth: 980,
             }}
           >
-            One workflow, from the rig to the result.
+            From drillhole to assay. One traceable record.
           </div>
           <div style={{ fontSize: 32, lineHeight: 1.35, color: TEXT, maxWidth: 960 }}>
             Core logging, sampling and chain of custody for exploration teams.
