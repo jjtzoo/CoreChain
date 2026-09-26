@@ -5,9 +5,9 @@ import "./globals.css";
 const sans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-const title = "CoreChain | Core logging and sample custody";
+const title = "CoreChain | Core logging and sample traceability for exploration teams";
 const description =
-  "An offline-first field app and team workspace for core logging, sampling and chain of custody.";
+  "CoreChain carries drillhole, logging, sampling, custody, laboratory and QA/QC records through one connected exploration workflow.";
 
 // Link previews need absolute URLs. On Vercel the production address is
 // provided by the platform; elsewhere the sign-in URL setting or localhost.

@@ -704,3 +704,40 @@
     padding: 12px 14px;
   }
 }
+
+/* On a phone the three columns are too narrow to read, and the status would
+   sit off the right edge. Each row becomes a small block instead. */
+@media (max-width: 600px) {
+  .lp-table thead {
+    display: none;
+  }
+
+  .lp-table,
+  .lp-table tbody,
+  .lp-table tr,
+  .lp-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .lp-table tr {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .lp-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .lp-table th,
+  .lp-table td,
+  .lp-table td:first-child {
+    width: auto;
+    padding: 2px 16px;
+    border-bottom: 0;
+  }
+
+  .lp-table td.lp-status {
+    padding-top: 8px;
+  }
+}
