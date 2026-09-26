@@ -2989,6 +2989,12 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
   gap: 24px;
 }
 
+/* The QA/QC page's project picker, beside the page title. */
+.qaqc-project-picker {
+  flex-shrink: 0;
+  width: min(280px, 100%);
+}
+
 .fb-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 2fr);

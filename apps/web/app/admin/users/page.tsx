@@ -76,6 +76,7 @@ export default async function UsersPage() {
           id: team.id,
           name: team.name,
           demoProjects: demoCounts.get(team.id) ?? 0,
+          demoProjectsTotal: DEMO_PROJECT_NAMES.length,
         }))}
         currentUserId={session.user.id}
         hasTester={rows.some((user) => user.id !== session.user.id)}

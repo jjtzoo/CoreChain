@@ -1,4 +1,5 @@
 import {
+  exceptionKeyInStage,
   exceptionKindFromKey,
   openExceptions,
   QAQC_EXCEPTION_KIND_LABELS,
@@ -8,6 +9,7 @@ import {
   type QaqcStage,
 } from "@corechain/domain";
 import type { Route } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
@@ -16,6 +18,8 @@ import {
   loadStageHoles,
 } from "@/lib/qaqc/stage-exceptions";
 import { requireQaqc } from "@/lib/session";
+import { QAQC_PROJECT_COOKIE } from "./project-cookie";
+import { QaqcProjectPicker } from "./project-picker";
 import {
   QaqcWorkspace,
   type DeviceExceptionRow,
@@ -85,6 +89,29 @@ export default async function QaqcPage() {
   ]);
   const nameById = new Map(members.map((m) => [m.id, m.name]));
 
+  // The reviewer's own stage only: another stage's resolutions and
+  // decisions stay on that reviewer's page and in the hole's own record.
+  // A decision made before the stage was kept is shown to every stage.
+  const stageResolutions = resolutions.filter((r) =>
+    exceptionKeyInStage(r.exceptionKey, stage),
+  );
+  const stageDecisions = decisions.filter(
+    (d) => d.stage === null || d.stage === stage,
+  );
+
+  // The project picker: every project with a hole, and the one chosen last
+  // time, if it still has holes.
+  const projects = [
+    ...new Map(holes.map((h) => [h.projectId, h.project.name])).entries(),
+  ]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const chosen = (await cookies()).get(QAQC_PROJECT_COOKIE)?.value ?? null;
+  const projectId = projects.some((p) => p.id === chosen) ? chosen : null;
+  const holeInProject = new Map(holes.map((h) => [h.id, h.projectId]));
+  const inProject = (drillholeId: string) =>
+    projectId === null || holeInProject.get(drillholeId) === projectId;
+
   const resolvedKeys = new Set(resolutions.map((r) => r.exceptionKey));
   const open = openExceptions(rawExceptions, { resolvedKeys });
   const deviceExceptions = openExceptions(rawDeviceExceptions, {
@@ -111,7 +138,7 @@ export default async function QaqcPage() {
   };
   const resolvedByHole = new Map<string, ResolvedRow[]>();
   const resolvedOther: ResolvedRow[] = [];
-  for (const resolution of resolutions) {
+  for (const resolution of stageResolutions) {
     const matched = exceptionByKey.get(resolution.exceptionKey);
     const row: ResolvedRow = {
       key: resolution.exceptionKey,
@@ -146,13 +173,14 @@ export default async function QaqcPage() {
   }
 
   const decisionsByHole = new Map<string, typeof decisions>();
-  for (const decision of decisions) {
+  for (const decision of stageDecisions) {
     const list = decisionsByHole.get(decision.drillholeId) ?? [];
     list.push(decision);
     decisionsByHole.set(decision.drillholeId, list);
   }
 
   const holeRows: QaqcHoleRow[] = holes
+    .filter((hole) => inProject(hole.id))
     .map((hole) => {
       const holeDecisions = decisionsByHole.get(hole.id) ?? [];
       return {
@@ -191,11 +219,16 @@ export default async function QaqcPage() {
   }));
 
   resolvedOther.sort((a, b) => b.resolvedAt.localeCompare(a.resolvedAt));
+  // Resolutions no longer tied to a hole belong to no project.
+  const otherResolved = projectId === null ? resolvedOther : [];
 
-  const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
+  const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString();
   const resolvedThisWeekCount =
-    resolutions.filter((r) => r.resolvedAt >= weekAgo).length +
-    decisions.filter((d) => d.decidedAt >= weekAgo).length;
+    [...holeRows.flatMap((h) => h.resolvedExceptions), ...otherResolved].filter(
+      (r) => r.resolvedAt >= weekAgo,
+    ).length +
+    holeRows.flatMap((h) => h.decisions).filter((d) => d.decidedAt >= weekAgo).length;
+  const openInProject = open.filter((e) => inProject(e.drillholeId));
 
   return (
     <>
@@ -210,13 +243,16 @@ export default async function QaqcPage() {
             </Link>
           </p>
         </div>
+        {projects.length > 1 ? (
+          <QaqcProjectPicker projects={projects} selectedId={projectId} />
+        ) : null}
       </div>
       <QaqcWorkspace
         holes={holeRows}
         devices={deviceRows}
         stage={stage}
-        otherResolved={resolvedOther}
-        openCount={open.length}
+        otherResolved={otherResolved}
+        openCount={openInProject.length}
         resolvedThisWeekCount={resolvedThisWeekCount}
       />
     </>
