@@ -9,8 +9,8 @@ import {
   type Project,
   type WorkSummary,
 } from '@corechain/domain';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   BackHandler,
   ScrollView,
@@ -162,25 +162,29 @@ export default function HomeScreen() {
 
   // Home is the bottom of the stack: one back press here would otherwise
   // exit the app immediately, an easy slip when backing out of a screen. A
-  // second press within the window confirms it.
+  // second press within the window confirms it. Only while Home is the screen
+  // in front: Home stays mounted under every other screen, and a guard left
+  // on there would catch their back presses too.
   const exitArmed = useRef(false);
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        if (exitArmed.current) {
-          return false;
-        }
-        exitArmed.current = true;
-        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
-        setTimeout(() => {
-          exitArmed.current = false;
-        }, 2000);
-        return true;
-      },
-    );
-    return () => subscription.remove();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          if (exitArmed.current) {
+            return false;
+          }
+          exitArmed.current = true;
+          ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+          setTimeout(() => {
+            exitArmed.current = false;
+          }, 2000);
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, []),
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
