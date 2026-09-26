@@ -170,7 +170,7 @@ export async function createTeamAction(
 }
 
 /**
- * The manual option: add the two demo projects to a team, or replace them
+ * The manual option: add the demo projects to a team, or replace them
  * with a fresh copy. Anything recorded in the demo projects since is replaced.
  */
 export async function loadDemoProjectsAction(
@@ -192,7 +192,7 @@ export async function loadDemoProjectsAction(
   }
 }
 
-/** Removes the two demo projects from a team, with everything recorded in them, and its demo crew. */
+/** Removes the demo projects from a team, with everything recorded in them, and its demo crew. */
 export async function removeDemoProjectsAction(
   teamId: string,
 ): Promise<ActionResult<{ removed: number }>> {

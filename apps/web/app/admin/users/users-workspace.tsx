@@ -50,8 +50,9 @@ const NO_STAGE = "";
 export type TeamRow = {
   id: string;
   name: string;
-  /** How many of the two demo projects the team has now. */
+  /** How many of the demo projects the team has now, out of demoProjectsTotal. */
   demoProjects: number;
+  demoProjectsTotal: number;
 };
 
 const PERSONAL_WORKSPACE = "";
@@ -323,10 +324,10 @@ function TeamsCard({
             onChange={(e) => setWithDemo(e.target.checked)}
           />
           <span>
-            Start with the two demo projects and a demo crew (three
-            geologists, a laboratory and three QA/QC reviewers, who cannot sign
-            in), so the team has holes, logs, samples and results to look at
-            before its own work syncs. They can be removed at any time.
+            Start with the demo projects and a demo crew (three geologists, a
+            laboratory and three QA/QC reviewers, who cannot sign in), so the
+            team has holes, logs, samples, a batch for the laboratory and
+            results to look at before its own work syncs. They can be removed at any time.
           </span>
         </label>
       </form>
@@ -392,7 +393,7 @@ function TeamDemoControls({ team }: { team: TeamRow }) {
     <div className="team-demo">
       <div className="team-demo-line">
         <span className="admin-meta-label">Demo projects</span>
-        <span>{has ? `${team.demoProjects} of 2 added` : "None"}</span>
+        <span>{has ? `${team.demoProjects} of ${team.demoProjectsTotal} added` : "None"}</span>
         {confirming === null ? (
           <span className="team-demo-actions">
             {has ? (

@@ -87,6 +87,35 @@ export const QAQC_EXCEPTION_KIND_LABELS: Record<QaqcExceptionKind, string> = {
   result_missing: "Result missing",
 };
 
+/** The stage of the chain each kind of exception belongs to. A quiet device
+ * matters to every stage, so it belongs to none. */
+export const QAQC_EXCEPTION_KIND_STAGE: Record<QaqcExceptionKind, QaqcStage | null> = {
+  run_gap: "core_logging",
+  run_overlap: "core_logging",
+  recovery_over_100: "core_logging",
+  run_past_final_depth: "core_logging",
+  qc_rate_short: "sampling_custody",
+  custody_stalled: "sampling_custody",
+  sample_overlap: "sampling_custody",
+  device_stale: null,
+  standard_failed: "laboratory_assays",
+  standard_warning: "laboratory_assays",
+  blank_failed: "laboratory_assays",
+  duplicate_failed: "laboratory_assays",
+  qc_reference_missing: "laboratory_assays",
+  unit_mismatch: "laboratory_assays",
+  result_missing: "laboratory_assays",
+};
+
+/** Whether an exception key belongs on a reviewer's page for `stage`: its own
+ * stage's kinds, a quiet device, or a key of no known kind (never hidden). */
+export function exceptionKeyInStage(key: string, stage: QaqcStage): boolean {
+  const kind = exceptionKindFromKey(key);
+  if (!kind) return true;
+  const owner = QAQC_EXCEPTION_KIND_STAGE[kind];
+  return owner === null || owner === stage;
+}
+
 /** The exception kind encoded at the start of a `QaqcException.key`, or null
  * if the key doesn't start with one of the known kinds. */
 export function exceptionKindFromKey(key: string): QaqcExceptionKind | null {

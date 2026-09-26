@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   coreLoggingExceptions,
   deviceStaleExceptions,
+  exceptionKeyInStage,
   exceptionKindFromKey,
   isQaqcDecision,
   openExceptions,
@@ -255,6 +256,20 @@ describe("exceptionKindFromKey", () => {
   it("returns null for an unknown or malformed key", () => {
     expect(exceptionKindFromKey("not_a_real_kind:h1")).toBeNull();
     expect(exceptionKindFromKey("no-colon-here")).toBeNull();
+  });
+});
+
+describe("exceptionKeyInStage", () => {
+  it("keeps each stage's own exceptions on that stage's page", () => {
+    expect(exceptionKeyInStage("run_gap:h1:3-3.5", "core_logging")).toBe(true);
+    expect(exceptionKeyInStage("run_gap:h1:3-3.5", "laboratory_assays")).toBe(false);
+    expect(exceptionKeyInStage("blank_failed:s1:cu:85", "laboratory_assays")).toBe(true);
+    expect(exceptionKeyInStage("custody_stalled:s1", "core_logging")).toBe(false);
+  });
+
+  it("shows a quiet device and an unknown key on every page", () => {
+    expect(exceptionKeyInStage("device_stale:d1", "sampling_custody")).toBe(true);
+    expect(exceptionKeyInStage("not_a_real_kind:h1", "core_logging")).toBe(true);
   });
 });
 

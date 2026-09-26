@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { parseCsvRows } from "@corechain/domain";
 import type { Prisma, PrismaClient } from "@prisma/client";
 
-// The two demo projects, so a team has realistic work to look at before its
+// The demo projects, so a team has realistic work to look at before its
 // geologists have logged anything (the admin's "Demo projects", or
 // `npm run sample:seed` / `sample:cordillera`).
 //
@@ -27,6 +27,10 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 // (illustrative values, not the survey's assays), the second still in transit.
 // Each batch carries its own blank, standard and duplicate.
 // The Cordillera samples are left unbagged so custody can be tried by hand.
+// The laboratory project has no logging at all: one batch of nine samples,
+// its own blank, standard and duplicate included, already dispatched and
+// waiting for the laboratory to receive it and upload results, so the
+// laboratory and its QA/QC reviewer can be walked through on their own.
 // The team's standards-and-blanks list gets the demo standard and blank, and
 // the first dispatch's standard reads high for copper, so the laboratory
 // QA/QC check has one failure to show.
@@ -38,6 +42,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 export const DEMO_PROJECTS = {
   alberta: "Alberta sample project",
   cordillera: "Cordillera porphyry sample (synthetic)",
+  laboratory: "Laboratory QA/QC sample (synthetic)",
 } as const;
 export type DemoProjectKey = keyof typeof DEMO_PROJECTS;
 export const DEMO_PROJECT_NAMES: readonly string[] = Object.values(DEMO_PROJECTS);
@@ -511,7 +516,7 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
     const sampling = crew.qaqc.sampling_custody;
     if (longRun) {
       const run = `${longRun.from}–${longRun.to} m`;
-      decide(rows, org, longRun.holeId, "hold", logging, stamp(60 * 24 * 3),
+      decide(rows, org, longRun.holeId, "hold", "core_logging", logging, stamp(60 * 24 * 3),
         `Recovery over 100% at ${run}. Driller to check the depth block.`);
       rows.add("qaqc_exception_resolutions", {
         id: randomUUID(),
@@ -523,9 +528,9 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
       });
     }
     for (const hole of [0, 1, 2])
-      decide(rows, org, holeIds[hole], "accept", logging, stamp(60 * 24 * 2 + 120 - hole * 10),
+      decide(rows, org, holeIds[hole], "accept", "core_logging", logging, stamp(60 * 24 * 2 + 120 - hole * 10),
         "Intervals, runs and recovery checked against the drill log.");
-    decide(rows, org, holeIds[0], "accept", sampling, stamp(60 * 24 + 240),
+    decide(rows, org, holeIds[0], "accept", "sampling_custody", sampling, stamp(60 * 24 + 240),
       "Blank, standard and duplicate inserted; custody complete to the laboratory.");
   }
 
@@ -682,7 +687,7 @@ function buildCordillera(rows: RowBuffer, org: string, crew: Crew): DemoSummary 
   }
 
   if (crew.qaqc)
-    decide(rows, org, holeIds[0], "hold", crew.qaqc.core_logging, stamp(60 * 24 * 3),
+    decide(rows, org, holeIds[0], "hold", "core_logging", crew.qaqc.core_logging, stamp(60 * 24 * 3),
       "Recovery 78 to 83% in the weathered zone above 40 m. Check the runs before this hole is accepted.");
 
   project.next_sample_number = sampleNo;
@@ -692,6 +697,153 @@ function buildCordillera(rows: RowBuffer, org: string, crew: Crew): DemoSummary 
     intervals: intervalCount,
     boxesAndRuns: boxCount,
     samples: sampleNo - 1,
+  };
+}
+
+/**
+ * The laboratory walkthrough: three holes drilled and sampled, nine samples
+ * bagged and handed to the laboratory as DSP-QC-01, not yet received. No
+ * logging, boxes or runs, and no QA/QC decisions, so nothing here depends on
+ * the geologists' side of the demo. Collars are left out: the holes are not
+ * meant for the map.
+ */
+function buildLaboratory(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
+  const { stamp, tracked } = clock();
+  const projectId = randomUUID();
+  const geologist = crew.geologists[0];
+  const lab = crew.laboratory;
+  rows.add("projects", {
+    id: projectId,
+    organization_id: org,
+    created_by: geologist.id,
+    name: DEMO_PROJECTS.laboratory,
+    commodity: "Copper-gold",
+    location: "Synthetic, for the laboratory walkthrough",
+    coordinate_system: "WGS84",
+    sample_prefix: "LQC",
+    next_sample_number: 10,
+    qc_standard_every_n: 20,
+    qc_blank_every_n: 20,
+    qc_duplicate_every_n: 20,
+    photo_max_mb: 1.5,
+    ...tracked(60 * 24 * 4),
+  });
+
+  // Sample numbers are LQC-00001 to LQC-00009, in this order; the showcase
+  // results files in the owner's promo folder use them.
+  const holes = [
+    { name: "QC-DDH-01", depth: 120.5, ranges: [[12, 13.5], [13.5, 15]], withQc: true },
+    { name: "QC-DDH-02", depth: 96, ranges: [[40, 41.5], [41.5, 43]], withQc: false },
+    { name: "QC-DDH-03", depth: 150.2, ranges: [[78, 79.5], [79.5, 81]], withQc: false },
+  ] as const;
+  let sampleNo = 1;
+  const sampleNumber = () => `LQC-${String(sampleNo++).padStart(5, "0")}`;
+  const samples: AddedSample[] = [];
+  const age = 60 * 24 * 2;
+  for (const hole of holes) {
+    const holeId = randomUUID();
+    const base = { organization_id: org, created_by: geologist.id, project_id: projectId };
+    rows.add("drillholes", {
+      id: holeId,
+      ...base,
+      hole_id: hole.name,
+      collar_source: null,
+      collar_latitude: null,
+      collar_longitude: null,
+      collar_accuracy_m: null,
+      collar_captured_at: null,
+      planned_azimuth_deg: null,
+      planned_inclination_deg: null,
+      planned_depth_m: hole.depth,
+      actual_final_depth_m: hole.depth,
+      started_at: null,
+      completed_at: null,
+      status: "complete",
+      contractor: null,
+      drill_type: "Diamond core",
+      diameter: "HQ",
+      note: null,
+      ...tracked(age + 60),
+    });
+    for (const status of ["planned", "drilling", "complete"])
+      rows.add("drillhole_status_history", {
+        id: randomUUID(),
+        organization_id: org,
+        project_id: projectId,
+        drillhole_id: holeId,
+        status,
+        changed_at: stamp(age + 60),
+      });
+    const sampled = hole.ranges.map(([from, to]) => ({ id: randomUUID(), from, to }));
+    samples.push(
+      ...addSamples(rows, base, holeId, sampled, hole.withQc, sampleNumber, "dispatched", tracked, age),
+    );
+  }
+
+  const custody = (sampleId: string, fields: Row, minutesAgo: number) =>
+    rows.add("custody_events", {
+      id: randomUUID(),
+      organization_id: org,
+      project_id: projectId,
+      created_by: geologist.id,
+      sample_id: sampleId,
+      event_type: "bagged",
+      occurred_at: stamp(minutesAgo),
+      handled_by: geologist.name,
+      location: "Core yard",
+      recipient: null,
+      note: null,
+      dispatch_id: null,
+      corrects_event_id: null,
+      created_at: stamp(minutesAgo),
+      ...fields,
+    });
+  const dispatchId = randomUUID();
+  const handover = 60 * 20;
+  rows.add("dispatches", {
+    id: dispatchId,
+    organization_id: org,
+    project_id: projectId,
+    created_by: geologist.id,
+    dispatch_number: "DSP-QC-01",
+    laboratory: LABORATORY,
+    preparation_request: PREPARATION,
+    handover_at: stamp(handover).slice(0, 10),
+    status: "dispatched",
+    note: null,
+    results_returned_at: null,
+    created_at: stamp(handover + 15),
+    updated_at: stamp(handover),
+    version: 2,
+    deleted_at: null,
+  });
+  for (const sample of samples) {
+    custody(sample.id, {}, age - 10);
+    rows.add("dispatch_samples", {
+      id: randomUUID(),
+      organization_id: org,
+      project_id: projectId,
+      created_by: geologist.id,
+      dispatch_id: dispatchId,
+      sample_id: sample.id,
+      created_at: stamp(handover + 15),
+      updated_at: stamp(handover + 15),
+      version: 1,
+      deleted_at: null,
+    });
+    custody(
+      sample.id,
+      { event_type: "dispatched", location: null, recipient: lab.name, dispatch_id: dispatchId },
+      handover,
+    );
+  }
+
+  return {
+    name: DEMO_PROJECTS.laboratory,
+    holes: holes.length,
+    intervals: 0,
+    boxesAndRuns: 0,
+    samples: samples.length,
   };
 }
 
@@ -772,6 +924,7 @@ function decide(
   org: string,
   holeId: string,
   decision: "accept" | "hold" | "reject",
+  stage: QaqcStageKey,
   by: DemoPerson,
   at: string,
   note: string,
@@ -781,6 +934,7 @@ function decide(
     organization_id: org,
     drillhole_id: holeId,
     decision,
+    stage,
     note,
     decided_by: by.id,
     decided_at: at,
@@ -984,6 +1138,7 @@ async function removeDemoQcReferences(db: Db, organizationId: string): Promise<v
 const BUILDERS: Record<DemoProjectKey, (rows: RowBuffer, org: string, crew: Crew) => DemoSummary> = {
   alberta: buildAlberta,
   cordillera: buildCordillera,
+  laboratory: buildLaboratory,
 };
 
 /**
@@ -994,7 +1149,7 @@ const BUILDERS: Record<DemoProjectKey, (rows: RowBuffer, org: string, crew: Crew
 export async function loadDemoProjects(
   prisma: PrismaClient,
   target: DemoTarget,
-  which: readonly DemoProjectKey[] = ["alberta", "cordillera"],
+  which: readonly DemoProjectKey[] = ["alberta", "cordillera", "laboratory"],
 ): Promise<DemoSummary[]> {
   const { crew, team } = await crewFor(prisma, target);
   const rows = new RowBuffer();
@@ -1004,7 +1159,7 @@ export async function loadDemoProjects(
       await removeDemoProjects(tx, target.organizationId, which.map((k) => DEMO_PROJECTS[k]));
       if (team) await upsertDemoCrew(tx, target.organizationId);
       await rows.flush(tx);
-      if (which.includes("alberta")) {
+      if (which.includes("alberta") || which.includes("laboratory")) {
         // A fresh copy puts back the demo's own lines, as first loaded.
         if (team) await removeDemoQcReferences(tx, target.organizationId);
         await addDemoQcReferences(
