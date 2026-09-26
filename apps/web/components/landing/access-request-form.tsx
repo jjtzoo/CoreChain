@@ -26,8 +26,7 @@ export function AccessRequestForm() {
       <div className="lp-sent" role="status">
         <strong>Request received.</strong>
         <p>
-          Thank you. We will write to {state.email} when there is a place for
-          your team in the pilot.
+          Thank you. We will reply to {state.email} about the next step.
         </p>
       </div>
     );
@@ -35,6 +34,23 @@ export function AccessRequestForm() {
 
   return (
     <form action={formAction} className="lp-form" noValidate>
+      <fieldset className="lp-choice">
+        <legend>I want to</legend>
+        <label>
+          <input type="radio" name="interest" value="tester" required />
+          <span>
+            <b>Test CoreChain Field</b>
+            On my own Android phone
+          </span>
+        </label>
+        <label>
+          <input type="radio" name="interest" value="team" />
+          <span>
+            <b>Discuss a pilot</b>
+            For an exploration or mining team
+          </span>
+        </label>
+      </fieldset>
       <label className="lp-field-row">
         <span>Name</span>
         <input name="name" autoComplete="name" required maxLength={100} />
@@ -43,13 +59,14 @@ export function AccessRequestForm() {
         <span>Company or project</span>
         <input
           name="company"
+          placeholder="Or Independent"
           autoComplete="organization"
           required
           maxLength={120}
         />
       </label>
       <label className="lp-field-row">
-        <span>Work email</span>
+        <span>Email</span>
         <input
           name="email"
           type="email"
