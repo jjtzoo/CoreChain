@@ -25,6 +25,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 // admin sets one. The Alberta samples go the whole way: bagged, dispatched to
 // the laboratory in two batches, the first received with results entered
 // (illustrative values, not the survey's assays), the second still in transit.
+// Each batch carries its own blank, standard and duplicate.
 // The Cordillera samples are left unbagged so custody can be tried by hand.
 // The team's standards-and-blanks list gets the demo standard and blank, and
 // the first dispatch's standard reads high for copper, so the laboratory
@@ -496,7 +497,9 @@ function buildAlberta(rows: RowBuffer, org: string, crew: Crew): DemoSummary {
     }
 
     bagged.push(
-      ...addSamples(rows, base, holeId, sampled, index === 0, sampleNumber, "dispatched", tracked, age).map(
+      // A blank, a standard and a duplicate go in on the first hole of each
+      // dispatch (holes 1 and 4), so each batch has its own control samples.
+      ...addSamples(rows, base, holeId, sampled, index % 3 === 0, sampleNumber, "dispatched", tracked, age).map(
         (sample) => ({ ...sample, hole: index, geologist }),
       ),
     );
