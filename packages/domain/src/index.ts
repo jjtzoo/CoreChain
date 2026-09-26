@@ -182,6 +182,7 @@ export * from "./session";
 export * from "./sampleBlocks";
 export * from "./labQc";
 export * from "./collarMap";
+export * from "./projectView";
 export * from "./lithology";
 export * from "./roles";
 export * from "./signIn";

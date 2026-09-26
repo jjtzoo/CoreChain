@@ -197,6 +197,7 @@ export default async function TeamPage() {
     return {
       id: hole.id,
       holeId: hole.holeId,
+      projectId: hole.projectId,
       projectName: hole.project.name,
       status: hole.status,
       plannedDepthM: hole.plannedDepthM,
