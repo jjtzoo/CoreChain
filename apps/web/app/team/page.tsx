@@ -90,22 +90,26 @@ export default async function TodayPage() {
           value={drilledThisWeek.toFixed(1)}
           unit="m"
           sub={`${drilledLastWeek.toFixed(1)} m the 7 days before`}
+          href="/team/holes"
         />
         <Kpi
           label="Holes drilling"
           value={drilling.length}
           sub={drilling.length > 0 ? drilling.map((h) => h.holeId).join(", ") : "None right now"}
+          href="/team/holes"
         />
         <Kpi
           label="Samples waiting"
           value={waitingToBag + waitingToDispatch}
           sub={`${waitingToBag} to bag · ${waitingToDispatch} to dispatch`}
+          href="/team/lab"
         />
         <Kpi
           label="Results overdue"
           value={overdue.length}
           unit={overdue.length === 1 ? "dispatch" : "dispatches"}
           tone={overdue.length > 0 ? "warn" : undefined}
+          href="/team/lab#dispatches"
           sub={
             overdue.length > 0
               ? `More than ${RESULTS_OVERDUE_AFTER_DAYS} days at the laboratory`
@@ -116,6 +120,7 @@ export default async function TodayPage() {
           label="QA/QC held or rejected"
           value={heldOrRejected.length}
           tone={rejected > 0 ? "danger" : heldOrRejected.length > 0 ? "warn" : undefined}
+          href="/team/lab#qaqc"
           sub={
             heldOrRejected.length > 0
               ? `${heldOrRejected.length - rejected} held, ${rejected} rejected`

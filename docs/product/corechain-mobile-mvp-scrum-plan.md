@@ -657,6 +657,18 @@ Collected from the owner's own testing and from the first geologist tester's sug
 - **Outcome (2026-09-27): built, not yet tried with a signed-in account.**
   - **Checked:** tests (web 290), typecheck, lint and build all pass. The components were checked on a local-only preview page (since removed) with illustrative rows, at desktop width and at 600 px. Every new route redirects to sign-in when signed out.
   - **Not yet checked:** the pages signed in as a project manager on the demo projects.
+- **Follow-up (2026-09-27): showcase team and clickable cues.**
+  - **Showcase team:** a separate team, "Mabini Ridge Exploration (showcase)", with its own nine demo accounts (no passwords; opened with "View as"). `npm run showcase:seed` builds or rebuilds it, and `-- --remove` takes it out. No other team is touched. All of it is synthetic: a copper-gold porphyry programme part-way through (14 holes, every status) and an epithermal scout project (6 holes). It includes dispatches in every state (results back, overdue, waiting, in transit, being put together); QA/QC accepts, holds and a rejection with reviewers' notes; one failed standard and one contaminated blank; a duplicate shortfall; a phone that has gone quiet. Its dates count back from the day it is loaded, so reload it before a demonstration. The code is in `apps/web/lib/demo/showcaseTeam.ts`, with 5 tests.
+  - **Clickable cues:**
+    - Links inside content are blue-green and underlined.
+    - Figure cards and "Needs attention" rows that open a page carry an arrow and react on hover.
+    - Anything without these does nothing when clicked.
+  - **Checked:**
+    - A read-only script over the loaded data, using the pages' own functions:
+      - Today: 8 "Needs attention" items.
+      - QA/QC: 2 core-logging exceptions (1 already resolved), 1 sampling exception and 2 laboratory exceptions.
+    - The components on a local-only preview page (since removed).
+  - **Not yet checked:** the pages signed in.
 
 **Smaller items, not sized:**
 

@@ -42,6 +42,15 @@ export function NoTeam({ title }: { title: string }) {
   return <PageHead title={title} intro="You aren't on a team yet. Ask an admin to add you to one." />;
 }
 
+/** The arrow on anything that opens another page: a card, a row or a figure. */
+export function OpensIcon() {
+  return (
+    <svg className="mg-opens" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M6 3.5 10.5 8 6 12.5" />
+    </svg>
+  );
+}
+
 export function Kpi({
   label,
   value,
@@ -49,6 +58,7 @@ export function Kpi({
   sub,
   tone,
   barPercent,
+  href,
 }: {
   label: string;
   value: ReactNode;
@@ -56,11 +66,16 @@ export function Kpi({
   sub?: ReactNode;
   tone?: "warn" | "danger";
   barPercent?: number;
+  /** Where the figure's detail is; the whole card then opens it. */
+  href?: string;
 }) {
-  const className = `kpi-card mg-kpi-card${tone ? ` is-${tone}` : ""}`;
-  return (
-    <div className={className}>
-      <span className="mg-kpi-label">{label}</span>
+  const className = `kpi-card mg-kpi-card${tone ? ` is-${tone}` : ""}${href ? " mg-kpi-link" : ""}`;
+  const body = (
+    <>
+      <span className="mg-kpi-label">
+        {label}
+        {href ? <OpensIcon /> : null}
+      </span>
       <span className="mg-kpi-value">
         {value}
         {unit ? <em> {unit}</em> : null}
@@ -71,17 +86,27 @@ export function Kpi({
           <i style={{ width: `${barPercent}%` }} />
         </div>
       ) : null}
-    </div>
+    </>
+  );
+  return href ? (
+    <Link href={href as Route} className={className}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
   );
 }
 
 export function Panel({
+  id,
   title,
   note,
   action,
   tone,
   children,
 }: {
+  /** For links that jump to this panel ("#dispatches"). */
+  id?: string;
   title: string;
   note?: ReactNode;
   action?: ReactNode;
@@ -89,7 +114,7 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className={`mg-panel${tone ? ` is-${tone}` : ""}`}>
+    <section id={id} className={`mg-panel${tone ? ` is-${tone}` : ""}`}>
       <div className="mg-panel-head">
         <div>
           <h2>{title}</h2>
@@ -193,14 +218,31 @@ export function AttentionList({ rows, limit }: { rows: readonly AttentionRow[]; 
     <ul className="mg-attn">
       {shown.map((row) => (
         <li key={row.id}>
-          <i className={`mg-dot${row.severity === "danger" ? " is-danger" : ""}`} />
-          <div>
-            <b>{row.href ? <Link href={row.href as Route}>{row.title}</Link> : row.title}</b>
-            <span>{row.detail}</span>
-          </div>
+          {row.href ? (
+            <Link href={row.href as Route} className="mg-attn-row">
+              <AttentionBody row={row} />
+              <OpensIcon />
+            </Link>
+          ) : (
+            <div className="mg-attn-row">
+              <AttentionBody row={row} />
+            </div>
+          )}
         </li>
       ))}
     </ul>
+  );
+}
+
+function AttentionBody({ row }: { row: AttentionRow }) {
+  return (
+    <>
+      <i className={`mg-dot${row.severity === "danger" ? " is-danger" : ""}`} />
+      <div>
+        <b>{row.title}</b>
+        <span>{row.detail}</span>
+      </div>
+    </>
   );
 }
 

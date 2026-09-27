@@ -230,13 +230,9 @@
   font-size: 1.1rem;
 }
 
-.mg-project-card h3 a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.mg-project-card h3 a:hover {
-  text-decoration: underline;
+.mg-project-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 14px rgba(24, 35, 33, 0.07);
 }
 
 .mg-meta {
@@ -424,9 +420,6 @@
   font-weight: 700;
 }
 
-.mg-table a {
-  color: inherit;
-}
 
 .status-pill.is-warn {
   color: var(--warning-ink);
@@ -523,17 +516,38 @@
 }
 
 .mg-attn li {
-  display: grid;
-  grid-template-columns: 8px minmax(0, 1fr);
-  gap: 10px;
-  padding: 10px 0;
   border-top: 1px solid var(--warning-line);
   font-size: 0.85rem;
 }
 
 .mg-attn li:first-child {
-  padding-top: 0;
   border-top: 0;
+}
+
+.mg-attn-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  margin: 0 -10px;
+  padding: 10px;
+  color: inherit;
+  border-radius: var(--radius-control);
+  text-decoration: none;
+}
+
+a.mg-attn-row:hover {
+  background: rgba(116, 90, 18, 0.09);
+}
+
+a.mg-attn-row:hover b {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mg-attn-row .mg-opens {
+  align-self: center;
+  color: var(--warning-ink);
 }
 
 .mg-attn .mg-dot {
@@ -553,9 +567,6 @@
   font-weight: 600;
 }
 
-.mg-attn a {
-  color: inherit;
-}
 
 .mg-attn span {
   color: var(--warning-ink);
@@ -609,7 +620,6 @@
 }
 
 .mg-depths a {
-  color: inherit;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -827,5 +837,107 @@
     padding: 0;
     border: 0;
     box-shadow: none;
+  }
+}
+
+/* What can be clicked. Links inside content are blue-green and underlined;
+   a card, row or figure that opens another page carries an arrow (OpensIcon)
+   and reacts on hover. Plain text, pills and figures without an arrow do
+   nothing when clicked. */
+
+.admin-main {
+  --mg-link: #1d5c74;
+  --mg-link-hover: #123f50;
+}
+
+.mg-table a:not(.mg-button),
+.mg-depths a,
+.mg-project-card h3 a,
+.mg-links a:not(.mg-button),
+.mg-note a,
+.mg-crumb a,
+.mg-panel-head .admin-link,
+.mg-board .workspace-detail a:not(.mg-button) {
+  color: var(--mg-link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--mg-link) 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.mg-table a:not(.mg-button):hover,
+.mg-depths a:hover,
+.mg-project-card h3 a:hover,
+.mg-links a:not(.mg-button):hover,
+.mg-note a:hover,
+.mg-crumb a:hover,
+.mg-panel-head .admin-link:hover,
+.mg-board .workspace-detail a:not(.mg-button):hover {
+  color: var(--mg-link-hover);
+  text-decoration-color: currentColor;
+}
+
+.mg-panel-head .admin-link {
+  font-weight: 600;
+}
+
+.mg-panel-head .admin-link::after {
+  content: " →";
+}
+
+.mg-opens {
+  flex: none;
+  color: var(--muted);
+}
+
+.mg-kpi-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.mg-kpi-link .mg-kpi-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mg-kpi-link:hover {
+  border-color: var(--ink);
+  box-shadow: 0 4px 14px rgba(24, 35, 33, 0.08);
+  transform: translateY(-1px);
+}
+
+.mg-kpi-link:hover .mg-opens {
+  color: var(--ink);
+}
+
+.mg-kpi-link:focus-visible,
+.mg-attn-row:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--forest) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.mg-board .workspace-row:hover:not(.is-selected) {
+  border-color: var(--ink);
+}
+
+.mg-button {
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.mg-button:hover {
+  border-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-kpi-link,
+  .mg-button {
+    transition: none;
+  }
+  .mg-kpi-link:hover {
+    transform: none;
   }
 }

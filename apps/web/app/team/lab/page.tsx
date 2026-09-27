@@ -62,6 +62,7 @@ export default async function SamplesAndLabPage() {
           label="At the laboratory"
           value={atLabSamples}
           unit="samples"
+          href="#dispatches"
           sub={`${atLab.length} ${atLab.length === 1 ? "dispatch" : "dispatches"} waiting for results`}
         />
         <Kpi
@@ -74,6 +75,7 @@ export default async function SamplesAndLabPage() {
           label="Overdue"
           value={overdue.length}
           tone={overdue.length > 0 ? "warn" : undefined}
+          href="#dispatches"
           sub={`more than ${RESULTS_OVERDUE_AFTER_DAYS} days at the laboratory`}
         />
         <Kpi
@@ -81,14 +83,16 @@ export default async function SamplesAndLabPage() {
           value={heldOrRejected.length}
           tone={heldOrRejected.some((d) => d.decision === "reject") ? "danger" : heldOrRejected.length > 0 ? "warn" : undefined}
           sub="listed below"
+          href="#qaqc"
         />
       </div>
 
       <div className="mg-grid-even">
-        <Panel title="Dispatches" note="Longest waiting first, then those being put together, then results back.">
+        <Panel id="dispatches" title="Dispatches" note="Longest waiting first, then those being put together, then results back.">
           <DispatchTable rows={[...dispatches].sort(compareDispatchesForManager)} showProject />
         </Panel>
         <Panel
+          id="qaqc"
           title="QA/QC held or rejected"
           note="Read-only. The QA/QC reviewer decides; the manager follows up with the laboratory or the geologist."
         >
