@@ -77,9 +77,23 @@ export default async function HoleViewPage({
           </Link>
           <h1>{hole.holeId}</h1>
           <p>
-            {hole.project.name} · planned {hole.plannedDepthM.toFixed(1)} m
+            <Link href={`/team/projects/${hole.projectId}` as Route} className="admin-link">
+              {hole.project.name}
+            </Link>{" "}
+            · planned {hole.plannedDepthM.toFixed(1)} m
             {hole.actualFinalDepthM ? ` · final ${hole.actualFinalDepthM.toFixed(1)} m` : ""}
             {assignedToName ? ` · assigned to ${assignedToName}` : ""}
+            {hole.collarLatitude != null && hole.collarLongitude != null ? (
+              <>
+                {" · "}
+                <Link
+                  href={`/team/projects/${hole.projectId}?hole=${hole.id}` as Route}
+                  className="admin-link"
+                >
+                  See in 3D
+                </Link>
+              </>
+            ) : null}
             {hole.samples.length > 0 ? (
               <>
                 {" · "}

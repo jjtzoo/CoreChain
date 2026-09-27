@@ -9,6 +9,7 @@ import { assignHoleAction, setHolePriorityAction } from "./actions";
 export type HoleRow = {
   id: string;
   holeId: string;
+  projectId: string;
   projectName: string;
   status: string;
   plannedDepthM: number;
@@ -172,7 +173,11 @@ function HoleDetail({
             </span>
             {urgent ? <span className="status-pill is-danger">Urgent</span> : null}
           </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 2 }}>{hole.projectName}</div>
+          <div style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 2 }}>
+            <Link href={`/team/projects/${hole.projectId}` as Route} className="admin-link">
+              {hole.projectName}
+            </Link>
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span className={STATUS_PILL_CLASS[hole.status] ?? "status-pill is-muted"}>

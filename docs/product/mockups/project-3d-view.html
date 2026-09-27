@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Project 3D view mockup</title>
+<!--
+  MOCKUP, not the app. The resident / project manager's project page with its
+  3D evidence view (plan decision D18, epic E18: E18-1 project page, E18-2 3D
+  view coloured by element). Web only. It shows recorded evidence in place and
+  interprets nothing: no surfaces, no grade shells.
+  Holes, collars, azimuths, dips and depths are the SYNTHETIC Cordillera
+  porphyry sample (apps/web/data/demo/synthetic-cordillera-porphyry), itself
+  made up. The sample numbers, intervals and Cu / Au values are ILLUSTRATIVE,
+  generated from each logged interval's mineral so the picture looks like a
+  porphyry; they are not assays. Colours are the web app's tokens
+  (apps/web/app/globals.css). three.js loads from a CDN here only; the app
+  would bundle it and load it on this page alone.
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --surface-muted: #e3ddcf; --ink: #182321; --text: #3a4642;
+    --muted: #6b736e; --line: #d6cfc0; --line-strong: #bdb5a3; --forest: #182321; --forest-dark: #0f1615;
+    --copper: #a66a43; --warn-bg: #fff8e5; --warn-line: #e4c983; --warn-ink: #745a12;
+    --ok: #2f7a55; --okbg: #e2f0e7;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: Consolas, "Cascadia Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, h4, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+  .wrap { width: min(1240px, 100% - 48px); margin: 0 auto; }
+
+  .top { padding: 56px 0 24px; border-bottom: 1px solid var(--line); }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.15; margin: 10px 0 14px; max-width: 26ch; }
+  .lede { max-width: 72ch; color: var(--text); font-size: 18px; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--muted); max-width: 86ch; }
+  .note b { color: var(--text); }
+
+  .view { padding: 36px 0 48px; }
+  .scroll { overflow-x: auto; padding-bottom: 12px; }
+
+  /* the browser window */
+  .win { width: 1180px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(24,35,33,.10); }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--surface-muted); border-bottom: 1px solid var(--line); }
+  .chrome i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .chrome span { margin-left: 10px; flex: 1; max-width: 460px; background: var(--surface); border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+  .app { display: grid; grid-template-columns: 190px 1fr; min-height: 760px; }
+  .side { background: var(--forest); color: #d8d3c6; padding: 18px 12px; font-size: 13.5px; }
+  .side .brand { color: #eeeae1; font-weight: 700; font-size: 15px; padding: 0 8px 16px; letter-spacing: .02em; }
+  .side .brand small { display: block; font-weight: 400; color: #a8b0a9; font-size: 11px; margin-top: 2px; }
+  .side li { padding: 8px 10px; border-radius: 8px; margin-bottom: 2px; }
+  .side li.on { background: #243431; color: #fff; font-weight: 600; }
+  .side li.sub { padding-left: 22px; font-size: 12.5px; color: #a8b0a9; }
+  .side li.sub.on { color: #fff; }
+  .side .who { margin-top: 26px; padding: 10px; border-top: 1px solid #2a3a37; font-size: 12px; color: #a8b0a9; }
+  .main { padding: 18px 24px 24px; background: var(--canvas); min-width: 0; }
+
+  .crumbs { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  .crumbs a { color: var(--muted); text-decoration: none; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 14px; }
+  .head h4 { font-size: 22px; }
+  .head p { font-size: 12.5px; color: var(--muted); }
+  .synthetic { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink); font-size: 11px; font-weight: 600; vertical-align: 3px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  .kpi { padding: 10px 14px; }
+  .kpi small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kpi b { display: block; font-size: 24px; line-height: 1.2; margin-top: 2px; }
+  .kpi b em { font-style: normal; font-size: 13px; font-weight: 400; color: var(--muted); }
+
+  /* viewer */
+  .viewer { overflow: hidden; }
+  .toolbar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .toolbar label, .toolbar .lbl { font-size: 12px; color: var(--muted); }
+  .seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--canvas); vertical-align: middle; margin-left: 6px; }
+  .seg button { font: inherit; font-size: 12.5px; border: 0; background: transparent; color: var(--text); padding: 4px 11px; border-radius: 6px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--forest); color: #fff; }
+  .spacer { flex: 1; }
+  .btn { font: inherit; font-size: 12.5px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 5px 12px; border-radius: 8px; cursor: pointer; }
+  .btn:hover { border-color: var(--forest); }
+
+  .stage { display: grid; grid-template-columns: 1fr 300px; height: 520px; }
+  .canvas { position: relative; background: var(--forest-dark); min-width: 0; }
+  .canvas canvas { display: block; }
+  .labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .labels div { position: absolute; left: 0; top: 0; }
+  .hl { translate: -50% -140%; font-family: var(--mono); font-size: 11px; color: #d8d3c6; background: rgba(15,22,21,.85); border: 1px solid #2a3a37; border-radius: 4px; padding: 1px 6px; pointer-events: auto; cursor: pointer; white-space: nowrap; }
+  .hl.on { background: #eeeae1; color: var(--forest); border-color: #eeeae1; font-weight: 600; }
+  .gn { translate: -50% -50%; font-family: var(--mono); font-size: 10.5px; color: #a8b0a9; white-space: nowrap; }
+  .tip { position: absolute; z-index: 5; pointer-events: none; background: #f7f4ec; color: var(--ink); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 9px; font-size: 12px; line-height: 1.4; box-shadow: 0 6px 18px rgba(0,0,0,.25); display: none; }
+  .tip b { font-family: var(--mono); }
+  .caveat { position: absolute; left: 12px; bottom: 10px; right: 12px; font-size: 11.5px; color: #a8b0a9; pointer-events: none; }
+
+  .hole { border-left: 1px solid var(--line); padding: 14px; overflow-y: auto; font-size: 13px; }
+  .hole h5 { font-size: 17px; margin: 0 0 2px; font-family: var(--mono); }
+  .hole .meta { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--okbg); color: var(--ok); margin-left: 6px; vertical-align: 2px; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 12px; font-size: 12px; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; font-family: var(--mono); color: var(--ink); }
+  .rows { border-top: 1px solid var(--line); }
+  .rows li { display: grid; grid-template-columns: 76px 1fr 64px; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 11.5px; }
+  .rows .d { font-family: var(--mono); color: var(--muted); }
+  .rows .bar { height: 8px; border-radius: 2px; }
+  .rows .v { font-family: var(--mono); text-align: right; }
+  .rows .wait { color: var(--muted); font-style: italic; }
+  .open { display: block; margin-top: 12px; text-align: center; }
+
+  .legend { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text); }
+  .ramp { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11.5px; }
+  .ramp i { display: inline-block; width: 160px; height: 10px; border-radius: 2px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -2px; margin-right: 6px; }
+  .sw.wait { background: #55605c; }
+  .sw.bdl { background: repeating-linear-gradient(45deg, #3b2a20 0 2px, #6b736e 2px 4px); }
+  .legend .scale-note { flex-basis: 100%; color: var(--muted); font-size: 11.5px; }
+
+  .asides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+  .aside { padding: 14px 16px; }
+  .aside h3 { font-size: 14px; margin-bottom: 4px; }
+  .aside p { font-size: 13px; color: var(--text); }
+</style>
+</head>
+<body>
+
+<section class="top">
+  <div class="wrap">
+    <span class="tag">Mockup · E18 · for the owner's approval</span>
+    <h1>A project page, with its holes and grades in 3D</h1>
+    <p class="lede">For the resident / project manager, on the web. It shows where each hole runs, which intervals were sampled and what the laboratory returned. It shows the recorded evidence and interprets nothing.</p>
+    <p class="note"><b>The data is not real.</b> The six holes are the synthetic Cordillera porphyry sample. The sample numbers and the Cu and Au values are illustrative, made up from each interval's logged mineral. Drag to orbit, scroll to zoom, hover a sample, and click a hole's label or a row on the right.</p>
+  </div>
+</section>
+
+<section class="view">
+  <div class="wrap scroll">
+    <div class="win">
+      <div class="chrome"><i></i><i></i><i></i><span>corechain-orpin.vercel.app/team/projects/cordillera</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="brand">CoreChain<small>Team workspace</small></div>
+          <ul>
+            <li>Overview</li>
+            <li class="on">Projects</li>
+            <li class="sub on">Cordillera porphyry</li>
+            <li class="sub">Alberta sample</li>
+            <li>Holes</li>
+            <li>Samples</li>
+            <li>Activity</li>
+            <li>Codes</li>
+          </ul>
+          <div class="who">Signed in as<br><span style="color:#eeeae1">Resident / project manager</span></div>
+        </aside>
+
+        <main class="main">
+          <p class="crumbs"><a href="#">Team overview</a> › <a href="#">Projects</a> › Cordillera porphyry</p>
+          <div class="head">
+            <div>
+              <h4>Cordillera porphyry sample <span class="synthetic">Synthetic</span></h4>
+              <p>Copper-gold · WGS84 collars from the phone · 6 holes, 1,418 m drilled</p>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="panel kpi"><small>Holes</small><b>6 <em>all logged</em></b></div>
+            <div class="panel kpi"><small>Sampled intervals</small><b id="k-samples">–</b></div>
+            <div class="panel kpi"><small>With laboratory results</small><b id="k-results">–</b></div>
+            <div class="panel kpi"><small>At the laboratory</small><b id="k-wait">–</b></div>
+          </div>
+
+          <div class="panel viewer">
+            <div class="toolbar">
+              <span class="lbl">Colour by
+                <span class="seg" id="elements"></span>
+              </span>
+              <span class="lbl">Depth stretch
+                <span class="seg" id="ve">
+                  <button type="button" data-ve="1" aria-pressed="true">1×</button>
+                  <button type="button" data-ve="2" aria-pressed="false">2×</button>
+                  <button type="button" data-ve="3" aria-pressed="false">3×</button>
+                </span>
+              </span>
+              <span class="spacer"></span>
+              <button type="button" class="btn" id="all">Show all holes</button>
+            </div>
+
+            <div class="stage">
+              <div class="canvas" id="canvas">
+                <div class="labels" id="labels"></div>
+                <div class="tip" id="tip"></div>
+                <p class="caveat">Traces follow each hole's planned azimuth and dip; there is no downhole survey. Depths are below the collar. Grid squares are 25 m.</p>
+              </div>
+              <aside class="hole" id="hole"></aside>
+            </div>
+
+            <div class="legend" id="legend"></div>
+          </div>
+
+          <div class="asides">
+            <div class="panel aside"><h3>Where it opens from</h3><p>Project names on the team overview, and "See in 3D" on a hole's page, which opens this view with that hole selected.</p></div>
+            <div class="panel aside"><h3>What it leaves to the hole page</h3><p>The full log, core boxes, photos and custody. "Open hole page" goes there; this view does not repeat it.</p></div>
+            <div class="panel aside"><h3>Not in this step</h3><p>Colouring by rock type, a cut-off grade slider, a section view on the phone, and anything interpretive such as surfaces or grade shells.</p></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+
+const HOLES = [{"id":"CDL-001","lat":17.0452,"lon":120.851,"az":0,"dip":-90,"depth":302.5,"samples":[{"no":"CDL-00001","from":2.5,"to":8.3,"lith":"AND","min":"PY","Cu":0.018,"Au":0.02},{"no":"CDL-00002","from":8.3,"to":14,"lith":"AND","min":"PY","Cu":0.025,"Au":0.02},{"no":"CDL-00003","from":14,"to":19.8,"lith":"AND","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00004","from":19.8,"to":25.7,"lith":"AND","min":"PY","Cu":0.026,"Au":0.03},{"no":"CDL-00005","from":25.7,"to":31.5,"lith":"AND","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00006","from":31.5,"to":37,"lith":"AND","min":"PY","Cu":0.034,"Au":0.03},{"no":"CDL-00007","from":37,"to":42.5,"lith":"AND","min":"PY","Cu":0.038,"Au":0.03},{"no":"CDL-00008","from":42.5,"to":48,"lith":"AND","min":"PY","Cu":0.027,"Au":0.03},{"no":"CDL-00009","from":48,"to":53.4,"lith":"PORP","min":"PY","Cu":0.035,"Au":0.02},{"no":"CDL-00010","from":53.4,"to":58.9,"lith":"PORP","min":"PY","Cu":0.034,"Au":0.03},{"no":"CDL-00011","from":58.9,"to":64.3,"lith":"PORP","min":"PY","Cu":0.04,"Au":0.05},{"no":"CDL-00012","from":64.3,"to":69.8,"lith":"PORP","min":"PY","Cu":0.021,"Au":0.02},{"no":"CDL-00013","from":69.8,"to":75.2,"lith":"PORP","min":"PY","Cu":0.04,"Au":0.04},{"no":"CDL-00014","from":75.2,"to":80.5,"lith":"PORP","min":"CPY","Cu":0.502,"Au":0.49},{"no":"CDL-00015","from":80.5,"to":85.9,"lith":"PORP","min":"CPY","Cu":0.598,"Au":0.76},{"no":"CDL-00016","from":85.9,"to":91.2,"lith":"PORP","min":"CPY","Cu":0.404,"Au":0.3},{"no":"CDL-00017","from":91.2,"to":96.6,"lith":"PORP","min":"CPY","Cu":0.571,"Au":0.43},{"no":"CDL-00018","from":96.6,"to":101.9,"lith":"PORP","min":"CPY","Cu":0.325,"Au":0.23},{"no":"CDL-00019","from":101.9,"to":107.3,"lith":"PORP","min":"CPY","Cu":0.424,"Au":0.3},{"no":"CDL-00020","from":107.3,"to":112.6,"lith":"PORP","min":"CPY","Cu":0.607,"Au":0.58},{"no":"CDL-00021","from":112.6,"to":118,"lith":"PORP","min":"CPY","Cu":0.533,"Au":0.66},{"no":"CDL-00022","from":118,"to":121.4,"lith":"BX","min":"BN","Cu":1.811,"Au":1.26},{"no":"CDL-00023","from":121.4,"to":126.8,"lith":"PORP","min":"CPY","Cu":0.786,"Au":0.71},{"no":"CDL-00024","from":126.8,"to":132.3,"lith":"PORP","min":"CPY","Cu":0.703,"Au":0.44},{"no":"CDL-00025","from":132.3,"to":137.7,"lith":"PORP","min":"CPY","Cu":0.995,"Au":0.5},{"no":"CDL-00026","from":137.7,"to":143.1,"lith":"PORP","min":"CPY","Cu":0.669,"Au":0.51},{"no":"CDL-00027","from":143.1,"to":148.6,"lith":"PORP","min":"CPY","Cu":0.849,"Au":1.09},{"no":"CDL-00028","from":148.6,"to":154,"lith":"PORP","min":"CPY","Cu":0.759,"Au":0.45},{"no":"CDL-00029","from":154,"to":159.4,"lith":"PORP","min":"CPY","Cu":0.693,"Au":0.49},{"no":"CDL-00030","from":159.4,"to":164.9,"lith":"PORP","min":"CPY","Cu":0.669,"Au":0.56},{"no":"CDL-00031","from":164.9,"to":170.3,"lith":"PORP","min":"CPY","Cu":0.65,"Au":0.6},{"no":"CDL-00032","from":170.3,"to":171,"lith":"PORP","min":"","Cu":0.011,"Au":null},{"no":"CDL-00033","from":171,"to":176.6,"lith":"PORP","min":"MAG","Cu":0.027,"Au":0.02},{"no":"CDL-00034","from":176.6,"to":182.1,"lith":"PORP","min":"MAG","Cu":0.026,"Au":0.03},{"no":"CDL-00035","from":182.1,"to":187.7,"lith":"PORP","min":"MAG","Cu":0.022,"Au":0.02},{"no":"CDL-00036","from":187.7,"to":193.3,"lith":"PORP","min":"MAG","Cu":0.02,"Au":0.02},{"no":"CDL-00037","from":193.3,"to":198.9,"lith":"PORP","min":"MAG","Cu":0.027,"Au":0.02},{"no":"CDL-00038","from":198.9,"to":204.4,"lith":"PORP","min":"MAG","Cu":0.023,"Au":0.02},{"no":"CDL-00039","from":204.4,"to":210,"lith":"PORP","min":"MAG","Cu":0.021,"Au":0.02},{"no":"CDL-00040","from":210,"to":215.5,"lith":"DIO","min":"CPY","Cu":0.259,"Au":0.21},{"no":"CDL-00041","from":215.5,"to":221,"lith":"DIO","min":"CPY","Cu":0.371,"Au":0.46},{"no":"CDL-00042","from":221,"to":226.5,"lith":"DIO","min":"CPY","Cu":0.207,"Au":0.25},{"no":"CDL-00043","from":226.5,"to":232.1,"lith":"DIO","min":"CPY","Cu":0.199,"Au":0.16},{"no":"CDL-00044","from":232.1,"to":237.6,"lith":"DIO","min":"CPY","Cu":0.217,"Au":0.11},{"no":"CDL-00045","from":237.6,"to":243.1,"lith":"DIO","min":"CPY","Cu":0.419,"Au":0.27},{"no":"CDL-00046","from":243.1,"to":248.6,"lith":"DIO","min":"CPY","Cu":0.332,"Au":0.19},{"no":"CDL-00047","from":248.6,"to":254.1,"lith":"DIO","min":"PY","Cu":0.029,"Au":0.03},{"no":"CDL-00048","from":254.1,"to":259.6,"lith":"DIO","min":"PY","Cu":0.021,"Au":0.03},{"no":"CDL-00049","from":259.6,"to":265,"lith":"DIO","min":"PY","Cu":0.039,"Au":0.05},{"no":"CDL-00050","from":265,"to":270.5,"lith":"DIO","min":"PY","Cu":0.039,"Au":0.05},{"no":"CDL-00051","from":270.5,"to":276,"lith":"DIO","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00052","from":276,"to":281.3,"lith":"AND","min":"PY","Cu":0.018,"Au":null},{"no":"CDL-00053","from":281.3,"to":286.6,"lith":"AND","min":"PY","Cu":0.02,"Au":null},{"no":"CDL-00054","from":286.6,"to":291.9,"lith":"AND","min":"PY","Cu":0.033,"Au":0.02},{"no":"CDL-00055","from":291.9,"to":297.2,"lith":"AND","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00056","from":297.2,"to":302.5,"lith":"AND","min":"PY","Cu":0.035,"Au":0.02}]},{"id":"CDL-002","lat":17.0461,"lon":120.851,"az":180,"dip":-60,"depth":251,"samples":[{"no":"CDL-00057","from":3,"to":8.5,"lith":"AND","min":"PY","Cu":0.039,"Au":0.03},{"no":"CDL-00058","from":8.5,"to":13.9,"lith":"AND","min":"PY","Cu":0.027,"Au":0.03},{"no":"CDL-00059","from":13.9,"to":19.4,"lith":"AND","min":"PY","Cu":0.021,"Au":0.02},{"no":"CDL-00060","from":19.4,"to":24.9,"lith":"AND","min":"PY","Cu":0.018,"Au":0.02},{"no":"CDL-00061","from":24.9,"to":30.5,"lith":"AND","min":"PY","Cu":0.033,"Au":0.04},{"no":"CDL-00062","from":30.5,"to":36,"lith":"AND","min":"PY","Cu":0.019,"Au":0.02},{"no":"CDL-00063","from":36,"to":40.9,"lith":"AND","min":"PY","Cu":0.023,"Au":0.03},{"no":"CDL-00064","from":40.9,"to":45.8,"lith":"AND","min":"PY","Cu":0.032,"Au":0.03},{"no":"CDL-00065","from":45.8,"to":50.7,"lith":"AND","min":"PY","Cu":0.024,"Au":0.02},{"no":"CDL-00066","from":50.7,"to":55.6,"lith":"AND","min":"PY","Cu":0.023,"Au":0.02},{"no":"CDL-00067","from":55.6,"to":60.5,"lith":"AND","min":"PY","Cu":0.019,"Au":0.02},{"no":"CDL-00068","from":60.5,"to":65.8,"lith":"PORP","min":"CPY","Cu":0.348,"Au":0.38},{"no":"CDL-00069","from":65.8,"to":71,"lith":"PORP","min":"CPY","Cu":0.3,"Au":0.14},{"no":"CDL-00070","from":71,"to":76.3,"lith":"PORP","min":"CPY","Cu":0.206,"Au":0.26},{"no":"CDL-00071","from":76.3,"to":81.5,"lith":"PORP","min":"CPY","Cu":0.211,"Au":0.23},{"no":"CDL-00072","from":81.5,"to":86.8,"lith":"PORP","min":"CPY","Cu":0.394,"Au":0.19},{"no":"CDL-00073","from":86.8,"to":92,"lith":"PORP","min":"CPY","Cu":0.392,"Au":0.48},{"no":"CDL-00074","from":92,"to":97.7,"lith":"PORP","min":"CPY","Cu":0.753,"Au":0.99},{"no":"CDL-00075","from":97.7,"to":103.4,"lith":"PORP","min":"CPY","Cu":0.654,"Au":0.54},{"no":"CDL-00076","from":103.4,"to":109.1,"lith":"PORP","min":"CPY","Cu":0.431,"Au":0.48},{"no":"CDL-00077","from":109.1,"to":114.7,"lith":"PORP","min":"CPY","Cu":0.705,"Au":0.57},{"no":"CDL-00078","from":114.7,"to":120.4,"lith":"PORP","min":"CPY","Cu":0.425,"Au":0.35},{"no":"CDL-00079","from":120.4,"to":126.1,"lith":"PORP","min":"CPY","Cu":0.707,"Au":0.67},{"no":"CDL-00080","from":126.1,"to":131.8,"lith":"PORP","min":"CPY","Cu":0.476,"Au":0.48},{"no":"CDL-00081","from":131.8,"to":134,"lith":"PORP","min":"","Cu":0.012,"Au":null},{"no":"CDL-00082","from":134,"to":139.3,"lith":"PORP","min":"CPY","Cu":0.779,"Au":0.65},{"no":"CDL-00083","from":139.3,"to":144.6,"lith":"PORP","min":"CPY","Cu":0.501,"Au":0.37},{"no":"CDL-00084","from":144.6,"to":149.9,"lith":"PORP","min":"CPY","Cu":0.916,"Au":1.23},{"no":"CDL-00085","from":149.9,"to":155.3,"lith":"PORP","min":"CPY","Cu":0.73,"Au":0.9},{"no":"CDL-00086","from":155.3,"to":160.6,"lith":"PORP","min":"CPY","Cu":0.881,"Au":0.55},{"no":"CDL-00087","from":160.6,"to":165.9,"lith":"PORP","min":"CPY","Cu":0.737,"Au":0.42},{"no":"CDL-00088","from":165.9,"to":171.2,"lith":"PORP","min":"CPY","Cu":0.659,"Au":0.63},{"no":"CDL-00089","from":171.2,"to":176.5,"lith":"PORP","min":"CPY","Cu":0.803,"Au":1.04},{"no":"CDL-00090","from":176.5,"to":181.9,"lith":"DIO","min":"PY","Cu":0.03,"Au":0.02},{"no":"CDL-00091","from":181.9,"to":187.2,"lith":"DIO","min":"PY","Cu":0.029,"Au":0.02},{"no":"CDL-00092","from":187.2,"to":192.6,"lith":"DIO","min":"PY","Cu":0.034,"Au":0.03},{"no":"CDL-00093","from":192.6,"to":197.9,"lith":"DIO","min":"PY","Cu":0.031,"Au":0.03},{"no":"CDL-00094","from":197.9,"to":203.3,"lith":"DIO","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00095","from":203.3,"to":208.6,"lith":"DIO","min":"PY","Cu":0.036,"Au":0.02},{"no":"CDL-00096","from":208.6,"to":214,"lith":"DIO","min":"PY","Cu":0.025,"Au":0.02},{"no":"CDL-00097","from":214,"to":219.3,"lith":"AND","min":"PY","Cu":0.023,"Au":0.03},{"no":"CDL-00098","from":219.3,"to":224.6,"lith":"AND","min":"PY","Cu":0.025,"Au":0.02},{"no":"CDL-00099","from":224.6,"to":229.9,"lith":"AND","min":"PY","Cu":0.034,"Au":0.03},{"no":"CDL-00100","from":229.9,"to":235.1,"lith":"AND","min":"PY","Cu":0.02,"Au":0.02},{"no":"CDL-00101","from":235.1,"to":240.4,"lith":"AND","min":"PY","Cu":0.038,"Au":0.05},{"no":"CDL-00102","from":240.4,"to":245.7,"lith":"AND","min":"PY","Cu":0.04,"Au":0.04},{"no":"CDL-00103","from":245.7,"to":251,"lith":"AND","min":"PY","Cu":0.041,"Au":0.02}]},{"id":"CDL-003","lat":17.0452,"lon":120.8519,"az":270,"dip":-60,"depth":275.4,"samples":[{"no":"CDL-00104","from":2,"to":7.3,"lith":"TUF","min":"","Cu":0.012,"Au":null},{"no":"CDL-00105","from":7.3,"to":12.5,"lith":"TUF","min":"","Cu":0.012,"Au":0.02},{"no":"CDL-00106","from":12.5,"to":17.8,"lith":"TUF","min":"","Cu":0.006,"Au":null},{"no":"CDL-00107","from":17.8,"to":23.4,"lith":"AND","min":"PY","Cu":0.02,"Au":null},{"no":"CDL-00108","from":23.4,"to":29,"lith":"AND","min":"PY","Cu":0.02,"Au":null},{"no":"CDL-00109","from":29,"to":34.6,"lith":"AND","min":"PY","Cu":0.033,"Au":0.04},{"no":"CDL-00110","from":34.6,"to":40.2,"lith":"AND","min":"PY","Cu":0.023,"Au":null},{"no":"CDL-00111","from":40.2,"to":45.4,"lith":"AND","min":"PY","Cu":0.023,"Au":0.02},{"no":"CDL-00112","from":45.4,"to":50.5,"lith":"AND","min":"PY","Cu":0.024,"Au":0.02},{"no":"CDL-00113","from":50.5,"to":55.7,"lith":"AND","min":"PY","Cu":0.042,"Au":0.03},{"no":"CDL-00114","from":55.7,"to":60.8,"lith":"AND","min":"PY","Cu":0.034,"Au":0.04},{"no":"CDL-00115","from":60.8,"to":66,"lith":"AND","min":"PY","Cu":0.028,"Au":0.02},{"no":"CDL-00116","from":66,"to":71.9,"lith":"PORP","min":"PY","Cu":0.019,"Au":null},{"no":"CDL-00117","from":71.9,"to":77.8,"lith":"PORP","min":"PY","Cu":0.037,"Au":0.05},{"no":"CDL-00118","from":77.8,"to":83.6,"lith":"PORP","min":"PY","Cu":0.022,"Au":0.03},{"no":"CDL-00119","from":83.6,"to":89.5,"lith":"PORP","min":"PY","Cu":0.03,"Au":0.02},{"no":"CDL-00120","from":89.5,"to":95.4,"lith":"PORP","min":"PY","Cu":0.023,"Au":0.02},{"no":"CDL-00121","from":95.4,"to":101.3,"lith":"PORP","min":"PY","Cu":0.022,"Au":null},{"no":"CDL-00122","from":101.3,"to":106.9,"lith":"PORP","min":"CPY","Cu":0.295,"Au":0.3},{"no":"CDL-00123","from":106.9,"to":112.6,"lith":"PORP","min":"CPY","Cu":0.376,"Au":0.33},{"no":"CDL-00124","from":112.6,"to":118.2,"lith":"PORP","min":"CPY","Cu":0.502,"Au":0.26},{"no":"CDL-00125","from":118.2,"to":123.8,"lith":"PORP","min":"CPY","Cu":0.335,"Au":0.25},{"no":"CDL-00126","from":123.8,"to":129.5,"lith":"PORP","min":"CPY","Cu":0.217,"Au":0.1},{"no":"CDL-00127","from":129.5,"to":135.1,"lith":"PORP","min":"CPY","Cu":0.335,"Au":0.18},{"no":"CDL-00128","from":135.1,"to":140.7,"lith":"PORP","min":"CPY","Cu":0.283,"Au":0.36},{"no":"CDL-00129","from":140.7,"to":146.4,"lith":"PORP","min":"CPY","Cu":0.44,"Au":0.5},{"no":"CDL-00130","from":146.4,"to":152,"lith":"PORP","min":"CPY","Cu":0.342,"Au":0.42},{"no":"CDL-00131","from":152,"to":153.1,"lith":"BX","min":"CPY","Cu":0.822,"Au":0.96},{"no":"CDL-00132","from":153.1,"to":158.8,"lith":"PORP","min":"CPY","Cu":0.542,"Au":0.52},{"no":"CDL-00133","from":158.8,"to":164.5,"lith":"PORP","min":"CPY","Cu":0.422,"Au":0.34},{"no":"CDL-00134","from":164.5,"to":170.2,"lith":"PORP","min":"CPY","Cu":0.479,"Au":0.43},{"no":"CDL-00135","from":170.2,"to":175.9,"lith":"PORP","min":"CPY","Cu":0.506,"Au":0.56},{"no":"CDL-00136","from":175.9,"to":181.6,"lith":"PORP","min":"CPY","Cu":0.543,"Au":0.55},{"no":"CDL-00137","from":181.6,"to":187.3,"lith":"PORP","min":"CPY","Cu":0.568,"Au":0.71},{"no":"CDL-00138","from":187.3,"to":193,"lith":"PORP","min":"CPY","Cu":0.613,"Au":0.82},{"no":"CDL-00139","from":193,"to":198.7,"lith":"PORP","min":"CPY","Cu":0.456,"Au":0.41},{"no":"CDL-00140","from":198.7,"to":204.4,"lith":"DIO","min":"MAG","Cu":0.027,"Au":0.04},{"no":"CDL-00141","from":204.4,"to":210.1,"lith":"DIO","min":"MAG","Cu":0.018,"Au":null},{"no":"CDL-00142","from":210.1,"to":215.8,"lith":"DIO","min":"MAG","Cu":0.017,"Au":0.02},{"no":"CDL-00143","from":215.8,"to":221.6,"lith":"DIO","min":"MAG","Cu":0.023,"Au":0.03},{"no":"CDL-00144","from":221.6,"to":227.3,"lith":"DIO","min":"MAG","Cu":0.027,"Au":0.03},{"no":"CDL-00145","from":227.3,"to":233,"lith":"DIO","min":"MAG","Cu":0.015,"Au":null},{"no":"CDL-00146","from":233,"to":238.3,"lith":"AND","min":"PY","Cu":0.037,"Au":0.02},{"no":"CDL-00147","from":238.3,"to":243.6,"lith":"AND","min":"PY","Cu":0.04,"Au":0.05},{"no":"CDL-00148","from":243.6,"to":248.9,"lith":"AND","min":"PY","Cu":0.033,"Au":0.04},{"no":"CDL-00149","from":248.9,"to":254.2,"lith":"AND","min":"PY","Cu":0.031,"Au":0.03},{"no":"CDL-00150","from":254.2,"to":259.5,"lith":"AND","min":"PY","Cu":0.039,"Au":0.04},{"no":"CDL-00151","from":259.5,"to":264.8,"lith":"AND","min":"PY","Cu":0.039,"Au":0.03},{"no":"CDL-00152","from":264.8,"to":270.1,"lith":"AND","min":"PY","Cu":0.034,"Au":0.03},{"no":"CDL-00153","from":270.1,"to":275.4,"lith":"AND","min":"PY","Cu":0.027,"Au":0.02}]},{"id":"CDL-004","lat":17.0443,"lon":120.851,"az":0,"dip":-60,"depth":230.8,"samples":[{"no":"CDL-00154","from":2.8,"to":7.7,"lith":"AND","min":"PY","Cu":0.032,"Au":0.02},{"no":"CDL-00155","from":7.7,"to":12.6,"lith":"AND","min":"PY","Cu":0.04,"Au":0.05},{"no":"CDL-00156","from":12.6,"to":17.6,"lith":"AND","min":"PY","Cu":0.026,"Au":0.03},{"no":"CDL-00157","from":17.6,"to":22.5,"lith":"AND","min":"PY","Cu":0.039,"Au":0.02},{"no":"CDL-00158","from":22.5,"to":28.1,"lith":"AND","min":"PY","Cu":0.025,"Au":0.03},{"no":"CDL-00159","from":28.1,"to":33.8,"lith":"AND","min":"PY","Cu":0.018,"Au":null},{"no":"CDL-00160","from":33.8,"to":39.4,"lith":"AND","min":"PY","Cu":0.028,"Au":null},{"no":"CDL-00161","from":39.4,"to":45,"lith":"AND","min":"PY","Cu":0.035,"Au":0.04},{"no":"CDL-00162","from":45,"to":50.5,"lith":"AND","min":"PY","Cu":0.022,"Au":null},{"no":"CDL-00163","from":50.5,"to":56,"lith":"AND","min":"PY","Cu":0.041,"Au":0.04},{"no":"CDL-00164","from":56,"to":61.5,"lith":"AND","min":"PY","Cu":0.022,"Au":null},{"no":"CDL-00165","from":61.5,"to":67.1,"lith":"AND","min":"PY","Cu":0.033,"Au":0.02},{"no":"CDL-00166","from":67.1,"to":72.6,"lith":"AND","min":"PY","Cu":0.037,"Au":0.04},{"no":"CDL-00167","from":72.6,"to":78.1,"lith":"AND","min":"PY","Cu":0.036,"Au":0.02},{"no":"CDL-00168","from":78.1,"to":83.6,"lith":"AND","min":"PY","Cu":0.026,"Au":0.03},{"no":"CDL-00169","from":83.6,"to":89.5,"lith":"PORP","min":"CPY","Cu":0.368,"Au":0.35},{"no":"CDL-00170","from":89.5,"to":95.4,"lith":"PORP","min":"CPY","Cu":0.289,"Au":0.33},{"no":"CDL-00171","from":95.4,"to":101.3,"lith":"PORP","min":"CPY","Cu":0.314,"Au":0.35},{"no":"CDL-00172","from":101.3,"to":107.2,"lith":"PORP","min":"CPY","Cu":0.291,"Au":0.16},{"no":"CDL-00173","from":107.2,"to":113.1,"lith":"PORP","min":"CPY","Cu":0.172,"Au":0.17},{"no":"CDL-00174","from":113.1,"to":119,"lith":"PORP","min":"CPY","Cu":0.211,"Au":0.21},{"no":"CDL-00175","from":119,"to":124.9,"lith":"PORP","min":"PY","Cu":0.024,"Au":0.02},{"no":"CDL-00176","from":124.9,"to":130.8,"lith":"PORP","min":"PY","Cu":0.033,"Au":0.03},{"no":"CDL-00177","from":130.8,"to":136.7,"lith":"PORP","min":"PY","Cu":0.038,"Au":0.03},{"no":"CDL-00178","from":136.7,"to":142.5,"lith":"PORP","min":"PY","Cu":0.04,"Au":0.02},{"no":"CDL-00179","from":142.5,"to":148.4,"lith":"PORP","min":"PY","Cu":0.035,"Au":0.03},{"no":"CDL-00180","from":148.4,"to":154.3,"lith":"PORP","min":"PY","Cu":0.037,"Au":0.04},{"no":"CDL-00181","from":154.3,"to":160.2,"lith":"PORP","min":"PY","Cu":0.037,"Au":0.02},{"no":"CDL-00182","from":160.2,"to":166.2,"lith":"DIO","min":"PY","Cu":0.04,"Au":0.04},{"no":"CDL-00183","from":166.2,"to":172.1,"lith":"DIO","min":"PY","Cu":0.038,"Au":0.03},{"no":"CDL-00184","from":172.1,"to":178.1,"lith":"DIO","min":"PY","Cu":0.039,"Au":0.05},{"no":"CDL-00185","from":178.1,"to":184.1,"lith":"DIO","min":"PY","Cu":0.035,"Au":0.04},{"no":"CDL-00186","from":184.1,"to":190,"lith":"DIO","min":"PY","Cu":0.039,"Au":0.02,"wait":true},{"no":"CDL-00187","from":190,"to":196,"lith":"DIO","min":"PY","Cu":0.035,"Au":0.02,"wait":true},{"no":"CDL-00188","from":196,"to":201.8,"lith":"AND","min":"","Cu":0.007,"Au":null,"wait":true},{"no":"CDL-00189","from":201.8,"to":207.6,"lith":"AND","min":"","Cu":0.014,"Au":null,"wait":true},{"no":"CDL-00190","from":207.6,"to":213.4,"lith":"AND","min":"","Cu":0.007,"Au":null,"wait":true},{"no":"CDL-00191","from":213.4,"to":219.2,"lith":"AND","min":"","Cu":0.014,"Au":0.02,"wait":true},{"no":"CDL-00192","from":219.2,"to":225,"lith":"AND","min":"","Cu":0.014,"Au":null,"wait":true},{"no":"CDL-00193","from":225,"to":230.8,"lith":"AND","min":"","Cu":0.008,"Au":null,"wait":true}]},{"id":"CDL-005","lat":17.0452,"lon":120.8492,"az":90,"dip":-55,"depth":198.2,"samples":[{"no":"CDL-00194","from":1.6,"to":6.1,"lith":"AND","min":"","Cu":0.01,"Au":null},{"no":"CDL-00195","from":6.1,"to":10.5,"lith":"AND","min":"","Cu":0.007,"Au":null},{"no":"CDL-00196","from":10.5,"to":15,"lith":"AND","min":"","Cu":0.01,"Au":null},{"no":"CDL-00197","from":15,"to":20.4,"lith":"AND","min":"PY","Cu":0.019,"Au":null},{"no":"CDL-00198","from":20.4,"to":25.9,"lith":"AND","min":"PY","Cu":0.02,"Au":0.02},{"no":"CDL-00199","from":25.9,"to":31.3,"lith":"AND","min":"PY","Cu":0.029,"Au":0.03},{"no":"CDL-00200","from":31.3,"to":36.7,"lith":"AND","min":"PY","Cu":0.035,"Au":0.03},{"no":"CDL-00201","from":36.7,"to":42.1,"lith":"AND","min":"PY","Cu":0.035,"Au":0.03},{"no":"CDL-00202","from":42.1,"to":47.5,"lith":"AND","min":"PY","Cu":0.033,"Au":0.04},{"no":"CDL-00203","from":47.5,"to":53,"lith":"AND","min":"PY","Cu":0.036,"Au":0.05},{"no":"CDL-00204","from":53,"to":58.4,"lith":"AND","min":"PY","Cu":0.035,"Au":0.03},{"no":"CDL-00205","from":58.4,"to":63.6,"lith":"TUF","min":"","Cu":0.012,"Au":null},{"no":"CDL-00206","from":63.6,"to":68.8,"lith":"TUF","min":"","Cu":0.007,"Au":null},{"no":"CDL-00207","from":68.8,"to":74,"lith":"TUF","min":"","Cu":0.011,"Au":null},{"no":"CDL-00208","from":74,"to":79.5,"lith":"AND","min":"PY","Cu":0.031,"Au":0.02},{"no":"CDL-00209","from":79.5,"to":84.9,"lith":"AND","min":"PY","Cu":0.03,"Au":0.02},{"no":"CDL-00210","from":84.9,"to":90.4,"lith":"AND","min":"PY","Cu":0.02,"Au":null},{"no":"CDL-00211","from":90.4,"to":95.8,"lith":"AND","min":"PY","Cu":0.027,"Au":0.02},{"no":"CDL-00212","from":95.8,"to":101.3,"lith":"AND","min":"PY","Cu":0.023,"Au":0.02},{"no":"CDL-00213","from":101.3,"to":106.7,"lith":"AND","min":"PY","Cu":0.021,"Au":null},{"no":"CDL-00214","from":106.7,"to":112.2,"lith":"AND","min":"PY","Cu":0.018,"Au":0.02},{"no":"CDL-00215","from":112.2,"to":117.6,"lith":"AND","min":"PY","Cu":0.039,"Au":0.02},{"no":"CDL-00216","from":117.6,"to":123.1,"lith":"AND","min":"PY","Cu":0.036,"Au":0.03},{"no":"CDL-00217","from":123.1,"to":128.5,"lith":"AND","min":"PY","Cu":0.028,"Au":0.04},{"no":"CDL-00218","from":128.5,"to":134.4,"lith":"AND","min":"CPY","Cu":0.334,"Au":0.15},{"no":"CDL-00219","from":134.4,"to":140.3,"lith":"AND","min":"CPY","Cu":0.377,"Au":0.24},{"no":"CDL-00220","from":140.3,"to":146.2,"lith":"AND","min":"CPY","Cu":0.301,"Au":0.25},{"no":"CDL-00221","from":146.2,"to":152.2,"lith":"AND","min":"CPY","Cu":0.169,"Au":0.1},{"no":"CDL-00222","from":152.2,"to":158.1,"lith":"AND","min":"CPY","Cu":0.325,"Au":0.37},{"no":"CDL-00223","from":158.1,"to":164,"lith":"AND","min":"CPY","Cu":0.216,"Au":0.26},{"no":"CDL-00224","from":164,"to":169.7,"lith":"DIO","min":"PY","Cu":0.038,"Au":0.03},{"no":"CDL-00225","from":169.7,"to":175.4,"lith":"DIO","min":"PY","Cu":0.029,"Au":0.02},{"no":"CDL-00226","from":175.4,"to":181.1,"lith":"DIO","min":"PY","Cu":0.024,"Au":0.03},{"no":"CDL-00227","from":181.1,"to":186.8,"lith":"DIO","min":"PY","Cu":0.039,"Au":0.04},{"no":"CDL-00228","from":186.8,"to":192.5,"lith":"DIO","min":"PY","Cu":0.03,"Au":0.04},{"no":"CDL-00229","from":192.5,"to":198.2,"lith":"DIO","min":"PY","Cu":0.038,"Au":0.04}]},{"id":"CDL-006","lat":17.046,"lon":120.8526,"az":225,"dip":-60,"depth":160,"samples":[{"no":"CDL-00230","from":2.2,"to":7.7,"lith":"AND","min":"","Cu":0.012,"Au":0.02,"wait":true},{"no":"CDL-00231","from":7.7,"to":13.1,"lith":"AND","min":"","Cu":0.012,"Au":null,"wait":true},{"no":"CDL-00232","from":13.1,"to":18.6,"lith":"AND","min":"","Cu":0.012,"Au":null,"wait":true},{"no":"CDL-00233","from":18.6,"to":24,"lith":"AND","min":"","Cu":0.013,"Au":null,"wait":true},{"no":"CDL-00234","from":24,"to":29.9,"lith":"AND","min":"PY","Cu":0.038,"Au":0.04,"wait":true},{"no":"CDL-00235","from":29.9,"to":35.9,"lith":"AND","min":"PY","Cu":0.038,"Au":0.03,"wait":true},{"no":"CDL-00236","from":35.9,"to":41.8,"lith":"AND","min":"PY","Cu":0.037,"Au":0.04,"wait":true},{"no":"CDL-00237","from":41.8,"to":47.8,"lith":"AND","min":"PY","Cu":0.019,"Au":null,"wait":true},{"no":"CDL-00238","from":47.8,"to":53.7,"lith":"AND","min":"PY","Cu":0.023,"Au":null,"wait":true},{"no":"CDL-00239","from":53.7,"to":59.6,"lith":"AND","min":"PY","Cu":0.032,"Au":0.04,"wait":true},{"no":"CDL-00240","from":59.6,"to":65.6,"lith":"AND","min":"PY","Cu":0.033,"Au":0.04,"wait":true},{"no":"CDL-00241","from":65.6,"to":71.5,"lith":"AND","min":"PY","Cu":0.039,"Au":0.05,"wait":true},{"no":"CDL-00242","from":71.5,"to":77.3,"lith":"BAS","min":"","Cu":0.008,"Au":null,"wait":true},{"no":"CDL-00243","from":77.3,"to":83.1,"lith":"BAS","min":"","Cu":0.01,"Au":null,"wait":true},{"no":"CDL-00244","from":83.1,"to":88.9,"lith":"BAS","min":"","Cu":0.01,"Au":null,"wait":true},{"no":"CDL-00245","from":88.9,"to":94.6,"lith":"BAS","min":"","Cu":0.01,"Au":null,"wait":true},{"no":"CDL-00246","from":94.6,"to":100.4,"lith":"BAS","min":"","Cu":0.01,"Au":null,"wait":true},{"no":"CDL-00247","from":100.4,"to":106.2,"lith":"BAS","min":"","Cu":0.012,"Au":null,"wait":true},{"no":"CDL-00248","from":106.2,"to":112,"lith":"BAS","min":"","Cu":0.008,"Au":null,"wait":true},{"no":"CDL-00249","from":112,"to":118,"lith":"AND","min":"","Cu":0.011,"Au":null,"wait":true},{"no":"CDL-00250","from":118,"to":124,"lith":"AND","min":"","Cu":0.014,"Au":null,"wait":true},{"no":"CDL-00251","from":124,"to":130,"lith":"AND","min":"","Cu":0.009,"Au":null,"wait":true},{"no":"CDL-00252","from":130,"to":136,"lith":"AND","min":"","Cu":0.011,"Au":null,"wait":true},{"no":"CDL-00253","from":136,"to":142,"lith":"AND","min":"","Cu":0.011,"Au":null,"wait":true},{"no":"CDL-00254","from":142,"to":148,"lith":"AND","min":"","Cu":0.008,"Au":null,"wait":true},{"no":"CDL-00255","from":148,"to":154,"lith":"AND","min":"","Cu":0.009,"Au":null,"wait":true},{"no":"CDL-00256","from":154,"to":160,"lith":"AND","min":"","Cu":0.013,"Au":null,"wait":true}]}]
+
+const ELEMENTS = [
+  { key: 'Cu', label: 'Cu %', unit: '%', digits: 2 },
+  { key: 'Au', label: 'Au g/t', unit: 'g/t', digits: 2 },
+]
+// One copper hue, dark to light, so low grades recede into the dark viewport.
+const RAMP = ['#3b2a20', '#6e4329', '#a66a43', '#cf8a55', '#eab27c', '#f8dcbc']
+const WAIT = '#55605c'
+
+/* ===== geometry (what packages/domain/src/projectView.ts would do) ===== */
+const R = 6371008.8, rad = (d) => (d * Math.PI) / 180
+const lat0 = HOLES.reduce((s, h) => s + h.lat, 0) / HOLES.length
+const lon0 = HOLES.reduce((s, h) => s + h.lon, 0) / HOLES.length
+const local = (h) => ({ e: rad(h.lon - lon0) * Math.cos(rad(lat0)) * R, n: rad(h.lat - lat0) * R })
+// east, north, down metres along the straight planned trace
+function pointAt(h, depth) {
+  const dip = rad(Math.abs(h.dip)), az = rad(h.az), c = local(h)
+  const horiz = depth * Math.cos(dip)
+  return { e: c.e + horiz * Math.sin(az), n: c.n + horiz * Math.cos(az), down: depth * Math.sin(dip) }
+}
+function scaleFor(key) {
+  const v = HOLES.flatMap((h) => h.samples.filter((s) => !s.wait && s[key] != null).map((s) => s[key])).sort((a, b) => a - b)
+  const q = (p) => v[Math.min(v.length - 1, Math.floor(p * (v.length - 1)))]
+  return { lo: q(0.05), hi: q(0.95) }
+}
+function ramp(t) {
+  const x = Math.min(1, Math.max(0, t)) * (RAMP.length - 1), i = Math.min(RAMP.length - 2, Math.floor(x)), f = x - i
+  const a = new THREE.Color(RAMP[i]), b = new THREE.Color(RAMP[i + 1])
+  return a.lerp(b, f)
+}
+
+/* ===== state ===== */
+let element = 'Cu', ve = 1, selected = 'CDL-001'
+const scales = Object.fromEntries(ELEMENTS.map((e) => [e.key, scaleFor(e.key)]))
+
+/* ===== KPIs ===== */
+const all = HOLES.flatMap((h) => h.samples)
+document.getElementById('k-samples').textContent = all.length
+document.getElementById('k-results').innerHTML = `${all.filter((s) => !s.wait).length} <em>${Math.round((100 * all.filter((s) => !s.wait).length) / all.length)}%</em>`
+document.getElementById('k-wait').innerHTML = `${all.filter((s) => s.wait).length} <em>1 dispatch</em>`
+
+/* ===== scene ===== */
+const host = document.getElementById('canvas')
+const renderer = new THREE.WebGLRenderer({ antialias: true })
+renderer.setPixelRatio(Math.min(2, devicePixelRatio))
+host.prepend(renderer.domElement)
+const scene = new THREE.Scene()
+scene.background = new THREE.Color('#0f1615')
+const camera = new THREE.PerspectiveCamera(40, 1, 1, 5000)
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.maxPolarAngle = Math.PI * 0.6
+scene.add(new THREE.AmbientLight(0xffffff, 1.1))
+const sun = new THREE.DirectionalLight(0xffffff, 1.3); sun.position.set(200, 400, 150); scene.add(sun)
+
+const toV = (p) => new THREE.Vector3(p.e, -p.down * ve, -p.n)
+const world = new THREE.Group(); scene.add(world)
+const pickable = []
+
+function build() {
+  world.clear(); pickable.length = 0
+  const grid = new THREE.GridHelper(700, 28, 0x2a3a37, 0x1b2624); grid.position.y = 0.2; world.add(grid)
+  for (const h of HOLES) {
+    const on = h.id === selected
+    const top = toV(pointAt(h, 0)), end = toV(pointAt(h, h.depth))
+    const line = new THREE.BufferGeometry().setFromPoints([top, end])
+    world.add(new THREE.Line(line, new THREE.LineBasicMaterial({ color: on ? 0xeeeae1 : 0x6b736e, transparent: true, opacity: on ? 0.9 : 0.5 })))
+    const ring = new THREE.Mesh(new THREE.RingGeometry(3, 5, 32), new THREE.MeshBasicMaterial({ color: on ? 0xeeeae1 : 0x8b948f, side: THREE.DoubleSide }))
+    ring.rotation.x = -Math.PI / 2; ring.position.copy(top).setY(0.6); world.add(ring)
+    const r = on ? 5 : 4
+    for (const s of h.samples) {
+      const a = toV(pointAt(h, s.from)), b = toV(pointAt(h, s.to))
+      const len = a.distanceTo(b) - 0.6
+      if (len <= 0) continue
+      const value = s[element]
+      const sc = scales[element]
+      let color, bdl = false
+      if (s.wait) color = new THREE.Color(WAIT)
+      else if (value == null) { color = new THREE.Color('#3b2a20'); bdl = true }
+      else color = ramp((value - sc.lo) / (sc.hi - sc.lo || 1))
+      const mat = bdl
+        ? new THREE.MeshBasicMaterial({ color: 0x6b736e, wireframe: true, transparent: true, opacity: 0.5 })
+        : new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: s.wait ? 0.05 : 0.5, roughness: 0.7 })
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), mat)
+      m.position.copy(a).add(b).multiplyScalar(0.5)
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize())
+      m.userData = { hole: h.id, s }
+      world.add(m); pickable.push(m)
+    }
+  }
+  drawLabels(); render()
+}
+
+/* ===== labels (DOM, projected each frame) ===== */
+const labelsEl = document.getElementById('labels')
+let labels = []
+function drawLabels() {
+  labelsEl.innerHTML = ''
+  labels = HOLES.map((h) => {
+    const el = document.createElement('div')
+    el.innerHTML = `<span class="hl${h.id === selected ? ' on' : ''}">${h.id}</span>`
+    el.firstChild.onclick = () => select(h.id, true)
+    labelsEl.append(el)
+    return { el, pos: toV(pointAt(h, 0)).setY(2) }
+  })
+}
+function project() {
+  const w = host.clientWidth, h = host.clientHeight, v = new THREE.Vector3()
+  for (const l of labels) {
+    v.copy(l.pos).project(camera)
+    l.el.style.transform = `translate(${(v.x * 0.5 + 0.5) * w}px, ${(-v.y * 0.5 + 0.5) * h}px)`
+    l.el.style.visibility = v.z > 1 ? 'hidden' : 'visible'
+  }
+}
+
+/* ===== camera ===== */
+let goal = null
+function focusTarget() {
+  const h = HOLES.find((x) => x.id === selected)
+  return toV(pointAt(h, h.depth * 0.5))
+}
+function fly(target, dist) {
+  const dir = camera.position.clone().sub(controls.target).normalize()
+  goal = { target, pos: target.clone().addScaledVector(dir, dist) }
+}
+function render() { renderer.render(scene, camera); project() }
+function loop() {
+  requestAnimationFrame(loop)
+  if (goal) {
+    controls.target.lerp(goal.target, 0.12); camera.position.lerp(goal.pos, 0.12)
+    if (controls.target.distanceTo(goal.target) < 0.5) goal = null
+  }
+  controls.update(); render()
+}
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix()
+}
+
+/* ===== hover ===== */
+const tip = document.getElementById('tip'), ray = new THREE.Raycaster(), mouse = new THREE.Vector2()
+renderer.domElement.addEventListener('pointermove', (e) => {
+  const r = renderer.domElement.getBoundingClientRect()
+  mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
+  ray.setFromCamera(mouse, camera)
+  const hit = ray.intersectObjects(pickable)[0]
+  if (!hit) { tip.style.display = 'none'; return }
+  const { hole, s } = hit.object.userData, el = ELEMENTS.find((x) => x.key === element)
+  const val = s.wait ? 'Waiting for results' : s[element] == null ? 'Below detection' : `${el.key} ${s[element].toFixed(el.digits)} ${el.unit}`
+  tip.innerHTML = `<b>${s.no}</b> · ${hole}<br>${s.from}–${s.to} m<br>${val}`
+  tip.style.display = 'block'
+  tip.style.transform = `translate(${e.clientX - r.left + 14}px, ${e.clientY - r.top + 14}px)`
+})
+renderer.domElement.addEventListener('pointerleave', () => (tip.style.display = 'none'))
+renderer.domElement.addEventListener('click', () => {
+  ray.setFromCamera(mouse, camera)
+  const hit = ray.intersectObjects(pickable)[0]
+  if (hit) select(hit.object.userData.hole, true)
+})
+
+/* ===== hole panel and legend ===== */
+function holePanel() {
+  const h = HOLES.find((x) => x.id === selected), el = ELEMENTS.find((x) => x.key === element), sc = scales[element]
+  const max = Math.max(...h.samples.filter((s) => !s.wait && s[element] != null).map((s) => s[element]), sc.hi)
+  const waiting = h.samples.filter((s) => s.wait).length
+  document.getElementById('hole').innerHTML = `
+    <h5>${h.id}<span class="pill">Logged</span></h5>
+    <p class="meta">${h.samples.length} samples${waiting ? `, ${waiting} at the laboratory` : ', all with results'}</p>
+    <dl class="facts">
+      <dt>Azimuth</dt><dd>${h.az}°</dd><dt>Dip</dt><dd>${h.dip}°</dd>
+      <dt>Final depth</dt><dd>${h.depth} m</dd><dt>Collar</dt><dd>${h.lat.toFixed(4)}, ${h.lon.toFixed(4)}</dd>
+    </dl>
+    <ul class="rows">${h.samples.map((s) => {
+      const v = s[element]
+      if (s.wait) return `<li><span class="d">${s.from}–${s.to}</span><span class="wait">at the laboratory</span><span class="v">–</span></li>`
+      if (v == null) return `<li><span class="d">${s.from}–${s.to}</span><span class="bar" style="width:4px;background:#6b736e"></span><span class="v">&lt; DL</span></li>`
+      return `<li><span class="d">${s.from}–${s.to}</span><span class="bar" style="width:${Math.max(3, (100 * v) / max)}%;background:#${ramp((v - sc.lo) / (sc.hi - sc.lo || 1)).getHexString()}"></span><span class="v">${v.toFixed(el.digits)}</span></li>`
+    }).join('')}</ul>
+    <button type="button" class="btn open">Open hole page</button>`
+}
+function legend() {
+  const el = ELEMENTS.find((x) => x.key === element), sc = scales[element]
+  document.getElementById('legend').innerHTML = `
+    <span class="ramp">${el.key} ${sc.lo.toFixed(el.digits)}<i style="background:linear-gradient(90deg,${RAMP.join(',')})"></i>${sc.hi.toFixed(el.digits)} ${el.unit}</span>
+    <span><span class="sw bdl"></span>Below detection</span>
+    <span><span class="sw wait"></span>Waiting for results</span>
+    <span class="scale-note">One scale for the whole project: the lowest and highest 5% of results sit at the ends, so one very high value does not wash out the rest. Standards and blanks are not drawn; duplicates are not drawn twice.</span>`
+}
+
+/* ===== controls ===== */
+const elEl = document.getElementById('elements')
+for (const e of ELEMENTS) {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = e.label; b.setAttribute('aria-pressed', e.key === element)
+  b.onclick = () => { element = e.key; [...elEl.children].forEach((c) => c.setAttribute('aria-pressed', c === b)); build(); holePanel(); legend() }
+  elEl.append(b)
+}
+document.querySelectorAll('#ve button').forEach((b) => (b.onclick = () => {
+  const ratio = Number(b.dataset.ve) / ve; ve = Number(b.dataset.ve)
+  document.querySelectorAll('#ve button').forEach((c) => c.setAttribute('aria-pressed', c === b))
+  // Keep the view pointed at the same depth: move the target, carry the camera with it.
+  const offset = camera.position.clone().sub(controls.target)
+  controls.target.y *= ratio
+  camera.position.copy(controls.target).add(offset)
+  build()
+}))
+document.getElementById('all').onclick = () => { goal = { target: new THREE.Vector3(0, -120 * ve, 0), pos: new THREE.Vector3(-250, 210, 300) } }
+function select(id, flyTo) {
+  selected = id; build(); holePanel()
+  if (flyTo) fly(focusTarget(), 230)
+}
+
+resize(); addEventListener('resize', () => { resize(); render() })
+camera.position.set(-250, 210, 300); controls.target.set(0, -120, 0)
+build(); holePanel(); legend(); loop()
+</script>
+</body>
+</html>
