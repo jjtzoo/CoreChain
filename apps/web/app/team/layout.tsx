@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { requireProjectManager } from "@/lib/session";
+import { ManagerNav, ManagerSearch } from "@/components/manager/manager-nav";
 import { ViewAsBar } from "@/components/view-as-bar";
 import { signOutAction } from "../login/actions";
+import "./manager.css";
 
 export const metadata: Metadata = { title: "Team | CoreChain" };
 
@@ -20,7 +22,7 @@ export default async function TeamLayout({
     <div className="admin-shell">
       <ViewAsBar session={session} />
       <header className="admin-header">
-        <div className="admin-header-inner">
+        <div className="admin-header-inner mg-header-inner">
           <Image
             className="brand-logo"
             src="/branding/corechain-primary-horizontal.svg"
@@ -29,6 +31,8 @@ export default async function TeamLayout({
             height={42}
             priority
           />
+          <ManagerNav />
+          <ManagerSearch />
           <div className="admin-account">
             <span className="admin-account-email">{session.user.email}</span>
             <form action={signOutAction}>

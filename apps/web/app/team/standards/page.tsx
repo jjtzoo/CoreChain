@@ -9,7 +9,7 @@ export default async function TeamStandardsPage() {
   return (
     <StandardsPage
       userId={session.user.id}
-      back={{ href: "/team" as Route, label: "Team overview" }}
+      back={{ href: "/team/setup" as Route, label: "Setup" }}
     />
   );
 }

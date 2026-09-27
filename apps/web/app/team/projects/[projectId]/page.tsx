@@ -1,16 +1,38 @@
+import { recoveryPercent } from "@corechain/domain";
+import type { Route } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ProjectView, type ProjectViewSample } from "@/components/corechain/project-view/project-view";
-import { prisma } from "@/lib/prisma";
+import { notFound, redirect } from "next/navigation";
+import {
+  DepthBars,
+  Kpi,
+  Panel,
+  QcInsertionTable,
+  StatusBar,
+} from "@/components/manager/parts";
+import {
+  loadDecisionRows,
+  loadDispatchRows,
+  loadHoles,
+  loadMembers,
+  loadSampleIdsWithResults,
+  managedProject,
+  toHoleRows,
+} from "@/lib/manager/data";
+import { plural } from "@/lib/manager/labels";
+import {
+  averageTurnaroundDays,
+  formatMetres,
+  isHeldOrRejected,
+  percentOf,
+  qcInsertion,
+  RESULTS_OVERDUE_AFTER_DAYS,
+} from "@/lib/manager/stats";
 import { requireProjectManager } from "@/lib/session";
 
-// E18-1: one project, for the project manager, with its 3D evidence view
-// (E18-2). Only projects in the manager's own team open; anything else is
-// not found.
+// A project's summary tab: is the programme on track, and can we trust the
+// data? Programme progress, holes, recovery, QC insertion and the laboratory.
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export default async function ProjectPage({
+export default async function ProjectSummaryPage({
   params,
   searchParams,
 }: {
@@ -20,141 +42,137 @@ export default async function ProjectPage({
   const session = await requireProjectManager();
   const { projectId } = await params;
   const { hole } = await searchParams;
-  if (!UUID.test(projectId)) notFound();
+  // Links made before the tabs ("See in 3D" opened ?hole= on this page).
+  if (typeof hole === "string") redirect(`/team/projects/${projectId}/3d?hole=${encodeURIComponent(hole)}` as Route);
 
-  const self = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { organizationId: true },
-  });
-  const organizationId = self?.organizationId ?? null;
-  if (!organizationId) notFound();
-
-  const project = await prisma.project.findFirst({
-    where: { id: projectId, organizationId, deletedAt: null },
-    select: { id: true, name: true, commodity: true, location: true },
-  });
+  const project = await managedProject(session.user.id, projectId);
   if (!project) notFound();
+  const { organizationId } = project;
 
-  const [holes, samples, results] = await Promise.all([
-    prisma.drillhole.findMany({
-      where: { projectId, organizationId, deletedAt: null },
-      select: {
-        id: true,
-        holeId: true,
-        status: true,
-        collarLatitude: true,
-        collarLongitude: true,
-        plannedAzimuthDeg: true,
-        plannedInclinationDeg: true,
-        plannedDepthM: true,
-        actualFinalDepthM: true,
-      },
-    }),
-    prisma.sample.findMany({
-      where: { projectId, organizationId, deletedAt: null, drillhole: { deletedAt: null } },
-      select: {
-        id: true,
-        drillholeId: true,
-        sampleNumber: true,
-        sampleType: true,
-        fromM: true,
-        toM: true,
-        status: true,
-      },
-    }),
-    prisma.assayResult.findMany({
-      where: { organizationId, sample: { projectId, deletedAt: null } },
-      select: {
-        sampleId: true,
-        analyte: true,
-        value: true,
-        unit: true,
-        belowDetection: true,
-        createdAt: true,
-      },
-    }),
+  const now = new Date();
+  const members = await loadMembers(organizationId);
+  const [holes, decisions, dispatches, withResults] = await Promise.all([
+    loadHoles(organizationId, projectId),
+    loadDecisionRows(organizationId, members, projectId),
+    loadDispatchRows(organizationId, now, projectId),
+    loadSampleIdsWithResults(organizationId, projectId),
   ]);
+  const holeRows = toHoleRows(holes, members, decisions, now);
 
-  const viewSamples: ProjectViewSample[] = samples.map((s) => ({ ...s }));
-  const withResults = new Set(results.map((r) => r.sampleId));
+  const plannedM = holeRows.reduce((sum, h) => sum + h.plannedDepthM, 0);
+  const drilledM = holeRows.reduce((sum, h) => sum + h.drilledM, 0);
+  const statusCounts: Record<string, number> = {};
+  for (const h of holeRows) statusCounts[h.status] = (statusCounts[h.status] ?? 0) + 1;
+  const finished = (statusCounts.complete ?? 0) + (statusCounts.logged ?? 0);
+
+  const recoveries = holes
+    .flatMap((h) => h.runs)
+    .map((run) => recoveryPercent(run.toM - run.fromM, run.recoveredM))
+    .filter((pct): pct is number => pct !== null);
+  const recovery =
+    recoveries.length > 0 ? recoveries.reduce((sum, p) => sum + p, 0) / recoveries.length : null;
+
+  const samples = holes.flatMap((h) => h.samples);
   const primary = samples.filter((s) => s.sampleType === "primary");
-  const primaryWithResults = primary.filter((s) => withResults.has(s.id)).length;
-  const atLaboratory = primary.filter((s) => !withResults.has(s.id) && s.status === "dispatched").length;
-  const drilledM = holes.reduce((sum, h) => sum + (h.actualFinalDepthM ?? 0), 0);
-  const selectedHole = typeof hole === "string" ? hole : null;
+  const controls = samples.length - primary.length;
+  const qcRows = qcInsertion(
+    samples.map((s) => ({ type: s.sampleType })),
+    {
+      standardEveryN: project.qcStandardEveryN,
+      blankEveryN: project.qcBlankEveryN,
+      duplicateEveryN: project.qcDuplicateEveryN,
+    },
+  );
+  const resultsBack = primary.filter((s) => withResults.has(s.id)).length;
+  const atLab = primary.filter((s) => !withResults.has(s.id) && s.status === "dispatched").length;
+
+  const turnaround = averageTurnaroundDays(dispatches.map((d) => d.state));
+  const returnedCount = dispatches.filter((d) => d.state.kind === "returned").length;
+  const overdue = dispatches.filter((d) => d.state.kind === "waiting" && d.state.overdue);
+  const heldOrRejected = decisions.filter(isHeldOrRejected);
+  const labHref = `/team/projects/${projectId}/lab` as Route;
 
   return (
     <>
-      <div className="admin-page-header">
-        <div>
-          <Link href="/team" className="admin-link">
-            ← Team overview
-          </Link>
-          <h1>{project.name}</h1>
-          <p>
-            {[project.commodity, project.location].filter(Boolean).join(" · ")}
-            {project.commodity || project.location ? " · " : ""}
-            {holes.length} {holes.length === 1 ? "hole" : "holes"}
-            {drilledM > 0 ? `, ${Math.round(drilledM).toLocaleString("en-US")} m drilled` : ""}
-          </p>
-        </div>
+      <div className="mg-kpis">
+        <Kpi
+          label="Programme"
+          value={percentOf(drilledM, plannedM)}
+          unit="%"
+          sub={`${formatMetres(drilledM)} of ${formatMetres(plannedM)} planned`}
+          barPercent={percentOf(drilledM, plannedM)}
+        />
+        <Kpi
+          label="Holes finished"
+          value={finished}
+          unit={`of ${holeRows.length}`}
+          sub={`${statusCounts.drilling ?? 0} drilling, ${statusCounts.planned ?? 0} planned`}
+        />
+        <Kpi
+          label="Core recovery"
+          value={recovery === null ? "·" : recovery.toFixed(1)}
+          unit={recovery === null ? undefined : "%"}
+          sub={recovery === null ? "No runs yet" : `average of ${plural(recoveries.length, "run")}`}
+        />
+        <Kpi label="Samples" value={samples.length} sub={`of which ${controls} QC inserts`} />
+        <Kpi
+          label="Laboratory turnaround"
+          value={turnaround === null ? "·" : turnaround}
+          unit={turnaround === null ? undefined : "days"}
+          sub={
+            turnaround === null
+              ? "No results back yet"
+              : `average, ${plural(returnedCount, "dispatch", "dispatches")} back`
+          }
+        />
       </div>
 
-      <div className="kpi-strip">
-        <div className="kpi-card">
-          <span className="kpi-label">Holes</span>
-          <span className="kpi-value" style={{ display: "block" }}>
-            {holes.length}
-          </span>
-        </div>
-        <div className="kpi-card">
-          <span className="kpi-label">Sampled intervals</span>
-          <span className="kpi-value" style={{ display: "block" }}>
-            {primary.length}
-          </span>
-        </div>
-        <div className="kpi-card">
-          <span className="kpi-label">With laboratory results</span>
-          <span className="kpi-value" style={{ display: "block" }}>
-            {primaryWithResults}
-            {primary.length > 0 ? (
-              <em> {Math.round((100 * primaryWithResults) / primary.length)}%</em>
+      <div className="mg-grid">
+        <Panel
+          title="Drilled against planned depth, by hole"
+          note="All holes on one scale. Green: finished. Copper: still going. The dark mark is the planned depth."
+        >
+          <DepthBars holes={holeRows} />
+        </Panel>
+
+        <div className="mg-stack">
+          <Panel title="Holes by status">
+            <StatusBar counts={statusCounts} />
+          </Panel>
+          <Panel
+            title="QC inserted against the project's rates"
+            note={`${plural(primary.length, "primary sample")} so far.`}
+          >
+            <QcInsertionTable rows={qcRows} primaryCount={primary.length} />
+          </Panel>
+          <Panel
+            title="Laboratory and QA/QC"
+            action={
+              <Link href={labHref} className="admin-link">
+                Samples &amp; lab
+              </Link>
+            }
+          >
+            <div className="mg-figs">
+              <div>
+                <b>{resultsBack}</b>samples with results
+              </div>
+              <div>
+                <b>{atLab}</b>at the laboratory
+              </div>
+              <div>
+                <b>{heldOrRejected.length}</b>held or rejected
+              </div>
+            </div>
+            {overdue.length > 0 ? (
+              <p className="mg-note" style={{ color: "var(--warning-ink)" }}>
+                {overdue.map((d) => d.dispatchNumber).join(", ")}{" "}
+                {overdue.length === 1 ? "has" : "have"} been at the laboratory more than {RESULTS_OVERDUE_AFTER_DAYS} days.
+              </p>
             ) : null}
-          </span>
-        </div>
-        <div className="kpi-card">
-          <span className="kpi-label">At the laboratory</span>
-          <span className="kpi-value" style={{ display: "block" }}>
-            {atLaboratory}
-          </span>
+          </Panel>
         </div>
       </div>
-
-      <ProjectView
-        holes={holes.map((h) => ({
-          id: h.id,
-          holeId: h.holeId,
-          collar:
-            h.collarLatitude != null && h.collarLongitude != null
-              ? { latitude: h.collarLatitude, longitude: h.collarLongitude }
-              : null,
-          azimuthDeg: h.plannedAzimuthDeg,
-          inclinationDeg: h.plannedInclinationDeg,
-          plannedDepthM: h.plannedDepthM,
-          finalDepthM: h.actualFinalDepthM,
-          data: { status: h.status },
-        }))}
-        samples={viewSamples}
-        results={results.map((r) => ({
-          sampleId: r.sampleId,
-          analyte: r.analyte,
-          value: r.value,
-          unit: r.unit,
-          belowDetection: r.belowDetection,
-          enteredAt: r.createdAt.toISOString(),
-        }))}
-        initialHoleId={selectedHole}
-      />
     </>
   );
 }

@@ -72,8 +72,8 @@ export default async function HoleViewPage({
     <>
       <div className="admin-page-header">
         <div>
-          <Link href="/team" className="admin-link">
-            ← Team overview
+          <Link href={"/team/holes" as Route} className="admin-link">
+            ← Holes
           </Link>
           <h1>{hole.holeId}</h1>
           <p>
@@ -87,7 +87,7 @@ export default async function HoleViewPage({
               <>
                 {" · "}
                 <Link
-                  href={`/team/projects/${hole.projectId}?hole=${hole.id}` as Route}
+                  href={`/team/projects/${hole.projectId}/3d?hole=${hole.id}` as Route}
                   className="admin-link"
                 >
                   See in 3D

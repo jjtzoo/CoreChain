@@ -29,8 +29,8 @@ export default async function TagsPage({
   const header = (
     <div className="admin-page-header no-print">
       <div>
-        <Link href={"/team" as Route} className="admin-link">
-          ← Team overview
+        <Link href={"/team/setup" as Route} className="admin-link">
+          ← Setup
         </Link>
         <h1>Print tags</h1>
         <p>
