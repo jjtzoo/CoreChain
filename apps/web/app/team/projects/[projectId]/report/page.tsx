@@ -178,7 +178,7 @@ export default async function ProjectReportPage({
               <li key={d.id}>
                 {d.holeId} {d.decision === "accept" ? "accepted" : d.decision === "hold" ? "held" : "rejected"} at{" "}
                 {d.stageLabel.toLowerCase()} on {d.decidedDay}
-                {d.note?.trim() ? `: ${d.note.trim()}` : ""}.
+                {d.note?.trim() ? `: ${d.note.trim().replace(/[.\s]+$/, "")}` : ""}.
               </li>
             ))
           ) : (

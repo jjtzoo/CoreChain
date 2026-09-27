@@ -941,3 +941,17 @@ a.mg-attn-row:hover b {
     transform: none;
   }
 }
+
+/* A table cell holding a person keeps room for the name and job title. */
+.mg-table .mg-person {
+  min-width: 200px;
+}
+
+.mg-table .status-pill {
+  white-space: nowrap;
+}
+
+.mg-table .mg-sync {
+  align-items: baseline;
+  white-space: normal;
+}
