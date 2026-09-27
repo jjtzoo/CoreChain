@@ -820,7 +820,7 @@ async function upsertTeam(db: Db): Promise<void> {
       title: p.title,
       qaqcStage: p.stage ?? null,
       organizationId: SHOWCASE_TEAM_ID,
-      emailVerified: false,
+      emailVerified: true,
     };
     await db.user.upsert({ where: { id: id(key) }, create: { id: id(key), ...fields }, update: fields });
   }
