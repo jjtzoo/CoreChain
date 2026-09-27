@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreChain | Project manager mode mockup</title>
+<!--
+  MOCKUP, not the app. The whole resident / project manager mode on the web,
+  planned before deciding where the 3D evidence view (E18) belongs. Outline:
+  docs/product/project-manager-mode-outline.md.
+
+  Clickable: the top bar switches between the six places, and the project page
+  has five tabs. "Show what is new" marks each part as existing today or new.
+
+  Hole names CDL-001 to CDL-006 continue the project-3d-view mockup, and
+  200110-128 to 200134-008 continue the team-dashboard mockups (Alberta
+  Geological Survey, AGS DIG 2024-0022). Every figure, person, date and
+  laboratory is ILLUSTRATIVE. Colours are the web app's own tokens.
+-->
+<style>
+  :root {
+    --canvas: #eeeae1; --surface: #faf8f3; --surface-muted: #e3ddcf; --ink: #182321; --text: #3a4642;
+    --muted: #6b736e; --line: #d6cfc0; --line-strong: #bdb5a3; --forest: #182321; --forest-soft: #e3ddcf;
+    --copper: #a66a43; --copper-soft: #f1e2d4; --warn-bg: #fff8e5; --warn-line: #e4c983; --warn-ink: #745a12;
+    --success: #1f7a55; --success-soft: #d9e9de; --danger: #b3261e; --danger-soft: #f4dcd6;
+    --new: #2f5f8a; --new-soft: #dfe9f3;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, h4, h5, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+  button { font-family: inherit; cursor: pointer; }
+  .wrap { width: min(1240px, 100% - 32px); margin: 0 auto; }
+
+  .top { padding: 48px 0 22px; }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+  h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.15; margin: 10px 0 12px; max-width: 30ch; text-wrap: balance; }
+  .lede { max-width: 78ch; color: var(--text); font-size: 16.5px; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .toggle input { accent-color: var(--new); width: 16px; height: 16px; }
+  .key { display: inline-flex; gap: 10px; align-items: center; }
+
+  .scroll { overflow-x: auto; padding: 4px 0 14px; }
+  .win { width: 1180px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(24,35,33,.10); }
+
+  .appbar { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; flex: none; }
+  .appbar nav { display: flex; gap: 2px; }
+  .appbar nav button { padding: 7px 12px; border: 0; border-radius: 8px; background: transparent; font-size: 13.5px; font-weight: 600; color: var(--muted); }
+  .appbar nav button:hover { color: var(--ink); }
+  .appbar nav button.on { background: var(--forest-soft); color: var(--ink); }
+  .jump { flex: 1; max-width: 250px; margin-left: auto; }
+  .jump input { width: 100%; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--canvas); font-size: 13px; color: var(--muted); }
+  .acct { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+  .acct span { border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 12px; font-weight: 600; color: var(--ink); }
+
+  .main { padding: 22px 24px 26px; background: var(--canvas); min-height: 640px; }
+  .page { display: none; }
+  .page.on { display: block; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
+  .head h4 { font-size: 21px; }
+  .head p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .crumb { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+  .crumb button { border: 0; background: none; padding: 0; color: var(--copper); font-weight: 600; font-size: 12.5px; }
+  .asof { font-size: 12px; color: var(--muted); text-align: right; }
+  .asof b { color: var(--ink); }
+
+  .panel { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .panel h5 { margin: 0 0 10px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 12px; }
+  .kpi small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kpi b { display: block; font-size: 24px; line-height: 1.15; margin-top: 4px; }
+  .kpi b em { font-style: normal; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+  .kpi span { font-size: 12px; color: var(--muted); }
+  .kpi.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .kpi.warn span { color: var(--warn-ink); }
+  .bar { height: 7px; border-radius: 4px; background: var(--surface-muted); overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: var(--copper); }
+  .bar.ok i { background: var(--success); }
+
+  .grid2 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; align-items: start; }
+  .grid-even { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+
+  /* project cards */
+  .projects { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pcard h6 { font-size: 16px; margin: 0; }
+  .pcard .meta { font-size: 12.5px; color: var(--muted); margin: 2px 0 12px; }
+  .pcard .figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; color: var(--muted); margin: 12px 0 14px; }
+  .pcard .figs b { display: block; color: var(--ink); font-size: 16px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--ink); }
+  .btn.primary { background: var(--forest); border-color: var(--forest); color: var(--surface); }
+  .btn svg { width: 15px; height: 15px; }
+
+  .stackbar { display: flex; height: 18px; border-radius: 5px; overflow: hidden; margin: 6px 0 8px; }
+  .stackbar i { display: block; height: 100%; }
+  .s-logged { background: var(--success); }
+  .s-complete { background: #9fb3aa; }
+  .s-drilling { background: var(--copper); }
+  .s-planned { background: var(--surface-muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+
+  .attn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .attn h5 { color: var(--warn-ink); }
+  .attn li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--warn-line); font-size: 12.5px; }
+  .attn li:first-child { border-top: 0; padding-top: 2px; }
+  .attn b { display: block; }
+  .attn span { color: var(--warn-ink); font-size: 12px; }
+  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #c98a1c; margin-top: 5px; }
+  .dot.red { background: var(--danger); }
+
+  .feed li { padding: 7px 0; border-top: 1px solid var(--line); font-size: 12.5px; display: grid; grid-template-columns: 50px 1fr; gap: 8px; }
+  .feed li:first-child { border-top: 0; }
+  .feed time { color: var(--muted); font-size: 11.5px; }
+  .link { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--copper); border: 0; background: none; padding: 0; }
+
+  /* project page tabs */
+  .ptabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-strong); margin-bottom: 16px; }
+  .ptabs button { padding: 9px 14px 10px; border: 0; background: none; font-size: 13.5px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ptabs button.on { color: var(--ink); border-bottom-color: var(--copper); }
+  .ptab { display: none; }
+  .ptab.on { display: block; }
+
+  .filters { display: flex; gap: 4px; margin-bottom: 12px; }
+  .filters span { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .filters span.on { background: var(--forest); border-color: var(--forest); color: var(--surface); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 10px 6px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td .h { font-weight: 700; white-space: nowrap; }
+  .mini { width: 140px; }
+  .mini .bar { margin-top: 4px; }
+  .st { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .st.logged { background: var(--success-soft); color: var(--success); }
+  .st.complete { background: var(--forest-soft); color: var(--ink); }
+  .st.drill { background: var(--copper-soft); color: var(--copper); }
+  .st.planned { background: var(--surface-muted); color: var(--muted); border: 1px solid var(--line); }
+  .st.late { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+  .st.held { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+  .st.rejected { background: var(--danger-soft); color: var(--danger); }
+  .st.back { background: var(--success-soft); color: var(--success); }
+  .urgent { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+  .muted { color: var(--muted); }
+
+  /* planned vs drilled chart */
+  .pvd li { display: grid; grid-template-columns: 70px 1fr 110px; gap: 10px; align-items: center; font-size: 12.5px; padding: 5px 0; }
+  .pvd .track { position: relative; height: 12px; border-radius: 4px; background: var(--surface-muted); }
+  .pvd .track i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--copper); }
+  .pvd .track i.done { background: var(--success); }
+  .pvd .track b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+  .pvd .v { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* 3D placeholder */
+  .view3d { display: grid; grid-template-columns: 1fr 280px; gap: 12px; }
+  .scene { background: #1b2522; border-radius: 12px; padding: 12px; position: relative; min-height: 470px; }
+  .scene svg { width: 100%; height: 440px; display: block; }
+  .scene .ctl { position: absolute; top: 14px; left: 14px; display: flex; gap: 6px; }
+  .scene .ctl span { padding: 5px 10px; border-radius: 7px; background: rgba(250,248,243,.12); color: #efe9dc; font-size: 12px; font-weight: 600; }
+  .scene .ctl span.on { background: #efe9dc; color: var(--ink); }
+  .scene .caveat { position: absolute; left: 14px; bottom: 12px; right: 14px; font-size: 11.5px; color: #b9c2bd; }
+  .scale { display: flex; height: 10px; border-radius: 3px; overflow: hidden; margin: 6px 0 4px; }
+  .scale i { flex: 1; }
+
+  /* report */
+  .sheet { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 28px 34px; max-width: 760px; margin: 0 auto; box-shadow: 0 4px 14px rgba(24,35,33,.07); }
+  .sheet h6 { font-size: 19px; margin: 0; }
+  .sheet .sub { font-size: 12.5px; color: var(--muted); margin: 2px 0 18px; }
+  .sheet h5 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 18px 0 6px; }
+  .sheet p { font-size: 13px; color: var(--text); }
+  .sheet .figs4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .sheet .figs4 div { border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 11.5px; color: var(--muted); }
+  .sheet .figs4 b { display: block; font-size: 18px; color: var(--ink); }
+
+  .person { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--forest-soft); display: grid; place-items: center; font-weight: 700; font-size: 12.5px; }
+  .person small { display: block; color: var(--muted); font-size: 12px; }
+  .online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); margin-right: 6px; }
+  .online.off { background: var(--line-strong); }
+
+  .setup li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .setup li:first-child { border-top: 0; padding-top: 2px; }
+  .setup li small { display: block; color: var(--muted); font-size: 12px; }
+
+  /* new / exists markers */
+  .mark { display: none; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; padding: 1px 7px; border-radius: 999px; vertical-align: middle; }
+  .mark.n { background: var(--new-soft); color: var(--new); border: 1px solid #a9c2dc; }
+  .mark.e { background: var(--surface-muted); color: var(--muted); border: 1px solid var(--line); }
+  body.show-marks .mark { display: inline-block; }
+  body.show-marks .isnew { outline: 2px dashed #7fa3c8; outline-offset: 3px; }
+
+  .band { border-top: 1px solid var(--line); padding: 36px 0 60px; margin-top: 18px; }
+  .band .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .band h2 { font-size: 21px; margin-bottom: 12px; }
+  .band li { padding: 10px 0; border-top: 1px solid var(--line); color: var(--text); font-size: 15px; }
+  .band li:first-child { border-top: 0; }
+  .band li b { color: var(--ink); }
+  @media (max-width: 800px) { .band .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="top wrap">
+  <span class="tag">Design mockup · not built</span>
+  <h1>Project manager mode on the web: every page, and where the 3D view lives</h1>
+  <p class="lede">The resident / project manager answers two questions: is the programme on track, and can we trust the data? Six places in the top bar cover that. <b>Today</b> is what needs attention now. Each project gets its own page with tabs, and the <b>3D view</b> is one of them. Click the top bar and the project tabs to move around.</p>
+  <div class="toolbar">
+    <label class="toggle"><input type="checkbox" id="marks"> Show what is new</label>
+    <span class="key"><span class="mark n" style="display:inline-block">New</span> not built yet <span class="mark e" style="display:inline-block">Exists</span> built today</span>
+    <span>All figures, people and dates are illustrative.</span>
+  </div>
+</header>
+
+<div class="wrap scroll">
+<div class="win">
+  <div class="appbar">
+    <span class="brand">CoreChain</span>
+    <nav id="nav">
+      <button data-go="today" class="on">Today</button>
+      <button data-go="projects">Projects</button>
+      <button data-go="holes">Holes</button>
+      <button data-go="lab">Samples &amp; lab</button>
+      <button data-go="team">Team</button>
+      <button data-go="setup">Setup</button>
+    </nav>
+    <div class="jump"><input value="Find a sample or hole" readonly></div>
+    <div class="acct">Project manager <span>Sign out</span></div>
+  </div>
+
+  <div class="main">
+
+  <!-- ============ TODAY ============ -->
+  <section class="page on" id="p-today">
+    <div class="head">
+      <div><h4>Today</h4><p>Rig 1 team · 2 projects · 4 geologists</p></div>
+      <div class="asof">Updated <b>27 Sep 2026, 16:40</b><br>from phones that have synced</div>
+    </div>
+    <div class="kpis">
+      <div class="panel kpi isnew"><small>Drilled this week <span class="mark n">New</span></small><b>148.5 <em>m</em></b><span>last week 131.0 m</span></div>
+      <div class="panel kpi"><small>Holes drilling <span class="mark e">Exists</span></small><b>2</b><span>CDL-004, 200134-001</span></div>
+      <div class="panel kpi"><small>Samples waiting <span class="mark e">Exists</span></small><b>34</b><span>not yet dispatched</span></div>
+      <div class="panel kpi warn isnew"><small>Results overdue <span class="mark n">New</span></small><b>1 <em>dispatch</em></b><span>CDL-D03, 16 days at the lab</span></div>
+      <div class="panel kpi warn"><small>QA/QC held or rejected <span class="mark e">Exists</span></small><b>2</b><span>1 held, 1 rejected</span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="stack">
+        <div class="projects isnew">
+          <div class="panel pcard">
+            <h6>Cordillera porphyry</h6>
+            <p class="meta">Cu, Au · Benguet · 6 holes</p>
+            <div style="font-size:12px;color:var(--muted)">Drilled 1,012.5 of 1,672.5 m planned</div>
+            <div class="bar"><i style="width:61%"></i></div>
+            <div class="stackbar"><i class="s-logged" style="width:33.3%"></i><i class="s-complete" style="width:16.7%"></i><i class="s-drilling" style="width:16.7%"></i><i class="s-planned" style="width:33.3%"></i></div>
+            <div class="figs"><div><b>2</b>logged</div><div><b>180</b>results back</div><div><b>76</b>waiting</div></div>
+            <div class="actions">
+              <button class="btn primary" data-go="project">Open project</button>
+              <button class="btn" data-go="project" data-tab="t3d"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5 14 5v6L8 14.5 2 11V5z"/><path d="M2 5l6 3.5L14 5M8 8.5v6"/></svg>3D view</button>
+            </div>
+          </div>
+          <div class="panel pcard">
+            <h6>Alberta core study</h6>
+            <p class="meta">Reference data · Alberta · 6 holes</p>
+            <div style="font-size:12px;color:var(--muted)">Drilled 556.4 of 721.6 m planned</div>
+            <div class="bar"><i style="width:77%"></i></div>
+            <div class="stackbar"><i class="s-logged" style="width:33.3%"></i><i class="s-complete" style="width:33.3%"></i><i class="s-drilling" style="width:16.7%"></i><i class="s-planned" style="width:16.7%"></i></div>
+            <div class="figs"><div><b>2</b>logged</div><div><b>64</b>results back</div><div><b>12</b>waiting</div></div>
+            <div class="actions">
+              <button class="btn primary" data-go="project">Open project</button>
+              <button class="btn" data-go="project" data-tab="t3d"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5 14 5v6L8 14.5 2 11V5z"/><path d="M2 5l6 3.5L14 5M8 8.5v6"/></svg>3D view</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h5>Team workload this week <span class="mark e">Exists</span></h5>
+          <table>
+            <tr><th>Geologist</th><th>Holes</th><th class="num">Metres logged</th><th>Last sync</th></tr>
+            <tr><td>Geologist A</td><td>CDL-003, CDL-004</td><td class="num">62.0</td><td class="muted">14 min ago</td></tr>
+            <tr><td>Geologist B</td><td>200134-001</td><td class="num">41.0</td><td class="muted">1 h ago</td></tr>
+            <tr><td>Geologist C</td><td>200110-133</td><td class="num">45.5</td><td class="muted">yesterday</td></tr>
+            <tr><td>Geologist D</td><td class="muted">none assigned</td><td class="num">0</td><td class="muted">3 days ago</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel attn">
+          <h5>Needs attention <span class="mark e">Exists</span></h5>
+          <ul>
+            <li><i class="dot red"></i><div><b>CDL-003 rejected at QA/QC (core logging)</b><span>Run gap 118.0 to 121.5 m. Reviewer asks for the run to be re-measured.</span></div></li>
+            <li class="isnew"><i class="dot"></i><div><b>Dispatch CDL-D03 has been at the lab 16 days <span class="mark n">New</span></b><span>76 samples. The last two came back in 14 and 12 days.</span></div></li>
+            <li><i class="dot"></i><div><b>200110-133 is urgent: 35.9 m still to log</b><span>Assigned to Geologist C.</span></div></li>
+            <li><i class="dot"></i><div><b>200134-006 has no geologist assigned</b><span>Complete, 22.0 of 73.0 m logged.</span></div></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h5>Recent activity <span class="mark e">Exists</span></h5>
+          <ul class="feed">
+            <li><time>16:26</time><span>Geologist A logged CDL-004 to 170.0 m</span></li>
+            <li><time>15:02</time><span>QA/QC reviewer rejected CDL-003 (core logging)</span></li>
+            <li><time>13:48</time><span>Geologist B added 6 samples on 200134-001</span></li>
+            <li><time>09:15</time><span>Laboratory results uploaded for CDL-D02</span></li>
+          </ul>
+          <button class="link" data-go="team">All activity</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROJECTS LIST ============ -->
+  <section class="page" id="p-projects">
+    <div class="head"><div><h4>Projects</h4><p>The team's projects. Open one for its summary, holes, 3D view, samples and report.</p></div></div>
+    <div class="panel isnew">
+      <table>
+        <tr><th>Project</th><th>Commodity</th><th>Holes</th><th class="mini">Drilled of planned</th><th class="num">Results back</th><th class="num">Waiting</th><th></th></tr>
+        <tr><td><span class="h">Cordillera porphyry</span><div class="muted" style="font-size:12px">Benguet</div></td><td>Cu, Au</td><td>6</td><td class="mini">1,012.5 of 1,672.5 m<div class="bar"><i style="width:61%"></i></div></td><td class="num">180</td><td class="num">76</td><td><div class="actions"><button class="btn primary" data-go="project">Open</button><button class="btn" data-go="project" data-tab="t3d">3D view</button></div></td></tr>
+        <tr><td><span class="h">Alberta core study</span><div class="muted" style="font-size:12px">Alberta</div></td><td>Reference data</td><td>6</td><td class="mini">556.4 of 721.6 m<div class="bar"><i style="width:77%"></i></div></td><td class="num">64</td><td class="num">12</td><td><div class="actions"><button class="btn primary" data-go="project">Open</button><button class="btn" data-go="project" data-tab="t3d">3D view</button></div></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ PROJECT PAGE ============ -->
+  <section class="page" id="p-project">
+    <p class="crumb"><button data-go="projects">Projects</button> / Cordillera porphyry</p>
+    <div class="head">
+      <div><h4>Cordillera porphyry</h4><p>Cu, Au · Benguet · PRS92 / Zone III · sample prefix CDL · 6 holes</p></div>
+      <div class="actions"><button class="btn" data-tab="treport">Progress report</button></div>
+    </div>
+    <div class="ptabs" id="ptabs">
+      <button data-tab="tsum" class="on">Summary</button>
+      <button data-tab="tholes">Holes</button>
+      <button data-tab="t3d">3D view</button>
+      <button data-tab="tlab">Samples &amp; lab</button>
+      <button data-tab="treport">Progress report</button>
+    </div>
+
+    <!-- Summary -->
+    <div class="ptab on" id="tsum">
+      <div class="kpis isnew">
+        <div class="panel kpi"><small>Programme <span class="mark n">New</span></small><b>61<em>%</em></b><span>1,012.5 of 1,672.5 m</span><div class="bar"><i style="width:61%"></i></div></div>
+        <div class="panel kpi"><small>Holes completed</small><b>3 <em>of 6</em></b><span>1 drilling, 2 planned</span></div>
+        <div class="panel kpi"><small>Core recovery</small><b>94.1<em>%</em></b><span>average of logged runs</span></div>
+        <div class="panel kpi"><small>Samples</small><b>256</b><span>of which 26 QC inserts</span></div>
+        <div class="panel kpi"><small>Lab turnaround</small><b>13 <em>days</em></b><span>average, 2 dispatches back</span></div>
+      </div>
+      <div class="grid2">
+        <div class="panel isnew">
+          <h5>Drilled against planned depth, by hole <span class="mark n">New</span></h5>
+          <ul class="pvd">
+            <li><span class="h">CDL-001</span><div class="track"><i class="done" style="width:100%"></i><b style="left:99.4%"></b></div><span class="v">302.5 / 302.5 m</span></li>
+            <li><span class="h">CDL-002</span><div class="track"><i class="done" style="width:92.6%"></i><b style="left:92.3%"></b></div><span class="v">280.0 / 280.0 m</span></li>
+            <li><span class="h">CDL-003</span><div class="track"><i class="done" style="width:86%"></i><b style="left:85.7%"></b></div><span class="v">260.0 / 260.0 m</span></li>
+            <li><span class="h">CDL-004</span><div class="track"><i style="width:56.2%"></i><b style="left:98.9%"></b></div><span class="v">170.0 / 300.0 m</span></li>
+            <li><span class="h">CDL-005</span><div class="track"><b style="left:82.3%"></b></div><span class="v">0 / 250.0 m</span></li>
+            <li><span class="h">CDL-006</span><div class="track"><b style="left:92.3%"></b></div><span class="v">0 / 280.0 m</span></li>
+          </ul>
+          <p style="font-size:12px;color:var(--muted);margin-top:8px">Bars are drawn on one scale (the deepest planned hole). Green: finished. Copper: still drilling. The dark mark is the planned depth.</p>
+        </div>
+        <div class="stack">
+          <div class="panel isnew">
+            <h5>QC inserted against the project's rates <span class="mark n">New</span></h5>
+            <table>
+              <tr><th>Type</th><th>Rate</th><th class="num">Expected</th><th class="num">Inserted</th></tr>
+              <tr><td>Standards</td><td>1 in 20</td><td class="num">12</td><td class="num">12</td></tr>
+              <tr><td>Blanks</td><td>1 in 25</td><td class="num">9</td><td class="num">9</td></tr>
+              <tr><td>Duplicates</td><td>1 in 20</td><td class="num">12</td><td class="num" style="color:var(--warn-ink);font-weight:700">5</td></tr>
+            </table>
+          </div>
+          <div class="panel">
+            <h5>Holes by status <span class="mark e">Exists</span></h5>
+            <div class="stackbar"><i class="s-logged" style="width:33.3%"></i><i class="s-complete" style="width:16.7%"></i><i class="s-drilling" style="width:16.7%"></i><i class="s-planned" style="width:33.3%"></i></div>
+            <div class="legend"><span><i class="s-logged"></i>Logged 2</span><span><i class="s-complete"></i>Complete 1</span><span><i class="s-drilling"></i>Drilling 1</span><span><i class="s-planned" style="border:1px solid var(--line)"></i>Planned 2</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holes -->
+    <div class="ptab" id="tholes">
+      <div class="filters"><span class="on">All 6</span><span>Urgent 0</span><span>Drilling 1</span><span>Needs attention 1</span></div>
+      <div class="panel">
+        <h5>Holes in this project <span class="mark e">Exists, filtered to the project</span></h5>
+        <table>
+          <tr><th>Hole</th><th>Status</th><th class="mini">Logged of drilled</th><th class="num">Recovery</th><th>Samples</th><th>Geologist</th><th></th></tr>
+          <tr><td><span class="h">CDL-001</span></td><td><span class="st logged">Logged</span></td><td class="mini">302.5 of 302.5 m<div class="bar ok"><i style="width:100%"></i></div></td><td class="num">94.3%</td><td>64, all back</td><td>Geologist A</td><td><button class="link" data-go="project" data-tab="t3d">See in 3D</button></td></tr>
+          <tr><td><span class="h">CDL-002</span></td><td><span class="st logged">Logged</span></td><td class="mini">280.0 of 280.0 m<div class="bar ok"><i style="width:100%"></i></div></td><td class="num">95.0%</td><td>60, all back</td><td>Geologist A</td><td><button class="link" data-go="project" data-tab="t3d">See in 3D</button></td></tr>
+          <tr><td><span class="h">CDL-003</span></td><td><span class="st complete">Complete</span> <span class="st rejected">QA/QC rejected</span></td><td class="mini">260.0 of 260.0 m<div class="bar"><i style="width:100%"></i></div></td><td class="num">92.8%</td><td>70, 14 waiting</td><td>Geologist A</td><td><button class="link" data-go="project" data-tab="t3d">See in 3D</button></td></tr>
+          <tr><td><span class="h">CDL-004</span></td><td><span class="st drill">Drilling</span></td><td class="mini">155.0 of 170.0 m<div class="bar"><i style="width:91%"></i></div></td><td class="num">93.6%</td><td>62, all waiting</td><td>Geologist A</td><td><button class="link" data-go="project" data-tab="t3d">See in 3D</button></td></tr>
+          <tr><td><span class="h">CDL-005</span></td><td><span class="st planned">Planned</span></td><td class="mini">0 of 250.0 m planned<div class="bar"><i style="width:0"></i></div></td><td class="num muted">·</td><td class="muted">·</td><td class="muted">Unassigned</td><td></td></tr>
+          <tr><td><span class="h">CDL-006</span></td><td><span class="st planned">Planned</span></td><td class="mini">0 of 280.0 m planned<div class="bar"><i style="width:0"></i></div></td><td class="num muted">·</td><td class="muted">·</td><td class="muted">Unassigned</td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3D -->
+    <div class="ptab" id="t3d">
+      <div class="view3d">
+        <div class="scene">
+          <div class="ctl"><span class="on">Cu</span><span>Au</span><span>Depth ×1</span><span>×2</span></div>
+          <svg viewBox="0 0 700 440" aria-label="Illustration of the 3D evidence view">
+            <defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#34403c"/><stop offset="1" stop-color="#1b2522"/></linearGradient></defs>
+            <polygon points="90,120 430,70 640,150 300,210" fill="#26312e" stroke="#3c4944"/>
+            <g stroke-width="7" stroke-linecap="round">
+              <line x1="210" y1="140" x2="250" y2="380" stroke="#55635e"/>
+              <line x1="210" y1="140" x2="222" y2="210" stroke="#3b7fb8"/><line x1="222" y1="212" x2="232" y2="270" stroke="#e0b341"/><line x1="232" y1="272" x2="242" y2="330" stroke="#d2542f"/><line x1="242" y1="332" x2="249" y2="375" stroke="#e0b341"/>
+              <line x1="330" y1="120" x2="390" y2="360" stroke="#55635e"/>
+              <line x1="330" y1="120" x2="345" y2="180" stroke="#3b7fb8"/><line x1="345" y1="182" x2="362" y2="250" stroke="#8fbf6a"/><line x1="362" y1="252" x2="378" y2="315" stroke="#d2542f"/><line x1="378" y1="317" x2="389" y2="356" stroke="#b33a2a"/>
+              <line x1="440" y1="135" x2="470" y2="345" stroke="#55635e"/>
+              <line x1="440" y1="135" x2="450" y2="205" stroke="#8fbf6a"/><line x1="450" y1="207" x2="460" y2="275" stroke="#e0b341"/><line x1="460" y1="277" x2="469" y2="340" stroke="#8a948f" stroke-dasharray="4 6"/>
+              <line x1="530" y1="160" x2="545" y2="280" stroke="#8a948f" stroke-dasharray="4 6"/>
+            </g>
+            <g fill="#efe9dc" font-size="13" font-weight="700" font-family="Segoe UI, Arial">
+              <text x="180" y="130">CDL-001</text><text x="304" y="108">CDL-002</text><text x="418" y="124">CDL-003</text><text x="512" y="150">CDL-004</text>
+            </g>
+            <g fill="#b9c2bd" font-size="12" font-family="Segoe UI, Arial">
+              <circle cx="585" cy="190" r="4" fill="none" stroke="#b9c2bd"/><text x="594" y="194">CDL-005 planned</text>
+              <circle cx="150" cy="170" r="4" fill="none" stroke="#b9c2bd"/><text x="98" y="190">CDL-006 planned</text>
+            </g>
+          </svg>
+          <p class="caveat">Illustration only. The built E18 view goes here unchanged: drag to orbit, hover a sample. Traces follow the planned azimuth and dip (no downhole survey); depths are below the collar.</p>
+        </div>
+        <div class="stack">
+          <div class="panel">
+            <h5>Cu, % <span class="mark e">Exists</span></h5>
+            <div class="scale"><i style="background:#3b7fb8"></i><i style="background:#8fbf6a"></i><i style="background:#e0b341"></i><i style="background:#d2542f"></i><i style="background:#b33a2a"></i></div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)"><span>0.05</span><span>0.8</span></div>
+            <div class="legend" style="margin-top:10px"><span><i style="background:#8a948f"></i>Waiting for results</span><span><i style="background:#55635e"></i>Not sampled</span></div>
+          </div>
+          <div class="panel">
+            <h5>Holes</h5>
+            <table>
+              <tr><td class="h">CDL-001</td><td class="num">64 samples</td></tr>
+              <tr><td class="h">CDL-002</td><td class="num">60 samples</td></tr>
+              <tr><td class="h">CDL-003</td><td class="num">70, 14 waiting</td></tr>
+              <tr><td class="h">CDL-004</td><td class="num">62 waiting</td></tr>
+            </table>
+          </div>
+          <p style="font-size:12px;color:var(--muted)">Also opened from each project card on Today, the Projects list, and "See in 3D" on a hole's page.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Samples & lab (project) -->
+    <div class="ptab" id="tlab">
+      <div class="grid-even isnew">
+        <div class="panel">
+          <h5>Dispatches <span class="mark n">New view</span></h5>
+          <table>
+            <tr><th>Dispatch</th><th class="num">Samples</th><th>Handed over</th><th>Results</th></tr>
+            <tr><td class="h">CDL-D03</td><td class="num">76</td><td>11 Sep</td><td><span class="st late">16 days, waiting</span></td></tr>
+            <tr><td class="h">CDL-D02</td><td class="num">80</td><td>9 Sep</td><td><span class="st back">Back in 12 days</span></td></tr>
+            <tr><td class="h">CDL-D01</td><td class="num">100</td><td>2 Sep</td><td><span class="st back">Back in 14 days</span></td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h5>QA/QC decisions on this project <span class="mark n">New view</span></h5>
+          <table>
+            <tr><th>Hole</th><th>Stage</th><th>Decision</th><th>Reviewer's note</th></tr>
+            <tr><td class="h">CDL-003</td><td>Core logging</td><td><span class="st rejected">Rejected</span></td><td>Run gap 118.0 to 121.5 m. Re-measure the run.</td></tr>
+            <tr><td class="h">CDL-002</td><td>Laboratory</td><td><span class="st back">Accepted</span></td><td>Standard re-assayed within limits.</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report -->
+    <div class="ptab" id="treport">
+      <div class="actions" style="justify-content:flex-end;margin-bottom:12px"><span class="filters" style="margin:0"><span class="on">Last 7 days</span><span>Last 30 days</span><span>Since start</span></span><button class="btn primary">Print or save as PDF</button></div>
+      <div class="sheet isnew">
+        <h6>Cordillera porphyry: progress, 20 to 27 September 2026 <span class="mark n">New</span></h6>
+        <p class="sub">Prepared from CoreChain records on 27 Sep 2026, 16:40. Recorded data only; no forecasts.</p>
+        <div class="figs4">
+          <div><b>148.5 m</b>drilled this period</div>
+          <div><b>61%</b>of planned metres</div>
+          <div><b>40</b>samples taken</div>
+          <div><b>80</b>results returned</div>
+        </div>
+        <h5>Holes</h5>
+        <p>CDL-003 completed at 260.0 m on 22 Sep. CDL-004 drilling, 170.0 of 300.0 m. CDL-005 and CDL-006 not started.</p>
+        <h5>Laboratory</h5>
+        <p>CDL-D02 returned on 21 Sep (12 days). CDL-D03, 76 samples, at the laboratory since 11 Sep.</p>
+        <h5>Quality</h5>
+        <p>CDL-003 rejected at core logging: run gap 118.0 to 121.5 m. Duplicates inserted 5 of 12 expected.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOLES (all projects) ============ -->
+  <section class="page" id="p-holes">
+    <div class="head"><div><h4>Holes</h4><p>Every hole in the team, across projects. Assign a geologist and set priority here.</p></div></div>
+    <div class="filters"><span class="on">All 12</span><span>Urgent 1</span><span>Drilling 2</span><span>Needs attention 3</span></div>
+    <div class="panel">
+      <h5>All holes <span class="mark e">Exists, moved off the overview</span></h5>
+      <table>
+        <tr><th>Hole</th><th>Project</th><th>Status</th><th class="mini">Logged</th><th>Geologist</th><th>Priority</th></tr>
+        <tr><td><span class="h">200110-133</span><span class="urgent">Urgent</span></td><td>Alberta core study</td><td><span class="st complete">Complete</span></td><td class="mini">96.0 of 131.9 m<div class="bar"><i style="width:73%"></i></div></td><td>Geologist C</td><td>Urgent</td></tr>
+        <tr><td><span class="h">CDL-004</span></td><td><button class="link" style="margin:0" data-go="project">Cordillera porphyry</button></td><td><span class="st drill">Drilling</span></td><td class="mini">155.0 of 170.0 m<div class="bar"><i style="width:91%"></i></div></td><td>Geologist A</td><td>Normal</td></tr>
+        <tr><td><span class="h">200134-001</span></td><td>Alberta core study</td><td><span class="st drill">Drilling</span></td><td class="mini">41.0 of 132.9 m<div class="bar"><i style="width:31%"></i></div></td><td>Geologist B</td><td>Normal</td></tr>
+        <tr><td><span class="h">CDL-003</span></td><td><button class="link" style="margin:0" data-go="project">Cordillera porphyry</button></td><td><span class="st complete">Complete</span></td><td class="mini">260.0 of 260.0 m<div class="bar"><i style="width:100%"></i></div></td><td>Geologist A</td><td>Normal</td></tr>
+        <tr><td><span class="h">200134-006</span></td><td>Alberta core study</td><td><span class="st complete">Complete</span></td><td class="mini">22.0 of 73.0 m<div class="bar"><i style="width:30%"></i></div></td><td class="muted">Unassigned</td><td>Normal</td></tr>
+        <tr><td><span class="h">CDL-001</span></td><td><button class="link" style="margin:0" data-go="project">Cordillera porphyry</button></td><td><span class="st logged">Logged</span></td><td class="mini">302.5 of 302.5 m<div class="bar ok"><i style="width:100%"></i></div></td><td>Geologist A</td><td>Normal</td></tr>
+      </table>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Selecting a row opens the same detail panel as today (assign, priority, open hole page, See in 3D).</p>
+    </div>
+  </section>
+
+  <!-- ============ SAMPLES & LAB (team) ============ -->
+  <section class="page" id="p-lab">
+    <div class="head"><div><h4>Samples &amp; lab</h4><p>The sample chain across the team's projects: waiting to be sent, at the laboratory, and what QA/QC decided.</p></div></div>
+    <div class="kpis">
+      <div class="panel kpi"><small>Waiting to be sent <span class="mark e">Exists</span></small><b>34</b><span>on 3 holes</span></div>
+      <div class="panel kpi"><small>At the laboratory <span class="mark e">Exists</span></small><b>88</b><span>2 dispatches</span></div>
+      <div class="panel kpi isnew"><small>Average turnaround <span class="mark n">New</span></small><b>13 <em>days</em></b><span>last 3 dispatches back</span></div>
+      <div class="panel kpi warn isnew"><small>Overdue <span class="mark n">New</span></small><b>1</b><span>more than 14 days</span></div>
+      <div class="panel kpi"><small>QA/QC held or rejected <span class="mark e">Exists</span></small><b>2</b><span>see below</span></div>
+    </div>
+    <div class="grid-even">
+      <div class="panel isnew">
+        <h5>Dispatches, longest waiting first <span class="mark n">New view</span></h5>
+        <table>
+          <tr><th>Dispatch</th><th>Project</th><th class="num">Samples</th><th>Handed over</th><th>Results</th></tr>
+          <tr><td class="h">CDL-D03</td><td>Cordillera</td><td class="num">76</td><td>11 Sep</td><td><span class="st late">16 days, waiting</span></td></tr>
+          <tr><td class="h">ALB-D02</td><td>Alberta</td><td class="num">12</td><td>20 Sep</td><td><span class="st planned">7 days, waiting</span></td></tr>
+          <tr><td class="h">CDL-D02</td><td>Cordillera</td><td class="num">80</td><td>9 Sep</td><td><span class="st back">Back in 12 days</span></td></tr>
+          <tr><td class="h">ALB-D01</td><td>Alberta</td><td class="num">64</td><td>1 Sep</td><td><span class="st back">Back in 13 days</span></td></tr>
+        </table>
+      </div>
+      <div class="panel isnew">
+        <h5>QA/QC held or rejected <span class="mark n">New view</span></h5>
+        <table>
+          <tr><th>Hole</th><th>Stage</th><th>Decision</th><th>Why</th></tr>
+          <tr><td class="h">CDL-003</td><td>Core logging</td><td><span class="st rejected">Rejected</span></td><td>Run gap 118.0 to 121.5 m. Re-measure the run.</td></tr>
+          <tr><td class="h">200110-129</td><td>Laboratory</td><td><span class="st held">Held</span></td><td>Blank 85 ppb against a limit of 10. Re-assay requested.</td></tr>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">Read-only for the manager. The QA/QC reviewer makes the decision; the manager follows up with the laboratory or the geologist.</p>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <h5>Find a sample <span class="mark e">Exists</span></h5>
+      <p style="font-size:13px;color:var(--text)">Type a sample number to see its hole, depth, custody steps, dispatch and results.</p>
+    </div>
+  </section>
+
+  <!-- ============ TEAM ============ -->
+  <section class="page" id="p-team">
+    <div class="head"><div><h4>Team</h4><p>The people on this rig's team, their phones, and everything they did.</p></div></div>
+    <div class="grid2">
+      <div class="stack">
+        <div class="panel isnew">
+          <h5>People <span class="mark n">New page, workload exists</span></h5>
+          <table>
+            <tr><th>Person</th><th>Holes</th><th class="num">Logged this week</th><th>Phone</th></tr>
+            <tr><td><div class="person"><span class="avatar">GA</span><div>Geologist A<small>Field geologist</small></div></div></td><td>CDL-003, CDL-004</td><td class="num">62.0 m</td><td><span class="online"></span>synced 14 min ago</td></tr>
+            <tr><td><div class="person"><span class="avatar">GB</span><div>Geologist B<small>Field geologist</small></div></div></td><td>200134-001</td><td class="num">41.0 m</td><td><span class="online"></span>synced 1 h ago</td></tr>
+            <tr><td><div class="person"><span class="avatar">GC</span><div>Geologist C<small>Field geologist</small></div></div></td><td>200110-133</td><td class="num">45.5 m</td><td><span class="online off"></span>synced yesterday</td></tr>
+            <tr><td><div class="person"><span class="avatar">QR</span><div>QA/QC reviewer<small>QA/QC, core logging</small></div></div></td><td class="muted">·</td><td class="num muted">·</td><td class="muted">web only</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h5>Activity <span class="mark e">Exists</span></h5>
+        <ul class="feed">
+          <li><time>16:26</time><span>Geologist A logged CDL-004 to 170.0 m</span></li>
+          <li><time>15:02</time><span>QA/QC reviewer rejected CDL-003 (core logging)</span></li>
+          <li><time>13:48</time><span>Geologist B added 6 samples on 200134-001</span></li>
+          <li><time>11:20</time><span>Geologist A photographed boxes 41 to 44, CDL-004</span></li>
+          <li><time>09:15</time><span>Laboratory results uploaded for CDL-D02</span></li>
+          <li><time>Fri</time><span>Geologist C marked 200110-133 complete</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP ============ -->
+  <section class="page" id="p-setup">
+    <div class="head"><div><h4>Setup</h4><p>The standards the team logs and samples against.</p></div></div>
+    <div class="grid-even">
+      <div class="panel">
+        <h5>Team lists <span class="mark e">Exists</span></h5>
+        <ul class="setup">
+          <li><div>Code library<small>Lithology, alteration, mineralisation, weathering codes</small></div><span class="btn">Open</span></li>
+          <li><div>Standards and blanks<small>Certified values and limits used by the laboratory checks</small></div><span class="btn">Open</span></li>
+          <li><div>Print tags<small>Sample tag sheets by number range</small></div><span class="btn">Open</span></li>
+        </ul>
+      </div>
+      <div class="panel isnew">
+        <h5>Project settings <span class="mark n">New on the web</span></h5>
+        <ul class="setup">
+          <li><div>Cordillera porphyry<small>Prefix CDL · standard 1 in 20 · blank 1 in 25 · duplicate 1 in 20</small></div><span class="btn">Edit</span></li>
+          <li><div>Alberta core study<small>Prefix ALB · standard 1 in 20 · blank 1 in 20 · duplicate 1 in 25</small></div><span class="btn">Edit</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  </div>
+</div>
+</div>
+
+<section class="band wrap">
+  <div class="cols">
+    <div>
+      <h2>Where the 3D view lives</h2>
+      <ul>
+        <li><b>A tab on each project's page</b>, next to Summary, Holes, Samples &amp; lab and Progress report.</li>
+        <li><b>A "3D view" button on each project card on Today</b> and in the Projects list, so it is one click from sign-in.</li>
+        <li><b>"See in 3D" on a hole's page and the project's hole list</b>, opening the view on that hole (exists today).</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build order</h2>
+      <ul>
+        <li><b>1.</b> Top bar with six places; hole list moves to Holes; project cards on Today.</li>
+        <li><b>2.</b> Project page tabs: Summary, Holes, 3D view, Samples &amp; lab.</li>
+        <li><b>3.</b> Samples &amp; lab page: turnaround and the QA/QC held or rejected list.</li>
+        <li><b>4.</b> Progress report to print or save as PDF.</li>
+        <li><b>5.</b> Team page with phones and last sync.</li>
+        <li class="muted">All five are web only, from data already recorded: no migration, no new APK.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  const pages = document.querySelectorAll('.page');
+  const navButtons = document.querySelectorAll('#nav button');
+  const tabButtons = document.querySelectorAll('#ptabs button');
+  const tabs = document.querySelectorAll('.ptab');
+
+  function showTab(id) {
+    tabs.forEach(t => t.classList.toggle('on', t.id === id));
+    tabButtons.forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  }
+  function go(page, tab) {
+    pages.forEach(p => p.classList.toggle('on', p.id === 'p-' + page));
+    const navFor = page === 'project' ? 'projects' : page;
+    navButtons.forEach(b => b.classList.toggle('on', b.dataset.go === navFor));
+    if (page === 'project') showTab(tab || 'tsum');
+  }
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-go],[data-tab]');
+    if (!el) return;
+    if (el.dataset.go) go(el.dataset.go, el.dataset.tab);
+    else showTab(el.dataset.tab);
+  });
+  document.getElementById('marks').addEventListener('change', e => document.body.classList.toggle('show-marks', e.target.checked));
+</script>
+</body>
+</html>

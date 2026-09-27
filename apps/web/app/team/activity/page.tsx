@@ -191,8 +191,8 @@ export default async function ActivityPage() {
     <>
       <div className="admin-page-header">
         <div>
-          <Link href="/team" className="admin-link">
-            ← Team overview
+          <Link href={"/team/people" as Route} className="admin-link">
+            ← Team
           </Link>
           <h1>Activity</h1>
           <p>What changed in the last 24 hours, and what needs a look.</p>

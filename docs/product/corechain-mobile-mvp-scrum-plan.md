@@ -631,6 +631,33 @@ Collected from the owner's own testing and from the first geologist tester's sug
   - A team is one rig (D17), and every project and account belongs to one team, so today a project manager sees only one rig and a project cannot span two rigs. Will the pilot have more than one rig on a project, and who follows several rigs?
   - The resident manager, the project manager and the chief geologist are one tier today. Is that enough for the pilot?
 
+**E19 — Project manager mode on the web (web only, about 6 sessions).** Chosen by the owner on 2026-09-27, after the project manager could not find the 3D view (E18). Planned from the role first: `docs/product/project-manager-mode-outline.md` and the mockup `docs/product/mockups/manager-mode.html`, both approved by the owner. No migration, no sync change and no new APK: it reads what is already on the server.
+
+- **Top bar with six places:** Today, Projects, Holes, Samples & lab, Team and Setup, plus a "Find a sample or hole" box. Older pages sit under their place (a hole under Holes, the code library under Setup).
+- **Today** (`/team`):
+  - Figures: metres drilled in the last 7 days against the 7 before, holes drilling, samples waiting, results overdue, and QA/QC held or rejected.
+  - A card per project with **Open project** and **3D view**.
+  - One "Needs attention" list: rejections and holds, dispatches more than 14 days at the laboratory, urgent holes, quiet holes, drilling holes with no geologist, and quiet phones.
+  - Recent activity.
+- **Project page tabs:**
+  - Summary: drilled against planned depth per hole, holes by status, core recovery, QC inserted against the project's rates, and laboratory turnaround.
+  - Holes.
+  - **3D view:** E18, unchanged, now at `/team/projects/[id]/3d`. Old `?hole=` links redirect there.
+  - Samples & lab: dispatches and standing QA/QC decisions.
+  - Progress report: the last 7 days, the last 30 days or since the start, printed or saved as PDF from the browser. Recorded data only.
+- **Holes:** the hole list and detail panel, moved off the overview. Filters: urgent, drilling, needs attention and unassigned.
+- **Samples & lab:** dispatches with the longest waiting first, average turnaround, and every standing hold or rejection with the reviewer's note (read-only).
+- **Team:** each person's holes, metres logged in the last 7 days, and when their phones last synced.
+- **Setup:** the three team lists, and each project's settings, shown but not edited because the phone owns them.
+- **Rules:**
+  - A dispatch's clock starts on its hand-over day, or when it was created if no day was chosen, and stops when results return. Overdue means more than 14 days, a fixed default.
+  - The standing QA/QC decision is the newest one per hole and stage.
+  - Metres drilled come from the recorded final depth, or else the deepest run.
+  - These are pure functions in `apps/web/lib/manager/stats.ts`, with 17 tests.
+- **Outcome (2026-09-27): built, not yet tried with a signed-in account.**
+  - **Checked:** tests (web 290), typecheck, lint and build all pass. The components were checked on a local-only preview page (since removed) with illustrative rows, at desktop width and at 600 px. Every new route redirects to sign-in when signed out.
+  - **Not yet checked:** the pages signed in as a project manager on the demo projects.
+
 **Smaller items, not sized:**
 
 - **Delete with a confirmation step**, on the web admin and possibly the phone. Must respect the existing rules: sample numbers are never reused, and custody events are never edited or deleted (a mistake is a correction step).
