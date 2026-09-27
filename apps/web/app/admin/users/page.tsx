@@ -1,5 +1,6 @@
 import { suggestPassphrase } from "@corechain/domain";
 import { randomInt } from "node:crypto";
+import { ACCESS_INTEREST_LABELS, toAccessInterest } from "@/lib/access-interest";
 import { DEMO_PROJECT_NAMES } from "@/lib/demo/demoProjects";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
@@ -85,6 +86,7 @@ export default async function UsersPage() {
           name: request.name,
           company: request.company,
           email: request.email,
+          interest: ACCESS_INTEREST_LABELS[toAccessInterest(request.interest)],
           createdAt: request.createdAt.toISOString(),
         }))}
         initialSuggestion={suggestPassphrase(randomInt)}

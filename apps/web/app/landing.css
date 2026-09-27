@@ -1134,7 +1134,7 @@
   font-size: 0.85rem;
 }
 
-.lp-form input {
+.lp-form input:not([type="radio"]) {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
@@ -1143,6 +1143,60 @@
   border: 1px solid #3a4d46;
   border-radius: var(--radius-control);
   font: inherit;
+}
+
+.lp-choice {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+}
+
+.lp-choice legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: #c9cdc7;
+  font-size: 0.85rem;
+}
+
+.lp-choice label {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: 52px;
+  padding: 12px 14px;
+  background: var(--ink);
+  border: 1px solid #3a4d46;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.lp-choice label:has(input:checked) {
+  border-color: var(--canvas);
+}
+
+.lp-choice input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--canvas);
+}
+
+.lp-choice span {
+  display: grid;
+  color: #c9cdc7;
+  font-size: 0.85rem;
+}
+
+.lp-choice b {
+  color: var(--canvas);
+  font-size: 0.95rem;
+}
+
+.lp-form input::placeholder {
+  color: #7d8a84;
 }
 
 .lp-trap {

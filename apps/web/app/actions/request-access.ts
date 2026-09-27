@@ -1,5 +1,6 @@
 "use server";
 
+import { parseAccessInterest } from "@/lib/access-interest";
 import { prisma } from "@/lib/prisma";
 
 export type RequestAccessState =
@@ -10,7 +11,8 @@ export type RequestAccessState =
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * A pilot access request from the landing page. It only stores the request:
+ * An access request from the landing page, either to test CoreChain Field or
+ * to discuss a pilot for a team. It only stores the request:
  * nothing is sent and no account is made. The admin sees it on the Users page
  * and creates the account (decision D13: the owner creates every account).
  *
@@ -28,18 +30,23 @@ export async function requestAccessAction(
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
+  const interest = parseAccessInterest(formData.get("interest"));
   const trap = String(formData.get("website") ?? "");
 
   if (trap.length > 0) return { status: "sent", error: null, email };
+
+  if (!interest) {
+    return { status: "error", error: "Choose whether you want to test the app or discuss a pilot." };
+  }
 
   if (name.length < 2 || name.length > 100) {
     return { status: "error", error: "Enter your name." };
   }
   if (company.length < 2 || company.length > 120) {
-    return { status: "error", error: "Enter your company or project." };
+    return { status: "error", error: "Enter your company or project, or Independent." };
   }
   if (email.length > 200 || !EMAIL.test(email)) {
-    return { status: "error", error: "Enter a work email we can reply to." };
+    return { status: "error", error: "Enter an email we can reply to." };
   }
 
   try {
@@ -49,7 +56,7 @@ export async function requestAccessAction(
       select: { id: true },
     });
     if (!recent) {
-      await prisma.accessRequest.create({ data: { name, company, email } });
+      await prisma.accessRequest.create({ data: { name, company, email, interest } });
     }
   } catch {
     return {

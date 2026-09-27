@@ -797,6 +797,8 @@ model AccessRequest {
   name      String
   company   String
   email     String
+  // "tester" (wants to try CoreChain Field) or "team" (evaluating it for a team)
+  interest  String   @default("team")
   // new -> accepted (an account was created for that email) or dismissed
   status    String   @default("new")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
