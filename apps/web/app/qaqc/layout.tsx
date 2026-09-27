@@ -20,7 +20,7 @@ export default async function QaqcLayout({
     <div className="admin-shell">
       <ViewAsBar session={session} />
       <header className="admin-header">
-        <div className="admin-header-inner">
+        <div className="admin-header-inner admin-header-inner--wide">
           <Image
             className="brand-logo"
             src="/branding/corechain-primary-horizontal.svg"

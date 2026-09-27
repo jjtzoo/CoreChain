@@ -668,7 +668,10 @@ Collected from the owner's own testing and from the first geologist tester's sug
       - Today: 8 "Needs attention" items.
       - QA/QC: 2 core-logging exceptions (1 already resolved), 1 sampling exception and 2 laboratory exceptions.
     - The components on a local-only preview page (since removed).
-  - **Not yet checked:** the pages signed in.
+  - **Signed-in check (2026-09-27):** every manager and QA/QC page was opened on a local server, signed in as the showcase project manager and the three QA/QC reviewers (no decisions or resolutions recorded). Fixes from it:
+    - Manager mode: the report's double full stop, Team page column widths, status pills on one line, and the phone sync note wrapping.
+    - QA/QC: the sidebar no longer inherits the old sample-project shell's full-height grey column (the Devices and "How this screen works" cards had large gaps), the header spans the page like manager mode's, a phone's "last seen" shows a date instead of a raw timestamp, the Resolve button no longer stretches, and a short QC rate reads "Duplicate rate below target".
+    - Sign-in goes straight to the person's own page. It used to read the new session before its cookie existed, so every non-admin went through the admin page and back to sign-in first.
 
 **Smaller items, not sized:**
 

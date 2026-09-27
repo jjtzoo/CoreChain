@@ -247,7 +247,7 @@ export function samplingCustodyExceptions(
             drillholeId: hole.drillholeId,
             holeId: hole.holeId,
             kind: "qc_rate_short",
-            summary: `${a.controlType} rate below target`,
+            summary: `${a.controlType.charAt(0).toUpperCase()}${a.controlType.slice(1)} rate below target`,
             evidence: `${a.count} of an expected ${expected}+ for ${a.primaryCount} primary samples (target 1 per ${a.targetEveryN}).`,
           });
         }
@@ -327,7 +327,7 @@ export function deviceStaleExceptions(
         holeId: "",
         kind: "device_stale",
         summary: `${device.name} last synced ${Math.floor(ageDays)} days ago`,
-        evidence: `Last seen ${device.lastSeenAt}.`,
+        evidence: `Last seen ${device.lastSeenAt.slice(0, 10)}.`,
       });
     }
   }
