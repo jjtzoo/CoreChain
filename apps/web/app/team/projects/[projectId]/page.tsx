@@ -101,12 +101,14 @@ export default async function ProjectSummaryPage({
           unit="%"
           sub={`${formatMetres(drilledM)} of ${formatMetres(plannedM)} planned`}
           barPercent={percentOf(drilledM, plannedM)}
+          href={`/team/projects/${projectId}/holes`}
         />
         <Kpi
           label="Holes finished"
           value={finished}
           unit={`of ${holeRows.length}`}
           sub={`${statusCounts.drilling ?? 0} drilling, ${statusCounts.planned ?? 0} planned`}
+          href={`/team/projects/${projectId}/holes`}
         />
         <Kpi
           label="Core recovery"
@@ -114,7 +116,7 @@ export default async function ProjectSummaryPage({
           unit={recovery === null ? undefined : "%"}
           sub={recovery === null ? "No runs yet" : `average of ${plural(recoveries.length, "run")}`}
         />
-        <Kpi label="Samples" value={samples.length} sub={`of which ${controls} QC inserts`} />
+        <Kpi label="Samples" value={samples.length} sub={`of which ${controls} QC inserts`} href={labHref} />
         <Kpi
           label="Laboratory turnaround"
           value={turnaround === null ? "·" : turnaround}
@@ -124,6 +126,7 @@ export default async function ProjectSummaryPage({
               ? "No results back yet"
               : `average, ${plural(returnedCount, "dispatch", "dispatches")} back`
           }
+          href={labHref}
         />
       </div>
 

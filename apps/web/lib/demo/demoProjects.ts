@@ -192,8 +192,8 @@ export type DemoSummary = {
   samples: number;
 };
 
-type Db = PrismaClient | Prisma.TransactionClient;
-type Row = Record<string, unknown>;
+export type Db = PrismaClient | Prisma.TransactionClient;
+export type Row = Record<string, unknown>;
 
 // Run from apps/web (the npm scripts and the Next.js server both do).
 // next.config.ts includes these files in the server bundle.
@@ -208,12 +208,14 @@ function readCsv(path: string): Record<string, string>[] {
 }
 
 const ENUMS: Record<string, Record<string, string>> = {
-  drillholes: { status: "DrillholeStatus", collar_source: "CollarSource" },
+  drillholes: { status: "DrillholeStatus", collar_source: "CollarSource", priority: "DrillholePriority" },
   drillhole_status_history: { status: "DrillholeStatus" },
   samples: { sample_type: "SampleType", status: "SampleStatus" },
   custody_events: { event_type: "CustodyEventType" },
   dispatches: { status: "DispatchStatus" },
   qaqc_review_decisions: { decision: "QaqcDecisionType" },
+  code_library: { category: "CodeCategory" },
+  qc_reference_values: { kind: "QcReferenceKind" },
 };
 
 /** Web-only tables whose own id is text (a cuid), not a uuid. */
@@ -222,6 +224,7 @@ const TEXT_IDS = new Set([
   "qaqc_review_decisions",
   "qaqc_exception_resolutions",
   "assay_results",
+  "qc_reference_values",
 ]);
 
 function cast(table: string, column: string): string {
@@ -246,9 +249,17 @@ function cast(table: string, column: string): string {
   return "";
 }
 
-/** Rows collected in memory, then written table by table in large batches. */
-class RowBuffer {
+/**
+ * Rows collected in memory, then written table by table in large batches.
+ * Also used by the showcase team (showcaseTeam.ts).
+ */
+export class RowBuffer {
   private readonly tables = new Map<string, Row[]>();
+
+  /** The rows buffered for one table (for tests). */
+  rowsOf(table: string): readonly Row[] {
+    return this.tables.get(table) ?? [];
+  }
 
   add(table: string, row: Row): void {
     const rows = this.tables.get(table) ?? [];
