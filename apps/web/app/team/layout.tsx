@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { requireProjectManager } from "@/lib/session";
 import { ManagerNav, ManagerSearch } from "@/components/manager/manager-nav";
+import { Guide } from "@/components/guide/guide";
 import { ViewAsBar } from "@/components/view-as-bar";
 import { signOutAction } from "../login/actions";
 import "./manager.css";
@@ -34,6 +35,7 @@ export default async function TeamLayout({
           <ManagerNav />
           <ManagerSearch />
           <div className="admin-account">
+            <Guide tour="manager" />
             <span className="admin-account-email">{session.user.email}</span>
             <form action={signOutAction}>
               <button type="submit" className="admin-button">

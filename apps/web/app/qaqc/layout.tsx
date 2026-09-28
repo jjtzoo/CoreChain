@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { requireQaqc } from "@/lib/session";
+import { Guide } from "@/components/guide/guide";
 import { ViewAsBar } from "@/components/view-as-bar";
 import { signOutAction } from "../login/actions";
 
@@ -30,6 +31,7 @@ export default async function QaqcLayout({
             priority
           />
           <div className="admin-account">
+            <Guide tour="qaqc" />
             <span className="admin-account-email">{session.user.email}</span>
             <form action={signOutAction}>
               <button type="submit" className="admin-button">
