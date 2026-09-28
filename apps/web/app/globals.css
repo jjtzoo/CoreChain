@@ -352,7 +352,7 @@ h3 {
   background: var(--canvas);
 }
 
-.workspace-sidebar {
+.workspace-shell > .workspace-sidebar {
   display: flex;
   flex-direction: column;
   gap: 42px;
@@ -1713,7 +1713,7 @@ h3 {
     grid-template-columns: 1fr;
   }
 
-  .workspace-sidebar {
+  .workspace-shell > .workspace-sidebar {
     display: none;
   }
 
@@ -2270,6 +2270,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 14px;
+  margin-left: auto;
 }
 
 .admin-account-email {
@@ -3165,6 +3166,11 @@ details[open] > .admin-user-group-head .admin-user-group-chevron {
    status pills and small charts shared across the three role dashboards. */
 
 .admin-main--wide {
+  width: min(1400px, 100%);
+}
+
+/* The header over a wide page lines up with it. */
+.admin-header-inner--wide {
   width: min(1400px, 100%);
 }
 

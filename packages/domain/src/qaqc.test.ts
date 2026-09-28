@@ -88,9 +88,13 @@ describe("samplingCustodyExceptions", () => {
       now,
       staleAfterDays: 14,
     });
-    expect(
-      exceptions.filter((e) => e.kind === "qc_rate_short"),
-    ).toHaveLength(3);
+    const short = exceptions.filter((e) => e.kind === "qc_rate_short");
+    expect(short).toHaveLength(3);
+    expect(short.map((e) => e.summary).sort()).toEqual([
+      "Blank rate below target",
+      "Duplicate rate below target",
+      "Standard rate below target",
+    ]);
   });
 
   it("does not flag a rate that is met", () => {
@@ -210,6 +214,7 @@ describe("deviceStaleExceptions", () => {
     );
     expect(exceptions).toHaveLength(1);
     expect(exceptions[0]!.summary).toContain("Field tablet");
+    expect(exceptions[0]!.evidence).toBe("Last seen 2026-08-01.");
   });
 
   it("does not flag a device with no sync history or within the threshold", () => {

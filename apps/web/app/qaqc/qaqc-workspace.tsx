@@ -72,7 +72,7 @@ function ExceptionItem({ exception }: { exception: ExceptionRow }) {
 
   return (
     <div className="exception-row" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: "0.875rem", fontWeight: 500 }}>{exception.summary}</div>
           <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 3 }}>{exception.evidence}</div>
