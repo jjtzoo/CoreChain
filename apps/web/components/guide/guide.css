@@ -1,0 +1,239 @@
+/* The in-app guide: the "Guide" button in the top bar and the tour over the
+   page. The part being described stays in full colour; the rest of the page
+   fades to grey behind four veils around it. */
+
+.guide-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 7px 14px 7px 12px;
+  color: #6b4a2e;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--copper-soft);
+  border: 1px solid #ddb992;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.guide-button svg {
+  color: var(--brand-copper);
+  flex-shrink: 0;
+}
+
+.guide-button:hover {
+  background: #ead3bd;
+  border-color: #c99a6c;
+}
+
+.guide-button.is-on {
+  color: var(--surface);
+  background: var(--brand-copper);
+  border-color: var(--brand-copper);
+}
+
+.guide-button.is-on svg {
+  color: var(--surface);
+}
+
+.guide-button:focus-visible {
+  outline: 2px solid var(--brand-copper);
+  outline-offset: 2px;
+}
+
+/* Until the guide is first opened in this browser. */
+.guide-new {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  background: var(--brand-copper);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+}
+
+.guide-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.guide-veil {
+  position: fixed;
+  pointer-events: auto;
+  background: rgba(238, 234, 225, 0.62);
+  -webkit-backdrop-filter: grayscale(1);
+  backdrop-filter: grayscale(1);
+}
+
+.guide-ring {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 2px var(--brand-copper),
+    0 0 0 7px rgba(166, 106, 67, 0.18),
+    0 12px 32px rgba(24, 35, 33, 0.16);
+  transition:
+    top 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    left 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.guide-pop {
+  position: fixed;
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 18px 48px rgba(24, 35, 33, 0.22), 0 2px 6px rgba(24, 35, 33, 0.08);
+  pointer-events: auto;
+  outline: none;
+}
+
+.guide-pop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guide-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.guide-count b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guide-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px -8px -6px 0;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.guide-close:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.guide-bar {
+  height: 3px;
+  overflow: hidden;
+  background: var(--surface-muted);
+  border-radius: 3px;
+}
+
+.guide-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand-copper);
+  border-radius: 3px;
+  transition: width 250ms ease;
+}
+
+.guide-pop h2 {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.guide-pop p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.guide-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.guide-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.guide-back {
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+}
+
+.guide-back:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.guide-back:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.guide-next {
+  color: var(--surface);
+  font-weight: 600;
+  background: var(--forest);
+  border: 1px solid var(--forest);
+}
+
+.guide-next:hover:not(:disabled) {
+  background: var(--forest-dark);
+}
+
+.guide-next:disabled {
+  opacity: 0.8;
+  cursor: progress;
+}
+
+.guide-close:focus-visible,
+.guide-nav button:focus-visible {
+  outline: 2px solid var(--brand-copper);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-ring,
+  .guide-bar i,
+  .guide-button {
+    transition: none;
+  }
+}
+
+@media print {
+  .guide-button,
+  .guide-layer {
+    display: none;
+  }
+}

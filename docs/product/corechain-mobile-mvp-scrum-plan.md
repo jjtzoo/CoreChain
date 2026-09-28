@@ -672,6 +672,11 @@ Collected from the owner's own testing and from the first geologist tester's sug
     - Manager mode: the report's double full stop, Team page column widths, status pills on one line, and the phone sync note wrapping.
     - QA/QC: the sidebar no longer inherits the old sample-project shell's full-height grey column (the Devices and "How this screen works" cards had large gaps), the header spans the page like manager mode's, a phone's "last seen" shows a date instead of a raw timestamp, the Resolve button no longer stretches, and a short QC rate reads "Duplicate rate below target".
     - Sign-in goes straight to the person's own page. It used to read the new session before its cookie existed, so every non-admin went through the admin page and back to sign-in first.
+- **Follow-up (2026-09-28): in-app guide.** Added at the owner's request, outside the sprint order. Project managers may not be at ease with software, so help must be easy to find.
+  - A "Guide" button in the manager and QA/QC top bars, labelled and tinted copper, with a small dot until it is first used. It starts a short tour of the page you are on: the part being described stays in colour, the rest fades to grey, and a card says what it is, with "Part 3 of 7", Back and Next.
+  - One path per role: manager Today, Projects, a project's summary, 3D view and report, Holes, a hole's record, Samples & lab, Team and Setup; QA/QC queue, then Standards and blanks. Next on a page's last part opens the next page; Back on its first part returns. The part shown is in the address (`?guide=3`), so the browser's Back and Forward follow it. A part not on the page (no phones flagged, a reviewer who cannot edit the list) is skipped.
+  - Copy is written for any team's live data. Steps and paths are in `apps/web/lib/guide/tours.ts` (6 tests); the overlay is `apps/web/components/guide/`.
+  - **Checked:** on a local server, signed in as the showcase project manager and two QA/QC reviewers. A script walked every part forwards and back (36 manager parts on 10 pages, 12 and 14 QA/QC parts), the browser's Back and Forward, Escape, and Guide on a page with no tour; screenshots at desktop width and at 390 px. **Not checked:** under "View as" (needs the admin's own sign-in), and the laboratory page, which has no guide yet.
 
 **Smaller items, not sized:**
 
